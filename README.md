@@ -2,13 +2,25 @@
 
 Compare racetrack forecasts, inspect recent radar over the circuit, and review the weather expected during your sessions.
 
-**Runs locally at [localhost:4173](http://localhost:4173/). No account or API key is required.** GitHub holds the source and runs checks; there is no hosted application or deployment service.
+**A local Mac app. No account, Terminal or Node.js installation is needed to use the packaged application.** GitHub holds the source, checks and installer downloads; there is no hosted weather application.
 
 ![Pitwall overview showing isolated example weather data](docs/images/overview.png)
 
 Screenshots and the [short walkthrough](docs/images/walkthrough.webm) use clearly synthetic browser-test data and an example session. They demonstrate the interface; they are not weather reports. The normal application fetches real provider data and has no seeded demo weather.
 
-## Run it
+## Install on your Mac
+
+1. Download the universal **Pitwall `.dmg`** from [Releases](https://github.com/Arthur-Brht/pitwall-/releases).
+2. Open the disk image and drag **Pitwall** into **Applications**.
+3. Open Pitwall from Applications, Launchpad or the Dock.
+
+The application supports Apple silicon and Intel Macs running **macOS 13 Ventura or newer**. Its runtime and interface are bundled. The local server starts and stops automatically; no browser or terminal window needs to remain open.
+
+**Release status:** previews are labelled `preview` and are ad-hoc signed, not Developer ID signed or Apple notarized. They are build previews, not the standard public installer; the final signing step requires the maintainer's Apple Developer credentials. [Mac installation and release details](docs/MAC_APP.md).
+
+Fresh forecasts, location search, map tiles and radar need internet access. The bundled interface opens offline, with original timestamps on available saved forecasts.
+
+## Run from source (developers)
 
 Install [Node.js 22.13 or newer](https://nodejs.org/en/download), then:
 
@@ -19,9 +31,7 @@ npm ci
 npm start -- --open
 ```
 
-Open **http://localhost:4173/** and keep the terminal running. Press Ctrl+C to stop. On later launches, run `npm start -- --open` again. Windows users can double-click `Start Pitwall.cmd`; a macOS launcher is also included. In PowerShell, use `npm.cmd` if `npm.ps1` is blocked. [Setup and troubleshooting](docs/RUN_LOCALLY.md).
-
-Fresh forecasts, location search, map tiles and radar need internet access. The optional installed app can reopen its saved interface offline, with the original timestamps on available saved forecasts.
+The source/browser version runs at **http://localhost:4173/** until stopped with Ctrl+C. Source launchers are also included. Mac app users do not need these commands. [Source setup](docs/RUN_LOCALLY.md).
 
 ## Plan a session
 
@@ -44,9 +54,9 @@ The observation comparison reports sample counts, errors, lead bands and station
 
 ## Your data
 
-Circuits, preferences and sessions stay in this browser's local storage. Forecast snapshots and caches stay in IndexedDB. Nothing is uploaded to GitHub, synced to another device, or sent to a Pitwall backend. Weather and map providers receive the requested coordinates or map area and normal connection metadata.
+Circuits, preferences and sessions stay in local storage inside Pitwall's private application profile. Forecast snapshots and caches stay in IndexedDB. Nothing is uploaded to GitHub, synced to another device, or sent to a Pitwall backend. Weather and map providers receive the requested coordinates or map area and normal connection metadata.
 
-Use the same browser profile and **localhost:4173** each time: another hostname or port has a separate store. Browser storage can be cleared or evicted. Export a JSON backup for plans/settings and CSV for history you want to retain. [Privacy and storage details](docs/PRIVACY.md).
+The Mac app has a separate profile from Safari or Chrome. Bring over browser plans/settings by exporting a JSON backup from the old version and importing it in the app's Weather preferences. History exports separately as CSV. Updates preserve the app's profile; keep backups of important plans. [Privacy and storage details](docs/PRIVACY.md).
 
 ## Develop and contribute
 
@@ -61,7 +71,7 @@ npm run test:e2e
 
 Development uses port 5173. Browser tests use isolated contexts on port 4174 with clearly synthetic provider fixtures; they do not touch your saved 4173 data or call public weather services. Chromium, Firefox, WebKit and a mobile viewport exercise the interface. Offline service-worker reload checks run in Chromium.
 
-The stack is React 19, TypeScript, Vite 8, Recharts and locally bundled Leaflet, with a small Node server bound to loopback. See [architecture](docs/ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md), [verification](docs/VERIFICATION.md) and the [changelog](CHANGELOG.md).
+The stack is React 19, TypeScript, Vite 8, Recharts and locally bundled Leaflet, with a small loopback server. Electron bundles the interface and runtime as a Mac application. See [architecture](docs/ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md), [verification](docs/VERIFICATION.md) and the [changelog](CHANGELOG.md).
 
 ## Licence and data terms
 

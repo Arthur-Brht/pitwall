@@ -6,6 +6,9 @@ export default tseslint.config(
   {
     ignores: [
       "dist/**",
+      ".desktop-app/**",
+      "release/**",
+      "desktop/resources/**",
       "node_modules/**",
       "web/public/**",
       "playwright-report/**",
@@ -14,6 +17,14 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    files: ["**/*.cjs"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: { require: "readonly", module: "readonly" },
+    },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
   {
     languageOptions: {
       globals: {

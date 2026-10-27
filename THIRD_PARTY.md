@@ -2,6 +2,8 @@
 
 Pitwall's MIT licence covers its original application code and documentation. It does not replace the licences or service conditions for dependencies or external data.
 
+The desktop build also bundles Electron and Chromium/Node. Their distributed `ELECTRON_LICENSE.txt` and `CHROMIUM_LICENSES.html` notices are retained in the app bundle alongside web dependency notices. Electron is MIT licensed; bundled runtime components retain their individual licences. Packaging tools are development dependencies, not shipped application dependencies.
+
 ## Weather
 
 - **Open-Meteo:** normalized data are provided under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Credit [Open-Meteo](https://open-meteo.com/) and the named model sources, and identify processing changes. The free service is for non-commercial use within its quotas; see the [current terms](https://open-meteo.com/en/terms). Public code availability does not grant commercial free-API access.

@@ -2,6 +2,10 @@
 
 Pitwall is a browser application served by a small, read-only local Node server. Weather requests go directly from the browser to public providers; `/api/` names inside the code are browser-local dispatch paths, not a backend API.
 
+The Mac application packages the same interface and server with Electron. `desktop/main.mjs` owns window/server lifecycle; `desktop/policy.mjs` restricts navigation, external links and downloads. The renderer is sandboxed, with context isolation and no Node integration or native IPC API. The preload exposes only a read-only desktop marker. Desktop mode hides browser-install controls and uses bundled files instead of a service worker, so updates replace the shell reliably. Data stays in a persistent profile outside the app bundle.
+
+`scripts/prepare-desktop.mjs` stages an explicit set of application/runtime files, excluding the repository, development dependencies, credentials and browser exports. `electron-builder.config.cjs` produces the universal app, DMG and ZIP. Runtime/Chromium licence notices are retained. Signing/notarization require an explicit credential-backed build; previews are labelled. [Mac builds and storage](MAC_APP.md).
+
 ```text
 web/src/App.tsx                     Workspace composition
 web/src/components/pitwall/          Views, dialogs, charts, map and verification panel

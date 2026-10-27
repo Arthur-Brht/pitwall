@@ -1,0 +1,105 @@
+name: Build Mac app
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      signed:
+        description: Build a Developer ID signed and Apple-notarized release (credentials required)
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: mac-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 40
+    env:
+      PITWALL_SIGNED_RELEASE: ${{ inputs.signed && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.13.0"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Prepare signing credentials for an explicitly requested signed build
+        if: inputs.signed
+        env:
+          NOTARY_KEY: ${{ secrets.APPLE_NOTARY_KEY_P8 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          test -n "$NOTARY_KEY" && test -n "$APPLE_API_KEY_ID"
+          printf '%s' "$NOTARY_KEY" > "$RUNNER_TEMP/notary-key.p8"
+          chmod 600 "$RUNNER_TEMP/notary-key.p8"
+          printf 'APPLE_API_KEY=%s/notary-key.p8\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Build universal Mac installer
+        env:
+          CSC_LINK: ${{ inputs.signed && secrets.MAC_CERTIFICATE_P12 || '' }}
+          CSC_KEY_PASSWORD: ${{ inputs.signed && secrets.MAC_CERTIFICATE_PASSWORD || '' }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: npm run desktop:mac
+      - name: Check both architectures and the application signature
+        run: |
+          binary="release/mac-universal/Pitwall.app/Contents/MacOS/Pitwall"
+          lipo -archs "$binary" | grep -q arm64
+          lipo -archs "$binary" | grep -q x86_64
+          codesign --verify --deep --strict "release/mac-universal/Pitwall.app"
+      - name: Launch the packaged app twice and verify storage and isolation
+        run: npm run desktop:smoke
+      - name: Run desktop provider, plan and native file tests
+        run: npx playwright test --config playwright.desktop.config.ts
+      - name: Verify notarization for the standard installer
+        if: inputs.signed
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          spctl --assess --type execute --verbose "release/mac-universal/Pitwall.app"
+          xcrun stapler validate "release/mac-universal/Pitwall.app"
+          for dmg in release/*.dmg; do
+            xcrun notarytool submit "$dmg" --key "$APPLE_API_KEY" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
+            xcrun stapler staple "$dmg"
+            xcrun stapler validate "$dmg"
+          done
+      - run: node scripts/package-manifest.mjs
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: Pitwall-mac-installer
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/SHA256SUMS.txt
+            release/BUILD-INFO.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Remove temporary notarization key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/notary-key.p8"
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: mac
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: Pitwall-mac-installer
+          path: installer
+      - name: Prepare a reviewable download without publishing a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" --draft --title "Pitwall $TAG — Mac preview" --notes "Download the universal DMG, drag Pitwall into Applications, and open it. The preview bundles its runtime and needs no Terminal or Node.js. This build is ad-hoc signed and has not been Apple notarized; standard first-launch distribution awaits Developer ID signing. See BUILD-INFO.json and SHA256SUMS.txt."
+          gh release upload "$TAG" installer/*

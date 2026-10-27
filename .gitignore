@@ -10,6 +10,12 @@
 # Dependencies, builds and generated test evidence
 node_modules/
 dist/
+.desktop-app/
+release/
+desktop/resources/
+*.p12
+*.p8
+*.mobileprovision
 coverage/
 .vite/
 *.tsbuildinfo

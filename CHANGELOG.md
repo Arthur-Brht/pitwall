@@ -1,5 +1,12 @@
 ﻿# Changelog
 
+## 1.3.0 — Mac application preview
+
+- Added a self-contained universal Mac app and drag-to-Applications disk image, bundling its runtime and automatic server/window lifecycle.
+- Added persistent app storage, native menus and restricted navigation/downloads, with no Node or native IPC access from the interface.
+- Added packaged launch/reopen checks, desktop provider/plan/file tests, Mac CI builds, installer checksums and explicit signed/notarized release mode.
+- Made Mac installation the main README path. Previews are labelled; standard distribution awaits Apple Developer signing credentials.
+
 ## 1.2.0 — 27 October 2026
 
 - Prepared Pitwall as a standalone local application, with MIT licensing, third-party notices, public setup/contribution guidance and an app-only source history.

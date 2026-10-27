@@ -14,6 +14,8 @@ test("public documentation links resolve to files shipped with the repository", 
           ".git",
           "node_modules",
           "dist",
+          ".desktop-app",
+          "release",
           "test-results",
           "playwright-report",
         ].includes(entry.name)

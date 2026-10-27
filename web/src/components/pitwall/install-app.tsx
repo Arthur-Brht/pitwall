@@ -15,9 +15,14 @@ export function usePwa() {
   const [shellUnavailable, setShellUnavailable] = useState(false);
   const [installError, setInstallError] = useState("");
   useEffect(() => {
+    const desktop = Boolean(
+      (window as Window & { pitwallDesktop?: { isDesktop?: boolean } })
+        .pitwallDesktop?.isDesktop,
+    );
     setOffline(!navigator.onLine);
     setInstalled(
-      window.matchMedia("(display-mode: standalone)").matches ||
+      desktop ||
+        window.matchMedia("(display-mode: standalone)").matches ||
         Boolean((navigator as Navigator & { standalone?: boolean }).standalone),
     );
     const online = () => setOffline(false);
@@ -37,6 +42,7 @@ export function usePwa() {
     // Development never registers a worker, avoiding stale modules during edits.
     if (
       import.meta.env.PROD &&
+      !desktop &&
       "serviceWorker" in navigator &&
       window.isSecureContext
     ) {

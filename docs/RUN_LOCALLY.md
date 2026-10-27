@@ -1,6 +1,8 @@
 ﻿# Run Pitwall locally
 
-Pitwall opens at **http://localhost:4173/**. GitHub stores the source and runs tests; there is no hosting, login, Pages or cloud deployment step.
+For the downloadable Mac app, see [Mac installation](MAC_APP.md). The commands below are for the source/browser version and development, not the packaged Mac app.
+
+Pitwall opens at **http://localhost:4173/**. GitHub stores source, checks and installer downloads; there is no hosted weather service or login.
 
 ## First launch
 

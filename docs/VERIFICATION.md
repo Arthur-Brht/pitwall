@@ -1,10 +1,10 @@
-﻿# Verification — Pitwall 1.2.0
+# Verification — Pitwall 1.3.0
 
 Release review: 27 October 2026. The application runs locally at http://localhost:4173; GitHub stores source and executes checks. There is no hosted application, login or deployment workflow.
 
 ## Automated evidence
 
-- **62 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links.
+- **65 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links.
 - The browser suite exercises Chromium, Firefox, WebKit and a mobile Chromium viewport. It covers all views, source controls, session editing/undo, calendar/history/backup exports, restore/rejection, failed-provider recovery, custom coordinates, location search/timezones, corrupt storage, modal keyboard focus, observation verification and accessibility.
 - Accessibility checks cover the four views plus search/preferences dialogs for critical or serious WCAG-tagged axe violations. They do not constitute a complete accessibility certification.
 - Offline service-worker reload is checked in Chromium. Firefox and WebKit offline navigation are explicitly skipped in this automation harness; their normal application flows remain covered.
@@ -12,6 +12,12 @@ Release review: 27 October 2026. The application runs locally at http://localhos
 - CI runs Windows and Ubuntu web checks, Windows Chromium/mobile flows, Ubuntu Chromium/Firefox/WebKit/mobile flows, and a redacted reachable-history secret scan. Actions are pinned to commit hashes and the workflow has read-only repository permissions.
 
 The [GitHub workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/ci.yml) provides the current remote outcome. Test counts and dependency results describe this reviewed version, not every future revision.
+
+## Mac application verification
+
+The [Mac build workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/macos.yml) builds a universal app and DMG/ZIP on macOS, checks signatures and both CPU architectures, and launches the packaged application twice. Those checks cover rendering, sandboxed isolation, localStorage and IndexedDB persistence through quit/reopen, and hiding browser-install controls. A separate Electron flow verifies all five synthetic provider feeds, saved plans and native backup export/import. Tests use a temporary profile and port 4175, leaving real data on 4173 untouched.
+
+The initial packaged first/reopen checks and native file workflow passed on Windows. The host's Code Integrity policy blocked execution of a later unsigned Windows rebuild; that protection was left in place. The workflow is the source of truth for Mac build results. Ad-hoc signature verification is not Developer ID signing or Apple notarization; preview installers and build manifests state this explicitly. A standard installer remains dependent on maintainer signing credentials.
 
 ## Live-provider and local-runtime checks
 

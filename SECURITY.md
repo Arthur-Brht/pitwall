@@ -2,6 +2,8 @@
 
 The current 1.x release is maintained. Use a recent release and the locked dependencies from `npm ci`.
 
+The Mac app bundles Electron with sandboxing, context isolation, no renderer Node integration, no general IPC bridge, denied permission requests and restricted HTTPS external links. Packaged runtime fuses disable Node execution/environment options, CLI inspection and loading code outside the verified ASAR archive. Imports/exports use native file dialogs. Its profile is separate from ordinary browsers. Previews are explicitly ad-hoc signed; only the credential-backed release workflow can claim Developer ID signing and Apple notarization. See [Mac release verification](docs/MAC_APP.md).
+
 Pitwall serves built files on loopback only. It has no account system, remote write API or backend secrets. The production server rejects foreign hostnames, blocks framing and restricts scripts and provider connections with a content security policy. The optional worker caches the local interface, not cross-origin weather or map tiles.
 
 Never put credentials in browser code or `VITE_` variables. Do not share device backups or history exports without reviewing their locations and session details. Provider responses and imported files are untrusted data.

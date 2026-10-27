@@ -1,5 +1,8 @@
 node_modules
 dist
+.desktop-app
+release
+desktop/resources
 playwright-report
 test-results
 package-lock.json
