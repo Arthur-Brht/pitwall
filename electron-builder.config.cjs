@@ -20,7 +20,7 @@ module.exports = {
     output: "release",
     buildResources: "desktop/resources",
   },
-  files: ["**/*"],
+  files: ["**/*", "!node_modules/**"],
   asar: true,
   npmRebuild: false,
   publish: null,

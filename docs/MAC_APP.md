@@ -4,6 +4,8 @@ The universal disk image contains a complete application for Apple silicon and I
 
 Previews have `preview` in their filenames and are ad-hoc signed, not Apple notarized. They demonstrate the build and are not the standard public installer. A standard release requires a Developer ID certificate, Apple Developer membership and successful Apple notarization. Credentials are never included in source control. `BUILD-INFO.json` records which installer was produced.
 
+macOS may block an unverified preview on first launch. [Apple explains these alerts and the available choices](https://support.apple.com/en-us/102445). The preview does not require a Terminal command or a system-wide change to Gatekeeper. A normal verified public release remains a separate signing/notarization step.
+
 ## Everyday use and storage
 
 Pitwall starts its bundled server at `http://localhost:4173` on this computer only. Opening it again focuses its existing window. Closing the Mac window leaves the Dock app running; use Pitwall > Quit Pitwall or Command-Q to stop it and its server.
