@@ -18,6 +18,8 @@ Precipitation describes the hour **beginning** at `Hour.time`. Open-Meteo report
 
 Fetch time means receipt by this browser, not model initialization. Pitwall does not invent cycle times. Requests use a ten-minute application cache; manual Refresh bypasses that cache while respecting Retry-After and MET Norway Expires when supplied. Coordinates are rounded to four decimals for public requests.
 
+Open-Meteo model and ensemble requests are spaced at least 250 ms apart to avoid a burst on circuit changes. An HTTP 429 response applies a persisted cooldown across both Open-Meteo endpoints, not just the failed model URL. Refresh does not bypass that cooldown. Other providers retain their own cooldowns, and available/saved data remain explicit when a source cannot respond.
+
 If a feed fails, its last real forecast fetched less than 24 hours ago can be shown if future intervals remain. It is labelled saved, with the original fetch time. Failures never renew that timestamp. Missing hours/fields remain missing.
 
 ## Consensus and planned sessions

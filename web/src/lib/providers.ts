@@ -66,6 +66,11 @@ export class JsonAPIClient {
   ): Promise<any> {
     const url = new URL(path, this.baseUrl);
     url.search = new URLSearchParams(params).toString();
+    if (
+      url.hostname === "api.open-meteo.com" ||
+      url.hostname === "ensemble-api.open-meteo.com"
+    )
+      await paceWeatherRequest();
     return fetchJson(url.toString(), {}, this.timeoutMs, onResponse);
   }
   toString() {
@@ -74,6 +79,25 @@ export class JsonAPIClient {
 }
 
 const rateLimitedUntil = new Map<string, number>();
+let weatherStart = Promise.resolve();
+let nextWeatherStart = 0;
+/** Avoid a burst when one circuit needs several models and ensembles. */
+function paceWeatherRequest() {
+  const slot = weatherStart.then(async () => {
+    const wait = Math.max(0, nextWeatherStart - Date.now());
+    if (wait) await new Promise<void>((resolve) => setTimeout(resolve, wait));
+    nextWeatherStart = Date.now() + 250;
+  });
+  weatherStart = slot.catch(() => {});
+  return slot;
+}
+function rateService(url: string) {
+  const parsed = new URL(url);
+  return parsed.hostname === "api.open-meteo.com" ||
+    parsed.hostname === "ensemble-api.open-meteo.com"
+    ? "open-meteo"
+    : parsed.origin;
+}
 
 export async function fetchJson(
   url: string,
@@ -81,10 +105,15 @@ export async function fetchJson(
   timeout = 10000,
   onResponse?: (response: Response) => void,
 ): Promise<any> {
-  const blockedUntil = rateLimitedUntil.get(url);
+  const service = rateService(url);
+  const blockedUntil = Math.max(
+    rateLimitedUntil.get(url) ?? 0,
+    rateLimitedUntil.get(service) ?? 0,
+  );
   if (
     (blockedUntil && blockedUntil > Date.now()) ||
-    (await readCache<boolean>(`ratelimit:${url}`))
+    (await readCache<boolean>(`ratelimit:${url}`)) ||
+    (await readCache<boolean>(`ratelimit-service:${service}`))
   )
     throw new ProviderError(
       "rate_limit",
@@ -119,7 +148,9 @@ export async function fetchJson(
         ? Math.max(Date.now() + 1000, until)
         : Date.now() + 600000;
       rateLimitedUntil.set(url, retryAt);
+      rateLimitedUntil.set(service, retryAt);
       await writeCache(`ratelimit:${url}`, true, retryAt);
+      await writeCache(`ratelimit-service:${service}`, true, retryAt);
       throw new ProviderError(
         "rate_limit",
         "The provider rate limit was reached. Try again later.",

@@ -4,7 +4,7 @@ Release review: 27 October 2026. The application runs locally at http://localhos
 
 ## Automated evidence
 
-- **77 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links.
+- **79 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links.
 - The browser suite exercises Chromium, Firefox, WebKit and a mobile Chromium viewport. It covers both light and dark appearance, system changes, saved theme choices, incomplete rainfall summaries, all views, source controls, session editing/undo, calendar/history/backup exports, restore/rejection, failed-provider recovery, custom coordinates, location search/timezones, corrupt storage, modal keyboard focus, observation verification and accessibility.
 - Accessibility checks cover all five views in both themes plus search/preferences dialogs for critical or serious WCAG-tagged axe violations. They do not constitute a complete accessibility certification.
 - Dashboard checks cover window-level rain estimates, complete ensemble-member denominators, wet outliers, per-location source choices, manual track readings and radar start/end playback. Existing saved forecasts remain available as explicitly stale data during an offline upgrade.
