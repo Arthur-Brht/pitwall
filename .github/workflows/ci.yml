@@ -35,7 +35,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          # Keep the browser dependency set stable when ubuntu-latest changes.
+          - os: ubuntu-24.04
             browsers: chromium firefox webkit
             projects: ""
           - os: windows-latest
@@ -52,7 +53,9 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps ${{ matrix.browsers }}
+      - name: Install browser dependencies and binaries
+        timeout-minutes: 10
+        run: npx playwright install --with-deps ${{ matrix.browsers }}
       - run: npm run build
       - run: npm run test:e2e -- ${{ matrix.projects }}
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
