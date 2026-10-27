@@ -112,6 +112,7 @@ export default function CircuitMap({ track }: { track: Track }) {
         if (!d.frames?.length)
           throw Error("No recent radar frames are available.");
         setRadar(d);
+        player.current?.retryFailed();
         setTileError("");
         setPlaying(false);
         setFrame(d.frames.length - 1);
@@ -225,6 +226,12 @@ export default function CircuitMap({ track }: { track: Track }) {
             layer.remove();
           },
         },
+        retryFailed: () => {
+          if (failed && !removed) {
+            failed = false;
+            layer.redraw();
+          }
+        },
         ready: () => {
           if (removed || !layer.isLoading())
             return Promise.resolve(!removed && !failed);
@@ -295,7 +302,7 @@ export default function CircuitMap({ track }: { track: Track }) {
     };
   }, [
     mapReady,
-    radar?.host,
+    radar,
     radarOn,
     selectedTime,
     nextTime,

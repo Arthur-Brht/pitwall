@@ -1,5 +1,9 @@
 export type RadarRaster = { setOpacity(value: number): void; remove(): void };
-export type RadarSlot = { layer: RadarRaster; ready(): Promise<boolean> };
+export type RadarSlot = {
+  layer: RadarRaster;
+  ready(): Promise<boolean>;
+  retryFailed?(): void;
+};
 
 /** Keep the previous scan visible until its replacement has finished loading.
  * Only neighbouring real scans are blended; seeking and wrapping never invent
@@ -46,6 +50,9 @@ export class RadarPlayback {
   }
   preload(index: number) {
     this.get(index);
+  }
+  retryFailed() {
+    for (const slot of this.cache.values()) slot.retryFailed?.();
   }
   async show(index: number, duration = 0) {
     const generation = ++this.generation;

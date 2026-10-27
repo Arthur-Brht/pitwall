@@ -231,6 +231,34 @@ test("rain charts distinguish light rainfall from a graph that merely fills its 
   );
 });
 
+test("refresh recovers a failed radar tile even when the latest frame timestamp has not changed", async ({
+  page,
+}) => {
+  let offline = true;
+  await page.route("**/v2/radar/test-1200/**", async (route) => {
+    await route.fulfill(
+      offline
+        ? { status: 503, body: "Synthetic tile outage" }
+        : {
+            contentType: "image/svg+xml",
+            body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"/>',
+          },
+    );
+  });
+  await page.goto("/");
+  await expect(
+    page
+      .locator(".inline-warning")
+      .filter({ hasText: "radar scan could not load" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("Displayed radar time")).toHaveText("—");
+  offline = false;
+  await page
+    .getByRole("button", { name: "Refresh radar", exact: true })
+    .click();
+  await expect(page.getByLabel("Displayed radar time")).toHaveText("09:00");
+});
+
 test("missing ensemble and model rain never become a zero-percent dry outlook", async ({
   page,
   providers,
