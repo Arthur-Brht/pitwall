@@ -1,6 +1,6 @@
 {
   "name": "pitwall-weather",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "license": "MIT",
   "private": true,
   "description": "Local racetrack weather comparison and session planning application",
@@ -30,6 +30,7 @@
     "desktop": "npm run build && install-electron --no && electron .",
     "desktop:prepare": "install-electron --no && node scripts/prepare-desktop.mjs",
     "desktop:mac": "npm run build && npm run desktop:prepare && electron-builder --config electron-builder.config.cjs --mac --universal --publish never",
+    "desktop:windows": "npm run build && npm run desktop:prepare && electron-builder --config electron-builder.config.cjs --win nsis --x64 --publish never",
     "desktop:dir": "npm run build && npm run desktop:prepare && electron-builder --config electron-builder.config.cjs --dir --publish never",
     "desktop:smoke": "node scripts/desktop-smoke.mjs"
   },

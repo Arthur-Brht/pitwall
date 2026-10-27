@@ -1,4 +1,4 @@
-name: Build Mac app
+name: Build desktop apps
 on:
   push:
     branches: [main]
@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: mac-${{ github.ref }}
+  group: desktop-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   mac:
@@ -88,9 +88,44 @@ jobs:
       - name: Remove temporary notarization key
         if: always()
         run: rm -f "$RUNNER_TEMP/notary-key.p8"
+  windows:
+    name: Windows installer and installed app
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      PITWALL_SIGNED_RELEASE: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22.13.0"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Build the self-contained Windows x64 installer
+        run: npm run desktop:windows
+      - name: Launch and reopen the packaged app
+        run: npm run desktop:smoke
+      - name: Verify all feeds, plans and native file export/import
+        run: npx playwright test --config playwright.desktop.config.ts
+      - name: Install, reopen, reinstall and uninstall while retaining data
+        shell: pwsh
+        run: ./scripts/windows-installer-smoke.ps1
+      - run: node scripts/package-manifest.mjs
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: Pitwall-windows-installer
+          path: |
+            release/*-windows-x64-preview-setup.exe
+            release/WINDOWS-SHA256SUMS.txt
+            release/WINDOWS-BUILD-INFO.json
+          retention-days: 30
+          if-no-files-found: error
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: mac
+    needs: [mac, windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -99,11 +134,15 @@ jobs:
         with:
           name: Pitwall-mac-installer
           path: installer
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: Pitwall-windows-installer
+          path: installer
       - name: Prepare a reviewable download without publishing a release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG" --draft --title "Pitwall $TAG — Mac preview" --notes "Download the universal DMG, drag Pitwall into Applications, and open it. The preview bundles its runtime and needs no Terminal or Node.js. This build is ad-hoc signed and has not been Apple notarized; standard first-launch distribution awaits Developer ID signing. See BUILD-INFO.json and SHA256SUMS.txt."
+          gh release create "$TAG" --draft --title "Pitwall $TAG — Mac and Windows preview" --notes "Download the universal DMG for Mac or the x64 setup EXE for Windows. Both bundle their runtime and need no Terminal or Node.js. The Mac preview is ad-hoc signed and not Apple notarized; the Windows preview is unsigned. Operating-system security policies may warn or block these previews. See the platform build manifests and SHA256 checksum files."
           gh release upload "$TAG" installer/*

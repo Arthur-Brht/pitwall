@@ -1,6 +1,6 @@
 ﻿# Run Pitwall locally
 
-For the downloadable Mac app, see [Mac installation](MAC_APP.md). The commands below are for the source/browser version and development, not the packaged Mac app.
+For the downloadable desktop app, see [Mac installation](MAC_APP.md) or [Windows installation](WINDOWS_APP.md). The commands below are for the source/browser version and development, not the packaged apps.
 
 Pitwall opens at **http://localhost:4173/**. GitHub stores source, checks and installer downloads; there is no hosted weather service or login.
 

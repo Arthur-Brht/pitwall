@@ -8,15 +8,21 @@ import { fileURLToPath } from "node:url";
 const root = fileURLToPath(new URL("../", import.meta.url));
 const mac = process.platform === "darwin";
 const packaged = !process.argv.includes("--development");
-const binary = packaged
-  ? path.join(
-      root,
-      "release",
-      mac
-        ? "mac-universal/Pitwall.app/Contents/MacOS/Pitwall"
-        : "win-unpacked/Pitwall.exe",
-    )
-  : (await import("electron")).default;
+const executableIndex = process.argv.indexOf("--executable");
+if (executableIndex >= 0 && !process.argv[executableIndex + 1])
+  throw new Error("--executable requires the installed application path.");
+const binary =
+  executableIndex >= 0
+    ? path.resolve(process.argv[executableIndex + 1])
+    : packaged
+      ? path.join(
+          root,
+          "release",
+          mac
+            ? "mac-universal/Pitwall.app/Contents/MacOS/Pitwall"
+            : "win-unpacked/Pitwall.exe",
+        )
+      : (await import("electron")).default;
 await access(binary);
 const temporary = await mkdtemp(path.join(tmpdir(), "pitwall-desktop-"));
 try {

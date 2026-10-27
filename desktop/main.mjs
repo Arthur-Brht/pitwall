@@ -94,7 +94,7 @@ async function createWindow() {
           title: "Pitwall needs to reopen",
           message: "The weather window stopped responding.",
           detail:
-            "Your saved plans are still on this Mac. Quit and reopen Pitwall.",
+            "Your saved plans are still on this computer. Quit and reopen Pitwall.",
           buttons: ["Quit Pitwall"],
         })
         .then(() => app.quit());

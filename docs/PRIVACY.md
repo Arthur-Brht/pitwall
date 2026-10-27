@@ -13,7 +13,7 @@ The browser directly requests weather, location search, circuit geometry, map ti
 
 All stores belong to the complete origin and browser profile. `localhost:4173`, `127.0.0.1:4173`, 5173 and another browser have separate data.
 
-The Mac app keeps its own profile at `~/Library/Application Support/Pitwall`. It uses the same data formats but does not read Safari/Chrome profiles. Transfer plans/settings with a JSON backup. Updates retain that profile. The desktop shell uses bundled files instead of service-worker caching. Its page has no Node access, filesystem API or general-purpose IPC bridge; imports/exports use native file dialogs.
+The desktop app keeps its own profile at `~/Library/Application Support/Pitwall` on Mac and `%APPDATA%\Pitwall` on Windows. It uses the same data formats but does not read Safari, Chrome or Edge profiles. Transfer plans/settings with a JSON backup. Updates retain that profile; the Windows uninstaller retains it too. The desktop shell uses bundled files instead of service-worker caching. Its page has no Node access, filesystem API or general-purpose IPC bridge; imports/exports use native file dialogs.
 
 History records the first 24 forecast hours per source, with a seven-day retention window and 30,000-point cap per location. Captures from the past six hours remain distinct; older captures retain the latest real fetch per source/valid-hour/UTC-capture-hour. This preserves actual timestamps while limiting storage growth. Forecast history is not an observed weather record.
 

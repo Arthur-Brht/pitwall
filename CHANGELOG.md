@@ -1,5 +1,12 @@
 ﻿# Changelog
 
+## 1.3.1 — Windows application preview
+
+- Added a self-contained Windows x64 installer with Start menu/desktop shortcuts and Windows Apps registration, requiring no terminal or Node.js installation.
+- Added Windows CI checks for the packaged app and actual installation, reinstallation, launch/reopen, native backup export/import and uninstallation with data retention.
+- Added separate Windows build metadata and SHA256 checksums, and Windows installation/privacy/security documentation. Windows previews are explicitly unsigned.
+- Kept Mac packaging and verification alongside Windows, with both required before preparing a tagged release download.
+
 ## 1.3.0 — Mac application preview
 
 - Added a self-contained universal Mac app and drag-to-Applications disk image, bundling its runtime and automatic server/window lifecycle.

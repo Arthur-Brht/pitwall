@@ -1,4 +1,4 @@
-# Verification — Pitwall 1.3.0
+# Verification — Pitwall 1.3.1
 
 Release review: 27 October 2026. The application runs locally at http://localhost:4173; GitHub stores source and executes checks. There is no hosted application, login or deployment workflow.
 
@@ -18,6 +18,10 @@ The [GitHub workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/
 The [Mac build workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/macos.yml) builds a universal app and DMG/ZIP on macOS, checks signatures and both CPU architectures, and launches the packaged application twice. Those checks cover rendering, sandboxed isolation, localStorage and IndexedDB persistence through quit/reopen, and hiding browser-install controls. A separate Electron flow verifies all five synthetic provider feeds, saved plans and native backup export/import. Tests use a temporary profile and port 4175, leaving real data on 4173 untouched.
 
 The initial packaged first/reopen checks and native file workflow passed on Windows. The host's Code Integrity policy blocked execution of a later unsigned Windows rebuild; that protection was left in place. The workflow is the source of truth for Mac build results. Ad-hoc signature verification is not Developer ID signing or Apple notarization; preview installers and build manifests state this explicitly. A standard installer remains dependent on maintainer signing credentials.
+
+## Windows application verification
+
+The [desktop build workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/macos.yml) additionally builds the Windows x64 NSIS installer. Its Windows job requires successful packaged launch/reopen and the synthetic five-feed, plan and native backup flow. A disposable runner installs to a path containing spaces, checks the Start menu and Windows Apps registration, launches/reopens the installed executable, reinstalls it and uninstalls it while retaining profile data. Checksums and a platform-specific build manifest identify the actual unsigned preview. These checks do not disable or bypass the local host's Code Integrity policy.
 
 ## Live-provider and local-runtime checks
 

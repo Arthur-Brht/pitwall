@@ -28,7 +28,7 @@ npm run desktop:smoke
 npx playwright test --config playwright.desktop.config.ts
 ```
 
-Mac packaging runs on macOS. The **Build Mac app** GitHub workflow produces a universal DMG/ZIP, checks both CPU architectures and the signature, and launches the actual packaged app twice to check rendering, persistent storage, sandboxing and absence of Node access in the page. Separate Electron tests use synthetic provider data to test plans and native file export/import. These checks do not call public weather services. Downloads include `SHA256SUMS.txt` and `BUILD-INFO.json`. Tagged builds create a draft release for review without publishing it.
+Mac packaging runs on macOS. The **Build desktop apps** GitHub workflow produces a universal DMG/ZIP, checks both CPU architectures and the signature, and launches the actual packaged app twice to check rendering, persistent storage, sandboxing and absence of Node access in the page. Separate Electron tests use synthetic provider data to test plans and native file export/import. These checks do not call public weather services. Downloads include `SHA256SUMS.txt` and `BUILD-INFO.json`. Tagged builds create a draft release for review after both platform jobs pass, without publishing it.
 
 `npm run desktop` runs the source UI in Electron. `npm run desktop:dir` packages the local platform for smoke tests. Normal browser/source checks remain available.
 
