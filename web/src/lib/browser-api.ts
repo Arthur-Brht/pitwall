@@ -1,5 +1,6 @@
 import type {
   Forecast,
+  EnsembleResponse,
   GeometryResponse,
   RadarResponse,
   SourceStatus,
@@ -22,6 +23,8 @@ import {
   writeCache,
 } from "./browser-history.ts";
 import bundledCircuits from "./circuit-geometries.json" with { type: "json" };
+import { EnsembleClient, ENSEMBLE_SPECS } from "./ensemble.ts";
+import { DEFAULT_SOURCE_IDS, selectedSources } from "./forecast-catalog.ts";
 
 const inFlight = new Map<string, Promise<unknown>>();
 function once<T>(key: string, load: () => Promise<T>): Promise<T> {
@@ -41,8 +44,9 @@ async function weatherFor(
   lon: number,
   zone: string,
   refresh = false,
+  sourceIds = DEFAULT_SOURCE_IDS,
 ): Promise<WeatherResponse> {
-  const key = `weather-v1:${locationKey(lat, lon)}:${zone}`;
+  const key = `weather-v2:${locationKey(lat, lon)}:${zone}:${[...sourceIds].sort().join(",")}`;
   const cached = !refresh && (await readCache<WeatherResponse>(key));
   if (cached)
     return {
@@ -63,9 +67,12 @@ async function weatherFor(
             ? "cache"
             : prior.delivery,
       };
-    const fallback = await readCache<WeatherResponse>(key, {
-      allowStale: true,
-    });
+    const fallback =
+      (await readCache<WeatherResponse>(key, { allowStale: true })) ??
+      (await readCache<WeatherResponse>(
+        `weather-v1:${locationKey(lat, lon)}:${zone}`,
+        { allowStale: true },
+      ));
     const open = new OpenMeteoClient(),
       met = new MetNorwayClient();
     const sources = [
@@ -75,10 +82,11 @@ async function weatherFor(
         load: () => open.forecast(lat, lon, spec),
       })),
       { id: "metno", name: "MET Norway", load: () => met.forecast(lat, lon) },
-    ];
-    const results = await Promise.allSettled(
-      sources.map((source) => source.load()),
-    );
+    ].filter((source) => sourceIds.includes(source.id));
+    const [results, ensembles] = await Promise.all([
+      Promise.allSettled(sources.map((source) => source.load())),
+      ensemblesFor(lat, lon, refresh),
+    ]);
     const forecasts: Forecast[] = [],
       statuses: SourceStatus[] = [];
     results.forEach((result, i) => {
@@ -131,6 +139,7 @@ async function weatherFor(
       location: { lat, lon, timezone: zone },
       forecasts,
       statuses,
+      ensembles,
       notes: [
         "Forecasts come directly from the public providers. Availability and usage limits vary by source.",
         "Forecasts are model estimates at the selected coordinates, not observations of track grip or track-surface temperature.",
@@ -153,6 +162,52 @@ async function weatherFor(
       Date.now() + 86400000,
     );
     return weather;
+  });
+}
+
+async function ensemblesFor(
+  lat: number,
+  lon: number,
+  refresh: boolean,
+): Promise<EnsembleResponse> {
+  const key = `ensemble-v1:${locationKey(lat, lon)}`;
+  const cached = !refresh && (await readCache<EnsembleResponse>(key));
+  if (cached) return cached;
+  return once(key, async () => {
+    const client = new EnsembleClient();
+    const results = await Promise.allSettled(
+      ENSEMBLE_SPECS.map((spec) => client.forecast(lat, lon, spec)),
+    );
+    const value: EnsembleResponse = { forecasts: [], statuses: [] };
+    results.forEach((result, index) => {
+      const spec = ENSEMBLE_SPECS[index];
+      if (result.status === "fulfilled") {
+        value.forecasts.push(result.value);
+        value.statuses.push({
+          id: spec.id,
+          name: spec.name,
+          status: "ok",
+          fetchedAt: result.value.fetchedAt,
+          message: `${result.value.memberCount} ensemble members available.`,
+        });
+      } else
+        value.statuses.push({
+          id: spec.id,
+          name: spec.name,
+          status: "error",
+          message:
+            result.reason instanceof Error
+              ? result.reason.message
+              : "Ensemble unavailable.",
+        });
+    });
+    await writeCache(
+      key,
+      value,
+      Date.now() +
+        (value.forecasts.length === ENSEMBLE_SPECS.length ? 600000 : 60000),
+    );
+    return value;
   });
 }
 
@@ -372,6 +427,7 @@ async function dispatch(path: string, init?: RequestInit): Promise<Response> {
           lon,
           zone,
           url.searchParams.get("refresh") === "1",
+          selectedSources(url.searchParams.get("sources")),
         );
         const storage = await logWeather(weather);
         return response(

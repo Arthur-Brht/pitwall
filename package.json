@@ -1,6 +1,6 @@
 {
   "name": "pitwall-weather",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "license": "MIT",
   "private": true,
   "description": "Local racetrack weather comparison and session planning application",
@@ -63,9 +63,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Arthur-Brht/pitwall-.git"
+    "url": "git+https://github.com/Arthur-Brht/pitwall.git"
   },
   "bugs": {
-    "url": "https://github.com/Arthur-Brht/pitwall-/issues"
+    "url": "https://github.com/Arthur-Brht/pitwall/issues"
   }
 }

@@ -127,6 +127,15 @@ export const TRACKS: Track[] = [
     lengthKm: 3.85,
   },
   {
+    id: "dijon-prenois",
+    name: "Dijon-Prenois",
+    country: "France",
+    lat: 47.3625,
+    lon: 4.8992,
+    timezone: "Europe/Paris",
+    lengthKm: 3.801,
+  },
+  {
     id: "jerez",
     name: "Jerez",
     country: "Spain",

@@ -16,6 +16,20 @@ test("capture the illustrated workflow", async ({ page, providers }) => {
         (image) => image.complete && image.naturalWidth > 0,
       ),
   );
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await page.getByLabel("Dashboard forecast window").selectOption("6");
+  await expect(page.locator(".risk-probability>strong")).toHaveText("50%");
+  await page.screenshot({ path: "docs/images/dashboard.png" });
+  await page.getByRole("button", { name: "Switch to dark mode" }).click();
+  await page.screenshot({ path: "docs/images/dashboard-dark.png" });
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await page
+    .locator(".map-panel")
+    .screenshot({ path: "docs/images/radar-window.png" });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: "docs/images/dashboard-mobile.png" });
+  await page.setViewportSize({ width: 1440, height: 1200 });
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
   await page.screenshot({ path: "docs/images/overview.png" });
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");

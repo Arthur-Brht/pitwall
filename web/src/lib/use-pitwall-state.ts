@@ -5,6 +5,7 @@ import type {
   HistoryPoint,
   Session,
   Track,
+  TrackReading,
   WeatherResponse,
 } from "@/lib/contracts";
 import {
@@ -26,8 +27,11 @@ import {
 import { useModalFocus } from "@/lib/use-modal-focus";
 import { useTheme } from "@/lib/theme";
 import { useEffect, useMemo, useRef, useState } from "react";
-type View = "overview" | "comparison" | "planner" | "history";
+import { DEFAULT_SOURCE_IDS } from "@/lib/forecast-catalog";
+import { locationKey } from "@/lib/browser-history";
+type View = "dashboard" | "overview" | "comparison" | "planner" | "history";
 export const TABS: [View, string][] = [
+  ["dashboard", "Dashboard"],
   ["overview", "Overview"],
   ["planner", "Sessions"],
   ["comparison", "Models"],
@@ -38,7 +42,7 @@ export function usePitwallState() {
   const appearance = useTheme();
   const refreshRequested = useRef(false);
   const backupInput = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<View>("overview"),
+  const [view, setView] = useState<View>("dashboard"),
     [track, setTrack] = useState<Track>(TRACKS[0]),
     [favorites, setFavorites] = useState<Track[]>(INITIAL_TRACKS),
     [data, setData] = useState<WeatherResponse | null>(null),
@@ -83,7 +87,34 @@ export function usePitwallState() {
     [deletedSession, setDeletedSession] = useState<Session | null>(null),
     [storageMessage, setStorageMessage] = useState(""),
     [canSave, setCanSave] = useState(true),
-    [backupMessage, setBackupMessage] = useState("");
+    [backupMessage, setBackupMessage] = useState(""),
+    [sourceSelections, setSourceSelections] = useState<
+      Record<string, string[]>
+    >({}),
+    [trackReadings, setTrackReadings] = useState<Record<string, TrackReading>>(
+      {},
+    );
+  const trackKey = locationKey(track.lat, track.lon);
+  const selectedSourceIds = sourceSelections[trackKey] ?? DEFAULT_SOURCE_IDS;
+  const sourceKey = selectedSourceIds.join(",");
+  const trackReading = trackReadings[trackKey];
+  function toggleFetchedSource(id: string) {
+    const prior = sourceSelections[trackKey] ?? DEFAULT_SOURCE_IDS;
+    const next = prior.includes(id)
+      ? prior.filter((value) => value !== id)
+      : [...prior, id];
+    if (!next.length) return;
+    setSourceSelections((saved) => ({ ...saved, [trackKey]: next }));
+    setDisabled((saved) => saved.filter((value) => value !== id));
+  }
+  function saveTrackReading(temperature: number) {
+    if (!Number.isFinite(temperature) || temperature < -50 || temperature > 100)
+      throw new RangeError("Enter a track reading between −50 and 100°C.");
+    setTrackReadings((saved) => ({
+      ...saved,
+      [trackKey]: { temperature, recordedAt: new Date().toISOString() },
+    }));
+  }
   useModalFocus(searchOpen || settings);
   useEffect(() => {
     try {
@@ -97,6 +128,8 @@ export function usePitwallState() {
         setDisabled(preferences.disabled);
         setThreshold(preferences.threshold);
         setGustLimit(preferences.gustLimit);
+        setSourceSelections(preferences.sourceSelections ?? {});
+        setTrackReadings(preferences.trackReadings ?? {});
       }
     } catch {
       setCanSave(false);
@@ -122,7 +155,15 @@ export function usePitwallState() {
       try {
         localStorage.setItem(
           "pitwall-preferences",
-          JSON.stringify({ favorites, track, disabled, threshold, gustLimit }),
+          JSON.stringify({
+            favorites,
+            track,
+            disabled,
+            threshold,
+            gustLimit,
+            sourceSelections,
+            trackReadings,
+          }),
         );
         localStorage.setItem("pitwall-sessions", JSON.stringify(sessions));
         setStorageMessage("");
@@ -140,6 +181,8 @@ export function usePitwallState() {
     threshold,
     gustLimit,
     sessions,
+    sourceSelections,
+    trackReadings,
   ]);
   useEffect(() => {
     if (!hydrated) return;
@@ -157,7 +200,7 @@ export function usePitwallState() {
     const force = refreshRequested.current;
     refreshRequested.current = false;
     apiFetch(
-      `/api/weather?lat=${track.lat}&lon=${track.lon}&timezone=${encodeURIComponent(track.timezone)}${force ? "&refresh=1" : ""}`,
+      `/api/weather?lat=${track.lat}&lon=${track.lon}&timezone=${encodeURIComponent(track.timezone)}&sources=${encodeURIComponent(sourceKey)}${force ? "&refresh=1" : ""}`,
       { signal: controller.signal },
     )
       .then(async (r) => {
@@ -182,7 +225,15 @@ export function usePitwallState() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [hydrated, track.id, track.lat, track.lon, track.timezone, refresh]);
+  }, [
+    hydrated,
+    track.id,
+    track.lat,
+    track.lon,
+    track.timezone,
+    refresh,
+    sourceKey,
+  ]);
   useEffect(() => {
     if (!hydrated) return;
     const nextHour = (Math.floor(Date.now() / 3600000) + 1) * 3600;
@@ -296,8 +347,11 @@ export function usePitwallState() {
     return () => document.removeEventListener("keydown", key);
   }, [searchOpen, settings]);
   const active = useMemo(
-    () => (data?.forecasts || []).filter((f) => !disabled.includes(f.id)),
-    [data, disabled],
+    () =>
+      (data?.forecasts || []).filter(
+        (f) => !disabled.includes(f.id) && selectedSourceIds.includes(f.id),
+      ),
+    [data, disabled, selectedSourceIds],
   );
   const consensus = useMemo(
     () => buildConsensus(active, threshold),
@@ -539,7 +593,15 @@ export function usePitwallState() {
     () => getDryWindows(active, now, threshold, gustLimit, duration),
     [active, now, threshold, gustLimit, duration],
   );
-  const preferences = { favorites, track, disabled, threshold, gustLimit };
+  const preferences = {
+    favorites,
+    track,
+    disabled,
+    threshold,
+    gustLimit,
+    sourceSelections,
+    trackReadings,
+  };
   function saveSession() {
     setSessionError("");
     setSessionFeedback("");
@@ -617,6 +679,8 @@ export function usePitwallState() {
       setDisabled(merged.preferences.disabled);
       setThreshold(merged.preferences.threshold);
       setGustLimit(merged.preferences.gustLimit);
+      setSourceSelections(merged.preferences.sourceSelections ?? {});
+      setTrackReadings(merged.preferences.trackReadings ?? {});
       setSessions(merged.sessions);
       setEditingSessionId(null);
       setCanSave(true);
@@ -722,6 +786,10 @@ export function usePitwallState() {
     .sort((a, b) => a.time - b.time);
 
   return {
+    selectedSourceIds,
+    toggleFetchedSource,
+    trackReading,
+    saveTrackReading,
     pwa,
     backupInput,
     view,

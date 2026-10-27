@@ -1,4 +1,13 @@
-﻿# Changelog
+# Changelog
+
+## 2.1.0 — Rain-risk dashboard
+
+- Added a Dashboard tab with selectable forecast windows, ensemble rain estimates and their range, provider agreement, family counts, first rain signal and hourly source comparison.
+- Added UK Met Office, Canada GEM and Japan JMA to the default feeds, plus optional KNMI and ItaliaMeteo regional forecasts. Source selections are saved separately per location and included in backups.
+- Added ECMWF, GFS and ICON ensembles for window-level estimates, requiring complete hourly members and keeping probability separate from model agreement. Wet outliers remain visible; missing data never become dry votes.
+- Added timestamped manual track-temperature readings alongside forecast humidity, air temperature, wind and gusts. Readings stay local and travel in backups.
+- Added radar start/end selection, playback restricted to that range, and reset to available history. The controls remain limited to actual returned historical frames.
+- Added Dijon-Prenois and visible coordinates for custom locations, retained existing plans and saved forecasts on upgrade, and updated links for the renamed repository.
 
 ## 2.0.0 ? A clearer weather desk
 

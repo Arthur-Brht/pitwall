@@ -54,6 +54,11 @@ export function WorkspaceHeading() {
           <h1>{track.name}</h1>
           <p className="header-meta">
             <span>{track.country}</span>
+            {track.custom && (
+              <span>
+                {track.lat.toFixed(4)}, {track.lon.toFixed(4)}
+              </span>
+            )}
             <span>{dateLabel}</span>
             {data?.forecasts.length ? (
               <span

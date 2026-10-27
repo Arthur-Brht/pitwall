@@ -40,7 +40,13 @@ for (const theme of ["light", "dark"] as const) {
     test.setTimeout(120_000);
     await page.emulateMedia({ colorScheme: theme });
     await open(page);
-    for (const view of ["Overview", "Sessions", "Models", "History"]) {
+    for (const view of [
+      "Dashboard",
+      "Overview",
+      "Sessions",
+      "Models",
+      "History",
+    ]) {
       await page.getByRole("button", { name: view, exact: true }).click();
       expect(
         await page.evaluate(

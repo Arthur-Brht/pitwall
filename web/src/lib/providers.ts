@@ -1,4 +1,6 @@
 import type { Forecast, Hour } from "./contracts";
+import type { ModelSpec } from "./forecast-catalog.ts";
+export { MODEL_SPECS } from "./forecast-catalog.ts";
 import { readCache, writeCache } from "./browser-history.ts";
 
 export class ProviderError extends Error {
@@ -153,53 +155,6 @@ export async function fetchJson(
   }
 }
 
-type ModelSpec = {
-  id: string;
-  name: string;
-  model: string;
-  provider: string;
-  family: string;
-  color: string;
-  resolution: string;
-};
-export const MODEL_SPECS: ModelSpec[] = [
-  {
-    id: "ecmwf",
-    name: "ECMWF IFS",
-    model: "ecmwf_ifs025",
-    provider: "ECMWF",
-    family: "ecmwf",
-    color: "#c8f36b",
-    resolution: "0.25° (~25 km)",
-  },
-  {
-    id: "icon",
-    name: "DWD ICON",
-    model: "icon_seamless",
-    provider: "Deutscher Wetterdienst",
-    family: "icon",
-    color: "#70c5fa",
-    resolution: "Seamless: ~2–11 km, region dependent",
-  },
-  {
-    id: "gfs",
-    name: "NOAA GFS",
-    model: "gfs_seamless",
-    provider: "NOAA / NCEP",
-    family: "gfs",
-    color: "#c1a0ff",
-    resolution: "Seamless: ~3–25 km, region dependent",
-  },
-  {
-    id: "meteofrance",
-    name: "Météo-France",
-    model: "meteofrance_seamless",
-    provider: "Météo-France",
-    family: "meteofrance",
-    color: "#ffb36d",
-    resolution: "AROME / ARPEGE: ~1–25 km, region dependent",
-  },
-];
 const HOURLY =
   "temperature_2m,relative_humidity_2m,dew_point_2m,precipitation,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,pressure_msl,weather_code,visibility";
 
@@ -243,7 +198,12 @@ export function normalizeOpenMeteo(
       };
     })
     .filter((x: Hour | null): x is Hour => x !== null);
-  if (!hours.length)
+  if (
+    !hours.length ||
+    !hours.some(
+      (hour) => hour.precipitation !== null || hour.temperature !== null,
+    )
+  )
     throw new ProviderError(
       "invalid_response",
       "The provider supplied no forecast within the next 72 hours.",

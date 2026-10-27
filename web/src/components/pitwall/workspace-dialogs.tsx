@@ -3,6 +3,7 @@ import { download } from "@/lib/exports";
 import { day } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
 import { sourceColor } from "@/lib/theme";
+import { ForecastChoices } from "./forecast-choices";
 import { version } from "../../../../package.json";
 import {
   ArrowDownToLine,
@@ -290,34 +291,37 @@ export function WorkspaceDialogs() {
               <p className="fineprint">
                 A model counts as wet when its hourly rain reaches this amount.
               </p>
-              <div className="settings-section-label">Sources</div>
-              {data?.forecasts.length ? (
-                data.forecasts.map((f) => (
-                  <label className="source-toggle" key={f.id}>
-                    <span
-                      className="tiny-dot"
-                      style={{
-                        background: sourceColor(f.color, appearance.theme),
-                      }}
-                    />
-                    <span>
-                      <strong>{f.name}</strong>
-                      <small>
-                        {f.provider} · {f.family}
-                      </small>
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={!disabled.includes(f.id)}
-                      onChange={() => toggleSource(f.id)}
-                    />
-                  </label>
-                ))
-              ) : (
-                <p className="fineprint">
-                  Sources appear after the forecast loads.
-                </p>
-              )}
+              <ForecastChoices />
+              <details className="comparison-source-options">
+                <summary>Include in comparison</summary>
+                {data?.forecasts.length ? (
+                  data.forecasts.map((f) => (
+                    <label className="source-toggle" key={f.id}>
+                      <span
+                        className="tiny-dot"
+                        style={{
+                          background: sourceColor(f.color, appearance.theme),
+                        }}
+                      />
+                      <span>
+                        <strong>{f.name}</strong>
+                        <small>
+                          {f.provider} · {f.family}
+                        </small>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={!disabled.includes(f.id)}
+                        onChange={() => toggleSource(f.id)}
+                      />
+                    </label>
+                  ))
+                ) : (
+                  <p className="fineprint">
+                    Sources appear after the forecast loads.
+                  </p>
+                )}
+              </details>
               <div className="settings-section-label">Saved circuits</div>
               {favorites.map((f) => (
                 <div className="favorite-setting" key={f.id}>

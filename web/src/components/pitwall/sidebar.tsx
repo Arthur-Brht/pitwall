@@ -26,7 +26,7 @@ export function Sidebar() {
           href="#"
           onClick={(e) => {
             e.preventDefault();
-            setView("overview");
+            setView("dashboard");
           }}
         >
           <span className="brand-mark" aria-hidden="true" />

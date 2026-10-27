@@ -53,6 +53,19 @@ export type SourceStatus = {
   message: string;
   fetchedAt?: string;
 };
+export type EnsembleForecast = {
+  id: string;
+  name: string;
+  family: string;
+  fetchedAt: string;
+  memberCount: number;
+  hours: { time: number; members: (number | null)[] }[];
+};
+export type EnsembleResponse = {
+  forecasts: EnsembleForecast[];
+  statuses: SourceStatus[];
+};
+export type TrackReading = { temperature: number; recordedAt: string };
 export type WeatherResponse = {
   fetchedAt: string;
   checkedAt?: string;
@@ -62,6 +75,7 @@ export type WeatherResponse = {
   forecasts: Forecast[];
   statuses: SourceStatus[];
   notes: string[];
+  ensembles?: EnsembleResponse;
 };
 export type ConsensusHour = {
   time: number;

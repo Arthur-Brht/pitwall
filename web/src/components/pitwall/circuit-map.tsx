@@ -5,6 +5,7 @@ import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Layers, Maximize, Pause, Play, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { radarWindow } from "@/lib/radar-window";
 
 function localTime(t: number, tz: string) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -36,7 +37,14 @@ export default function CircuitMap({ track }: { track: Track }) {
     [tileError, setTileError] = useState(""),
     [geoLoading, setGeoLoading] = useState(true),
     [radarVersion, setRadarVersion] = useState(0),
+    [rangeFrom, setRangeFrom] = useState<number | null>(null),
+    [rangeTo, setRangeTo] = useState<number | null>(null),
     [clock, setClock] = useState(Date.now());
+  const windowRange = radarWindow(radar?.frames ?? [], rangeFrom, rangeTo);
+  const selectedFrame = Math.min(
+    windowRange.end,
+    Math.max(windowRange.start, frame),
+  );
   useEffect(() => {
     if (!node.current) return;
     let resize: ResizeObserver | undefined;
@@ -151,7 +159,7 @@ export default function CircuitMap({ track }: { track: Track }) {
     if (!mapReady || !map.current) return;
     if (radarLayer.current) map.current.removeLayer(radarLayer.current);
     if (!radar || !radarOn) return;
-    const f = radar.frames[frame];
+    const f = radar.frames[selectedFrame];
     if (!f) return;
     const layer = L.tileLayer(
       `${radar.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`,
@@ -173,10 +181,10 @@ export default function CircuitMap({ track }: { track: Track }) {
     return () => {
       if (map.current) map.current.removeLayer(layer);
     };
-  }, [mapReady, radar, frame, radarOn]);
+  }, [mapReady, radar, selectedFrame, radarOn]);
   useEffect(() => {
     radarLayer.current?.setOpacity(opacity / 100);
-  }, [opacity, mapReady, radar, frame, radarOn]);
+  }, [opacity, mapReady, radar, selectedFrame, radarOn]);
   useEffect(() => {
     if (!mapReady || !map.current) return;
     if (coverageLayer.current) map.current.removeLayer(coverageLayer.current);
@@ -204,11 +212,16 @@ export default function CircuitMap({ track }: { track: Track }) {
   useEffect(() => {
     if (!playing || !radar) return;
     const timer = setInterval(
-      () => setFrame((n) => (n + 1) % radar.frames.length),
+      () =>
+        setFrame((n) =>
+          n < windowRange.start || n >= windowRange.end
+            ? windowRange.start
+            : n + 1,
+        ),
       900,
     );
     return () => clearInterval(timer);
-  }, [playing, radar]);
+  }, [playing, radar, windowRange.start, windowRange.end]);
   useEffect(() => {
     const timer = setInterval(
       () => setRadarVersion((v) => v + 1),
@@ -220,7 +233,7 @@ export default function CircuitMap({ track }: { track: Track }) {
       clearInterval(clockTimer);
     };
   }, []);
-  const current = radar?.frames[frame];
+  const current = radar?.frames[selectedFrame];
   const age = current
     ? Math.max(0, Math.round((clock / 1000 - current.time) / 60))
     : null;
@@ -273,10 +286,96 @@ export default function CircuitMap({ track }: { track: Track }) {
           Light to heavy
         </div>
       </div>
+      <div className="radar-range">
+        <label>
+          From
+          <select
+            aria-label="Radar start time"
+            disabled={!radar?.frames.length}
+            value={radar?.frames[windowRange.start]?.time ?? ""}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              setRangeFrom(value);
+              if (radar && value > radar.frames[windowRange.end].time)
+                setRangeTo(value);
+              setPlaying(false);
+              setFrame(
+                radar?.frames.findIndex((item) => item.time === value) ?? 0,
+              );
+            }}
+          >
+            <option value="" disabled>
+              Start time
+            </option>
+            {radar?.frames.map((item) => (
+              <option key={item.time} value={item.time}>
+                {new Intl.DateTimeFormat("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: track.timezone,
+                }).format(item.time * 1000)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          To
+          <select
+            aria-label="Radar end time"
+            disabled={!radar?.frames.length}
+            value={radar?.frames[windowRange.end]?.time ?? ""}
+            onChange={(event) => {
+              const value = Number(event.target.value);
+              setRangeTo(value);
+              if (radar && value < radar.frames[windowRange.start].time)
+                setRangeFrom(value);
+              setPlaying(false);
+              setFrame(
+                radar?.frames.findIndex((item) => item.time === value) ?? 0,
+              );
+            }}
+          >
+            <option value="" disabled>
+              End time
+            </option>
+            {radar?.frames.map((item) => (
+              <option key={item.time} value={item.time}>
+                {new Intl.DateTimeFormat("en-GB", {
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: track.timezone,
+                }).format(item.time * 1000)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          className="button secondary"
+          onClick={() => {
+            setRangeFrom(null);
+            setRangeTo(null);
+            setPlaying(false);
+            setFrame((radar?.frames.length ?? 1) - 1);
+          }}
+          disabled={!radar}
+        >
+          Full history
+        </button>
+      </div>
+      <p className="radar-history-note">
+        Available radar history only · times in{" "}
+        {track.timezone.replaceAll("_", " ")}
+      </p>
       <div className="radar-playback">
         <button
           className="play-button"
-          disabled={!radar || !!radarError}
+          disabled={
+            !radar || !!radarError || windowRange.start === windowRange.end
+          }
           onClick={() => setPlaying((v) => !v)}
           aria-label={playing ? "Pause radar" : "Play radar"}
         >
@@ -286,9 +385,9 @@ export default function CircuitMap({ track }: { track: Track }) {
           <input
             aria-label="Radar frame"
             type="range"
-            min="0"
-            max={Math.max(0, (radar?.frames.length || 1) - 1)}
-            value={frame}
+            min={windowRange.start}
+            max={windowRange.end}
+            value={selectedFrame}
             disabled={!radar}
             onChange={(e) => {
               setPlaying(false);

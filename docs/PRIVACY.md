@@ -6,7 +6,7 @@ The browser directly requests weather, location search, circuit geometry, map ti
 
 ## Storage
 
-- **localStorage:** selected/saved circuits, weather preferences, appearance choice and planned sessions.
+- **localStorage:** selected/saved circuits, per-location forecast selections, manual track-temperature readings with their timestamps, weather preferences, appearance choice and planned sessions.
 - **IndexedDB:** genuine forecast snapshots, source cooldowns and short-lived response caches.
 - **Cache Storage:** the optional app's local HTML, JavaScript, CSS and icons.
 - **Observation imports:** kept only in the current verification panel until it unmounts or the page reloads; no automatic upload or persistence.
@@ -19,7 +19,7 @@ History records the first 24 forecast hours per source, with a seven-day retenti
 
 ## Backups and removal
 
-Export a JSON backup in Weather preferences for circuits, settings and sessions. Import merges plans without silently replacing existing sessions. History is separate and exports as CSV. Calendar export downloads a file and never sends anything to a calendar account.
+Export a JSON backup in Weather preferences for circuits, settings, per-location forecast selections, manual track-temperature readings and sessions. Import merges plans without silently replacing existing sessions, and keeps the newer manual reading for each location. History is separate and exports as CSV. Calendar export downloads a file and never sends anything to a calendar account.
 
 Appearance is a separate per-device choice and is not included in plan backups.
 

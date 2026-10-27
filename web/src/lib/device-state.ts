@@ -1,4 +1,5 @@
-import type { Session, Track } from "./contracts";
+import type { Session, Track, TrackReading } from "./contracts";
+import { SOURCE_IDS } from "./forecast-catalog.ts";
 import { localEpoch } from "./local-time.ts";
 import { TRACKS, validTrack } from "./tracks.ts";
 
@@ -8,6 +9,8 @@ export type Preferences = {
   disabled: string[];
   threshold: number;
   gustLimit: number;
+  sourceSelections?: Record<string, string[]>;
+  trackReadings?: Record<string, TrackReading>;
 };
 export type DeviceBackup = {
   format: "pitwall-device-backup";
@@ -68,14 +71,65 @@ export function parsePreferences(value: unknown): Preferences {
     throw new Error("The backup contains invalid weather preferences.");
   }
   const track = knownTrack(value.track);
+  const sourceSelections: Record<string, string[]> = {};
+  if (value.sourceSelections !== undefined) {
+    if (
+      !object(value.sourceSelections) ||
+      Object.keys(value.sourceSelections).length > 500
+    )
+      throw new Error("Invalid saved forecast selections.");
+    for (const [key, ids] of Object.entries(value.sourceSelections)) {
+      if (
+        key.length > 100 ||
+        !Array.isArray(ids) ||
+        !ids.length ||
+        ids.length > SOURCE_IDS.length ||
+        ids.some((id) => typeof id !== "string" || !SOURCE_IDS.includes(id))
+      )
+        throw new Error("Invalid saved forecast selections.");
+      Object.defineProperty(sourceSelections, key, {
+        value: [...new Set(ids)],
+        enumerable: true,
+      });
+    }
+  }
+  const trackReadings: Record<string, TrackReading> = {};
+  if (value.trackReadings !== undefined) {
+    if (
+      !object(value.trackReadings) ||
+      Object.keys(value.trackReadings).length > 500
+    )
+      throw new Error("Invalid saved track readings.");
+    for (const [key, reading] of Object.entries(value.trackReadings)) {
+      if (
+        key.length > 100 ||
+        !object(reading) ||
+        !Number.isFinite(reading.temperature) ||
+        reading.temperature < -50 ||
+        reading.temperature > 100 ||
+        typeof reading.recordedAt !== "string" ||
+        !Number.isFinite(Date.parse(reading.recordedAt))
+      )
+        throw new Error("Invalid saved track reading.");
+      Object.defineProperty(trackReadings, key, {
+        value: {
+          temperature: reading.temperature,
+          recordedAt: reading.recordedAt,
+        },
+        enumerable: true,
+      });
+    }
+  }
   return {
     favorites: uniqueTracks([...value.favorites.map(knownTrack), track]),
     track,
     disabled: [...new Set<string>(value.disabled)].filter((id) =>
-      ["ecmwf", "icon", "gfs", "meteofrance", "metno"].includes(id),
+      SOURCE_IDS.includes(id),
     ),
     threshold: value.threshold,
     gustLimit: value.gustLimit,
+    ...(value.sourceSelections !== undefined ? { sourceSelections } : {}),
+    ...(value.trackReadings !== undefined ? { trackReadings } : {}),
   };
 }
 
@@ -189,7 +243,22 @@ export function mergeBackup(
     existing.add(signature(session));
   }
   return {
-    preferences: { ...backup.preferences, favorites },
+    preferences: {
+      ...backup.preferences,
+      favorites,
+      sourceSelections: {
+        ...current.sourceSelections,
+        ...backup.preferences.sourceSelections,
+      },
+      trackReadings: Object.fromEntries(
+        [
+          ...Object.entries(current.trackReadings ?? {}),
+          ...Object.entries(backup.preferences.trackReadings ?? {}),
+        ].sort(
+          ([, a], [, b]) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt),
+        ),
+      ),
+    },
     sessions: merged,
     added: merged.length - sessions.length,
   };

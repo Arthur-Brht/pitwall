@@ -1,27 +1,28 @@
-# Verification — Pitwall 2.0.0
+# Verification — Pitwall 2.1.0
 
 Release review: 27 October 2026. The application runs locally at http://localhost:4173; GitHub stores source and executes checks. There is no hosted application, login or deployment workflow.
 
 ## Automated evidence
 
-- **65 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links.
+- **77 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links.
 - The browser suite exercises Chromium, Firefox, WebKit and a mobile Chromium viewport. It covers both light and dark appearance, system changes, saved theme choices, incomplete rainfall summaries, all views, source controls, session editing/undo, calendar/history/backup exports, restore/rejection, failed-provider recovery, custom coordinates, location search/timezones, corrupt storage, modal keyboard focus, observation verification and accessibility.
-- Accessibility checks cover all four views in both themes plus search/preferences dialogs for critical or serious WCAG-tagged axe violations. They do not constitute a complete accessibility certification.
+- Accessibility checks cover all five views in both themes plus search/preferences dialogs for critical or serious WCAG-tagged axe violations. They do not constitute a complete accessibility certification.
+- Dashboard checks cover window-level rain estimates, complete ensemble-member denominators, wet outliers, per-location source choices, manual track readings and radar start/end playback. Existing saved forecasts remain available as explicitly stale data during an offline upgrade.
 - Offline service-worker reload is checked in Chromium. Firefox and WebKit offline navigation are explicitly skipped in this automation harness; their normal application flows remain covered.
 - `npm run check` checks lint, formatting, tests, TypeScript, reproducible pilot calculations and a production build. The dependency audit reports zero findings for the locked tree at review time.
 - CI runs Windows and Ubuntu web checks, Windows Chromium/mobile flows, Ubuntu Chromium/Firefox/WebKit/mobile flows, and a redacted reachable-history secret scan. Actions are pinned to commit hashes and the workflow has read-only repository permissions.
 
-The [GitHub workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/ci.yml) provides the current remote outcome. Test counts and dependency results describe this reviewed version, not every future revision.
+The [GitHub workflow](https://github.com/Arthur-Brht/pitwall/actions/workflows/ci.yml) provides the current remote outcome. Test counts and dependency results describe this reviewed version, not every future revision.
 
 ## Mac application verification
 
-The [Mac build workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/macos.yml) builds a universal app and DMG/ZIP on macOS, checks signatures and both CPU architectures, and launches the packaged application twice. Those checks cover rendering, sandboxed isolation, localStorage and IndexedDB persistence through quit/reopen, saved appearance through reopen, and hiding browser-install controls. A separate Electron flow verifies all five synthetic provider feeds, saved plans and native backup export/import. Tests use a temporary profile and port 4175, leaving real data on 4173 untouched.
+The [Mac build workflow](https://github.com/Arthur-Brht/pitwall/actions/workflows/macos.yml) builds a universal app and DMG/ZIP on macOS, checks signatures and both CPU architectures, and launches the packaged application twice. Those checks cover rendering, sandboxed isolation, localStorage and IndexedDB persistence through quit/reopen, saved appearance through reopen, and hiding browser-install controls. A separate Electron flow verifies all eight synthetic provider feeds and three ensemble systems, saved plans and native backup export/import. Tests use a temporary profile and port 4175, leaving real data on 4173 untouched.
 
 The initial packaged first/reopen checks and native file workflow passed on Windows. The host's Code Integrity policy blocked execution of a later unsigned Windows rebuild; that protection was left in place. The workflow is the source of truth for Mac build results. Ad-hoc signature verification is not Developer ID signing or Apple notarization; preview installers and build manifests state this explicitly. A standard installer remains dependent on maintainer signing credentials.
 
 ## Windows application verification
 
-The [desktop build workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/macos.yml) additionally builds the Windows x64 NSIS installer. Its Windows job requires successful packaged launch/reopen and the synthetic five-feed, plan and native backup flow. A disposable runner installs to a path containing spaces, checks the Start menu and Windows Apps registration, launches/reopens the installed executable, reinstalls it and uninstalls it while retaining profile data. Checksums and a platform-specific build manifest identify the actual unsigned preview. These checks do not disable or bypass the local host's Code Integrity policy.
+The [desktop build workflow](https://github.com/Arthur-Brht/pitwall/actions/workflows/macos.yml) additionally builds the Windows x64 NSIS installer. Its Windows job requires successful packaged launch/reopen and the synthetic eight-feed/three-ensemble, plan and native backup flow. A disposable runner installs to a path containing spaces, checks the Start menu and Windows Apps registration, launches/reopens the installed executable, reinstalls it and uninstalls it while retaining profile data. Checksums and a platform-specific build manifest identify the actual unsigned preview. These checks do not disable or bypass the local host's Code Integrity policy.
 
 ## Live-provider and local-runtime checks
 

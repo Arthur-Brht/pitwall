@@ -1,4 +1,5 @@
 import { ComparisonView } from "@/components/pitwall/comparison-view";
+import { DashboardView } from "@/components/pitwall/dashboard-view";
 import { HistoryView } from "@/components/pitwall/history-view";
 import { OverviewView } from "@/components/pitwall/overview-view";
 import { PlannerView } from "@/components/pitwall/planner-view";
@@ -7,13 +8,14 @@ import { WorkspaceDialogs } from "@/components/pitwall/workspace-dialogs";
 import { WorkspaceHeading } from "@/components/pitwall/workspace-heading";
 import { PitwallProvider, usePitwall } from "@/lib/pitwall-context";
 function Workspace() {
-  const { view } = usePitwall();
+  const { view, track } = usePitwall();
   return (
     <div className="app-shell">
       <Sidebar />
       <main className="workspace">
         <div className="main-content">
           <WorkspaceHeading />
+          {view === "dashboard" && <DashboardView key={track.id} />}
           {view === "overview" && <OverviewView />}
           {view === "comparison" && <ComparisonView />}
           {view === "planner" && <PlannerView />}

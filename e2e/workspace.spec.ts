@@ -25,11 +25,11 @@ test("source toggles change the comparison and survive reload", async ({
     .getByRole("checkbox", { name: "Include DWD ICON in comparison" })
     .uncheck();
   await expect(
-    page.getByText("4 of 5 sources", { exact: false }),
+    page.getByText("7 of 8 sources", { exact: false }),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByText("4 of 5 sources", { exact: false }),
+    page.getByText("7 of 8 sources", { exact: false }),
   ).toBeVisible();
 });
 
@@ -108,7 +108,7 @@ test("provider failures preserve saved provenance and recover on refresh", async
     page.getByText("saved forecast", { exact: false }).first(),
   ).toBeVisible();
   await expect(
-    page.getByText("5 of 5 sources", { exact: false }),
+    page.getByText("8 of 8 sources", { exact: false }),
   ).toBeVisible();
   providers.failed = false;
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
@@ -245,7 +245,7 @@ test("observation verification scores only prior forecasts and exports station p
     page
       .getByRole("region", { name: "Forecast verification results" })
       .getByRole("row"),
-  ).toHaveCount(16);
+  ).toHaveCount(25);
   const pending = page.waitForEvent("download");
   await page
     .getByRole("button", { name: "Export verification", exact: true })

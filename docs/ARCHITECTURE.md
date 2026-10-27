@@ -12,6 +12,10 @@ web/src/components/pitwall/          Views, dialogs, charts, map and verificatio
 web/src/lib/use-pitwall-state.ts     Workspace coordination and user actions
 web/src/lib/pitwall-context.tsx      Typed shared workspace context
 web/src/lib/providers.ts            Public clients and unit/interval normalization
+web/src/lib/forecast-catalog.ts     Global/regional source choices and defaults
+web/src/lib/ensemble.ts             Ensemble member normalization and public client
+web/src/lib/rain-outlook.ts         Window-level rain estimates and source comparison
+web/src/lib/radar-window.ts         Radar playback bounds within available history
 web/src/lib/browser-api.ts          Local dispatch, caching and source isolation
 web/src/lib/browser-history.ts      IndexedDB snapshots and cache retention
 web/src/lib/consensus.ts            Family grouping and descriptive summaries

@@ -30,7 +30,7 @@ export function createAppServer(directory = path.join(projectRoot, "dist")) {
     );
     response.setHeader(
       "Content-Security-Policy",
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.rainviewer.com; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.met.no https://api.rainviewer.com https://*.rainviewer.com https://overpass-api.de; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'",
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://tile.openstreetmap.org https://*.rainviewer.com; connect-src 'self' https://api.open-meteo.com https://ensemble-api.open-meteo.com https://geocoding-api.open-meteo.com https://api.met.no https://api.rainviewer.com https://*.rainviewer.com https://overpass-api.de; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'",
     );
     const send = (status, body, type = "text/plain; charset=utf-8") => {
       response.writeHead(status, {

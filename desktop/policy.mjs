@@ -1,6 +1,7 @@
 const externalHosts = new Set([
   "open-meteo.com",
   "api.open-meteo.com",
+  "ensemble-api.open-meteo.com",
   "api.met.no",
   "api.rainviewer.com",
   "www.rainviewer.com",
@@ -20,7 +21,7 @@ export function externalLink(value) {
     if (externalHosts.has(url.hostname)) return url.href;
     if (
       url.hostname === "github.com" &&
-      /^\/Arthur-Brht\/pitwall-(?:\/|$)/.test(url.pathname)
+      /^\/Arthur-Brht\/pitwall-?(?:\/|$)/.test(url.pathname)
     )
       return url.href;
   } catch {

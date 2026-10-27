@@ -86,6 +86,11 @@ const LIGHT_SOURCE: Record<string, string> = {
   "#c1a0ff": "#7444d6",
   "#ffb36d": "#d0640d",
   "#eb81b4": "#c9367c",
+  "#58c9b9": "#167e72",
+  "#ee8e94": "#bd3f50",
+  "#e0c36e": "#846308",
+  "#a4cba0": "#4c7c42",
+  "#91aedb": "#4269a2",
 };
 export function sourceColor(color: string, theme: Theme) {
   return theme === "light"

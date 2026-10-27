@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { DEFAULT_SOURCE_IDS } from "../web/src/lib/forecast-catalog.ts";
 import assert from "node:assert/strict";
 import { apiFetch } from "../web/src/lib/browser-api.ts";
 import {
@@ -129,7 +130,7 @@ const savedWeather = (lat, age = 20 * 60000) => {
 test("failed refresh retains a saved forecast with its original timestamp and explicit stale status", async (context) => {
   const weather = savedWeather(11);
   await writeCache(
-    `weather-v1:${locationKey(11, 0)}:UTC`,
+    `weather-v2:${locationKey(11, 0)}:UTC:${[...DEFAULT_SOURCE_IDS].sort().join(",")}`,
     weather,
     Date.now() - 1000,
     Date.now() + 86400000,
@@ -156,7 +157,7 @@ test("failed refresh retains a saved forecast with its original timestamp and ex
 test("manual refresh bypasses the application cache without turning failed requests into fresh data", async (context) => {
   const weather = savedWeather(12, 60000);
   await writeCache(
-    `weather-v1:${locationKey(12, 0)}:UTC`,
+    `weather-v2:${locationKey(12, 0)}:UTC:${[...DEFAULT_SOURCE_IDS].sort().join(",")}`,
     weather,
     Date.now() + 600000,
     Date.now() + 86400000,
@@ -174,7 +175,7 @@ test("manual refresh bypasses the application cache without turning failed reque
   const refreshed = await (
     await apiFetch("/api/weather?lat=12&lon=0&timezone=UTC&refresh=1")
   ).json();
-  assert.equal(calls, 5);
+  assert.equal(calls, DEFAULT_SOURCE_IDS.length + 3);
   assert.equal(refreshed.delivery, "stale");
   assert.equal(refreshed.fetchedAt, weather.fetchedAt);
 });
@@ -182,7 +183,7 @@ test("manual refresh bypasses the application cache without turning failed reque
 test("partial source failure preserves a previous source while adding the newly fetched model", async (context) => {
   const weather = savedWeather(13);
   await writeCache(
-    `weather-v1:${locationKey(13, 0)}:UTC`,
+    `weather-v2:${locationKey(13, 0)}:UTC:${[...DEFAULT_SOURCE_IDS].sort().join(",")}`,
     weather,
     Date.now() - 1000,
     Date.now() + 86400000,
@@ -216,7 +217,7 @@ test("partial source failure preserves a previous source while adding the newly 
 test("a forecast fetched more than 24 hours ago is not reused after an outage", async (context) => {
   const weather = savedWeather(14, 25 * 3600000);
   await writeCache(
-    `weather-v1:${locationKey(14, 0)}:UTC`,
+    `weather-v2:${locationKey(14, 0)}:UTC:${[...DEFAULT_SOURCE_IDS].sort().join(",")}`,
     weather,
     Date.now() - 1000,
     Date.now() + 86400000,

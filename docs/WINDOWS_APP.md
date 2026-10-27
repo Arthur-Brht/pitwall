@@ -1,6 +1,6 @@
 # Pitwall for Windows
 
-Download the Windows x64 setup `.exe` from [Releases](https://github.com/Arthur-Brht/pitwall-/releases), run the installation wizard, and open Pitwall from the Start menu or its desktop shortcut. It supports 64-bit Intel/AMD PCs running Windows 10 or Windows 11. The app includes its interface and runtime; no terminal, Node.js or separate browser is needed.
+Download the Windows x64 setup `.exe` from [Releases](https://github.com/Arthur-Brht/pitwall/releases), run the installation wizard, and open Pitwall from the Start menu or its desktop shortcut. It supports 64-bit Intel/AMD PCs running Windows 10 or Windows 11. The app includes its interface and runtime; no terminal, Node.js or separate browser is needed.
 
 The default installation is for the current Windows user. The wizard lets you choose an installation folder. Pitwall is also registered in Windows Settings > Apps for uninstallation.
 
@@ -33,7 +33,7 @@ npx playwright test --config playwright.desktop.config.ts
 node scripts/package-manifest.mjs
 ```
 
-The [Build desktop apps workflow](https://github.com/Arthur-Brht/pitwall-/actions/workflows/macos.yml) builds both platforms. Its Windows job builds the x64 NSIS installer and requires the actual packaged app to render, keep localStorage and IndexedDB through quit/reopen, and preserve sandboxing with no renderer Node access. The separate Electron flow verifies all five synthetic provider feeds, plans and native backup export/import.
+The [Build desktop apps workflow](https://github.com/Arthur-Brht/pitwall/actions/workflows/macos.yml) builds both platforms. Its Windows job builds the x64 NSIS installer and requires the actual packaged app to render, keep localStorage and IndexedDB through quit/reopen, and preserve sandboxing with no renderer Node access. The separate Electron flow verifies all five synthetic provider feeds, plans and native backup export/import.
 
 An installer lifecycle check runs only on the disposable Windows CI runner. It installs to a path containing spaces, verifies the Start menu shortcut and Windows Apps registration, launches and reopens the installed executable, reinstalls it, and uninstalls it while checking that profile data is retained. Tests use an isolated profile and port 4175 and do not call live weather providers.
 

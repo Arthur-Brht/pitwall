@@ -37,6 +37,28 @@ export const test = base.extend<{
       const json = (data: unknown) => route.fulfill({ json: data });
       if (state.liveMap && url.hostname === "tile.openstreetmap.org")
         return route.continue();
+      if (url.hostname === "ensemble-api.open-meteo.com") {
+        if (state.failed)
+          return route.fulfill({
+            status: 503,
+            json: { error: "Synthetic ensemble outage" },
+          });
+        return json({
+          hourly: {
+            time: times,
+            ...Object.fromEntries(
+              Array.from({ length: 6 }, (_, member) => [
+                member === 0
+                  ? "precipitation"
+                  : `precipitation_member${String(member).padStart(2, "0")}`,
+                times.map((_, index) =>
+                  precipitation(index, member < 3 ? 0.7 : 0),
+                ),
+              ]),
+            ),
+          },
+        });
+      }
       if (url.hostname === "api.open-meteo.com") {
         if (state.failed)
           return route.fulfill({

@@ -52,7 +52,7 @@ test("desktop loads all feeds, preserves plans, exports and restores a real back
 }) => {
   await page.goto("http://localhost:4175/");
   await expect(
-    page.getByText("5 of 5 sources", { exact: false }),
+    page.getByText("8 of 8 sources", { exact: false }),
   ).toBeVisible();
   expect(
     await page.evaluate(() => ({

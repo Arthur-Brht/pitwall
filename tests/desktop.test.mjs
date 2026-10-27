@@ -8,6 +8,7 @@ import { startDesktopServer } from "../desktop/server.mjs";
 
 test("desktop external links admit only documented HTTPS destinations", () => {
   assert.ok(externalLink("https://open-meteo.com/en/docs"));
+  assert.ok(externalLink("https://github.com/Arthur-Brht/pitwall/releases"));
   assert.ok(externalLink("https://github.com/Arthur-Brht/pitwall-/releases"));
   for (const url of [
     "file:///etc/passwd",

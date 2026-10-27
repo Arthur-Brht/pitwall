@@ -3,8 +3,9 @@ import type { Page } from "@playwright/test";
 export async function open(page: Page) {
   await page.goto("/");
   await expect(
-    page.getByText("5 of 5 sources", { exact: false }),
+    page.getByText("8 of 8 sources", { exact: false }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Overview", exact: true }).click();
 }
 export async function planner(page: Page) {
   await page.getByRole("button", { name: "Sessions", exact: true }).click();

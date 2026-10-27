@@ -6,15 +6,15 @@ Weather models often disagree, and before a track day or a race weekend it helps
 
 You don't need an account, an API key, Terminal or any other software to use it. You download it, install it and open it like any other app.
 
-![Pitwall showing the overview for a circuit, with example data](docs/images/overview.png)
+![Pitwall's rain dashboard, with example data](docs/images/dashboard.png)
 
-[Dark mode](docs/images/overview-dark.png) · [Mobile layout](docs/images/overview-mobile.png) · [Short walkthrough video](docs/images/walkthrough.webm)
+[Dark mode](docs/images/dashboard-dark.png) · [Mobile layout](docs/images/dashboard-mobile.png) · [Short walkthrough video](docs/images/walkthrough.webm)
 
 The screenshots and video use made-up example data to show the interface. When you use the app, it shows real forecasts.
 
 ## Download
 
-The latest versions are on the [Releases page](https://github.com/Arthur-Brht/pitwall-/releases).
+The latest versions are on the [Releases page](https://github.com/Arthur-Brht/pitwall/releases).
 
 **Mac** (macOS 13 Ventura or newer, Apple silicon or Intel): download the `.dmg`, open it and drag Pitwall into Applications. Then open it from Applications, Launchpad or the Dock.
 
@@ -24,22 +24,26 @@ These are preview builds. The Mac app isn't signed with an Apple Developer ID or
 
 ## What it does
 
-Pitwall has four main views.
+Pitwall has five main views.
+
+- **Dashboard** brings together the estimated chance of rain, forecast agreement, first rain signal, humidity, air temperature and wind for a window you choose. It also compares hourly rain across sources and lets you record a track-temperature reading. [How to read the dashboard](docs/DASHBOARD.md).
 
 - **Overview** gives the outlook for your circuit, the next 24 hours and a map with recent rain radar.
 - **Sessions** lets you enter a session's date, start time and length, and see what each forecast expects for rain and gusts during it, including any windows where the models expect it to stay dry. You can save and edit your sessions, add them to your calendar, and back them up to a file.
 - **Models** compares the forecasts in detail. You can switch individual forecasts on or off to see where they differ.
 - **History** keeps the forecasts Pitwall has fetched, so you can look back at what was predicted, export it as a CSV file, and compare it with weather station measurements you import.
 
-You can choose from a list of known circuits, search for any place, or enter coordinates and a timezone yourself. Light, dark and system appearance are all available.
+You can choose from a list of known circuits, including Dijon-Prenois, search for any place, or enter coordinates and a timezone yourself. Light, dark and system appearance are all available. The radar's From and To controls let you loop a selected part of the available recent history.
 
 ![Comparing forecasts for a planned session, with example data](docs/images/planner.png)
 
 ## Where the weather comes from
 
-Pitwall uses five forecast feeds. Four come through [Open-Meteo](https://open-meteo.com/): ECMWF IFS (European), DWD ICON (German), NOAA GFS (American) and Météo-France. The fifth is MET Norway. Radar comes from RainViewer.
+Eight forecast feeds are enabled by default: ECMWF IFS, DWD ICON, NOAA GFS, Météo-France, UK Met Office, Canada GEM, Japan JMA and MET Norway. Manage forecasts lets you choose what to fetch for each circuit, with KNMI and ItaliaMeteo as extra regional options. Most feeds come through [Open-Meteo](https://open-meteo.com/); MET Norway is contacted directly. Radar comes from RainViewer.
 
-Five feeds aren't five independent opinions. Some of these models are related, so they can agree with each other and still be wrong. When Pitwall groups them and counts how many expect rain, that's a simple count, not a probability. Radar shows recent rain rather than a forecast, and zooming in on the track doesn't give you corner-by-corner detail. [More on the sources and their limits](docs/API_SOURCES.md).
+More feeds don't automatically mean more independent opinions. Some models are related, so they can agree and still be wrong. Forecast agreement is a count; the dashboard's separate rain estimate comes from ECMWF, GFS and ICON ensembles, which each contain multiple model runs. It shows their range as well as the middle estimate. Radar shows recent rain rather than a forecast, and zooming in on the track doesn't give you corner-by-corner detail. [More on the sources and their limits](docs/API_SOURCES.md).
+
+Track temperature needs a trackside measurement. Pitwall keeps your manual reading and its time separate from forecast air temperature; it doesn't substitute soil temperature or invent an asphalt reading.
 
 ## Your data
 
@@ -54,7 +58,7 @@ To move your plans to another computer, or from an older browser version of Pitw
 This part is only for people who want to work on the code. You need [Node.js 22.13 or newer](https://nodejs.org/en/download).
 
 ```sh
-git clone https://github.com/Arthur-Brht/pitwall-.git pitwall
+git clone https://github.com/Arthur-Brht/pitwall.git pitwall
 cd pitwall
 npm ci
 npm start -- --open
