@@ -4,15 +4,28 @@ import { writeFile } from "node:fs/promises";
 // Invoked only by the explicit local/CI --pitwall-test launch. No renderer API is exposed.
 export async function packagedSmoke(window, origin) {
   const report = await window.webContents.executeJavaScript(`(async () => {
+    const waitFor = async (predicate) => {
+      for (let i = 0; i < 100 && !predicate(); i++)
+        await new Promise(resolve => setTimeout(resolve, 100));
+      return Boolean(predicate());
+    };
     const rendered = () => ['Overview', 'Sessions', 'Models', 'History'].every(label =>
       [...document.querySelectorAll('nav[aria-label="Weather views"] button')].some(button => button.textContent === label));
-    for (let i = 0; i < 100 && !rendered(); i++)
-      await new Promise(resolve => setTimeout(resolve, 100));
+    await waitFor(() => rendered() && !document.body.innerText.includes('Use Pitwall as an app'));
     const reopen = ${JSON.stringify(process.env.PITWALL_SMOKE_REOPEN === "1")};
     const previous = localStorage.getItem('pitwall-desktop-smoke');
     if (!reopen) {
       localStorage.setItem('pitwall-desktop-smoke', 'retained');
-      localStorage.setItem('pitwall-theme', 'dark');
+      // Choose through React's controls so its initial system-preference effect
+      // cannot race a test-only localStorage write and remove the preference.
+      document.querySelector('.header-actions button[aria-label="Weather preferences"]').click();
+      await waitFor(() => document.querySelector('[aria-labelledby="appearance-label"]'));
+      [...document.querySelectorAll('[aria-labelledby="appearance-label"] button')]
+        .find(button => button.textContent === 'Dark').click();
+      await waitFor(() => localStorage.getItem('pitwall-theme') === 'dark' && document.documentElement.dataset.theme === 'dark');
+      [...document.querySelectorAll('[role="dialog"] button')]
+        .find(button => button.textContent.trim() === 'Done').click();
+      await waitFor(() => !document.querySelector('[role="dialog"]'));
     }
     const dbWorks = await new Promise(resolve => {
       const request = indexedDB.open('pitwall-desktop-smoke', 1);
@@ -32,7 +45,7 @@ export async function packagedSmoke(window, origin) {
     return {
       title: document.title,
       rendered: rendered(),
-      appearanceRetained: !reopen || document.documentElement.dataset.theme === 'dark',
+      appearanceRetained: localStorage.getItem('pitwall-theme') === 'dark' && document.documentElement.dataset.theme === 'dark',
       desktop: window.pitwallDesktop?.isDesktop === true,
       nodeUnavailable: typeof require === 'undefined' && typeof process === 'undefined',
       installButtonHidden: !document.body.innerText.includes('Use Pitwall as an app'),
