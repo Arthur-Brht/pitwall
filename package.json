@@ -1,0 +1,60 @@
+{
+  "name": "pitwall-weather",
+  "version": "1.2.0",
+  "license": "MIT",
+  "private": true,
+  "description": "Local racetrack weather comparison and session planning application",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vite --config web/vite.config.ts --host 127.0.0.1 --port 5173",
+    "build": "node scripts/notices.mjs && vite build --config web/vite.config.ts && node scripts/build-worker.mjs",
+    "preview": "vite preview --config web/vite.config.ts --host 127.0.0.1 --port 4173",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-transform-types --test tests/*.test.*",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "eslint web/src tests e2e scripts playwright.config.ts playwright.docs.config.ts eslint.config.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run format:check && npm test && npm run typecheck && npm run verify:pilot && npm run build",
+    "notices": "node scripts/notices.mjs",
+    "prestart": "npm run build",
+    "start": "node scripts/start.mjs",
+    "verify:pilot": "node --experimental-transform-types scripts/verify-pilot.mjs",
+    "docs:capture": "playwright test --config playwright.docs.config.ts && node scripts/copy-demo.mjs"
+  },
+  "dependencies": {
+    "leaflet": "1.9.4",
+    "lucide-react": "1.31.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "recharts": "3.8.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@types/leaflet": "1.9.22",
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.2",
+    "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "fake-indexeddb": "6.2.6",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Arthur-Brht/pitwall-.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Arthur-Brht/pitwall-/issues"
+  }
+}

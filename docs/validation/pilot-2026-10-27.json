@@ -1,0 +1,761 @@
+{
+  "provenance": {
+    "checkedAt": "2026-10-27T07:10:29.433Z",
+    "purpose": "Small nearby-station consistency pilot, not track-level accuracy calibration or a model ranking.",
+    "method": "Forecast valid instants versus IPMA hourly-mean air measurements and reported wind at the same timestamp. IPMA means differ from instantaneous model temperature, station is near sea level and the circuit is inland. Rain is excluded because accumulation interval alignment has not been established.",
+    "sourceUrls": [
+      "https://api.ipma.pt/open-data/observation/meteorology/stations/stations.json",
+      "https://api.ipma.pt/open-data/observation/meteorology/stations/observations.json",
+      "https://api.ipma.pt/"
+    ],
+    "forecastProvenance": "Genuine browser IndexedDB captures; only forecasts fetched strictly before their valid time. No historical forecast was synthesized or downloaded retrospectively.",
+    "forecastRows": 55,
+    "station": {
+      "idEstacao": 1210878,
+      "localEstacao": "Portimão (Aeródromo)"
+    },
+    "distance": 10.036952366093127,
+    "scores": [
+      {
+        "provider": "ecmwf",
+        "lead": "0–6 h",
+        "metric": "temperature",
+        "count": 7,
+        "mae": 2.7142857142857144,
+        "bias": 2.7142857142857144,
+        "rmse": 3.0416161117781733,
+        "wet": null
+      },
+      {
+        "provider": "ecmwf",
+        "lead": "0–6 h",
+        "metric": "wind",
+        "count": 7,
+        "mae": 4,
+        "bias": 4,
+        "rmse": 4.045102859366761,
+        "wet": null
+      },
+      {
+        "provider": "ecmwf",
+        "lead": "6–24 h",
+        "metric": "temperature",
+        "count": 2,
+        "mae": 3.3999999999999995,
+        "bias": 3.3999999999999995,
+        "rmse": 3.4058772731852796,
+        "wet": null
+      },
+      {
+        "provider": "ecmwf",
+        "lead": "6–24 h",
+        "metric": "wind",
+        "count": 3,
+        "mae": 3.5,
+        "bias": 3.5,
+        "rmse": 3.6299678602801246,
+        "wet": null
+      },
+      {
+        "provider": "gfs",
+        "lead": "0–6 h",
+        "metric": "temperature",
+        "count": 7,
+        "mae": 2.900000000000001,
+        "bias": 2.900000000000001,
+        "rmse": 3.0694345686833873,
+        "wet": null
+      },
+      {
+        "provider": "gfs",
+        "lead": "0–6 h",
+        "metric": "wind",
+        "count": 7,
+        "mae": 5.785714285714286,
+        "bias": 5.785714285714286,
+        "rmse": 5.866977805602179,
+        "wet": null
+      },
+      {
+        "provider": "gfs",
+        "lead": "6–24 h",
+        "metric": "temperature",
+        "count": 2,
+        "mae": 3.5999999999999996,
+        "bias": 3.5999999999999996,
+        "rmse": 3.5999999999999996,
+        "wet": null
+      },
+      {
+        "provider": "gfs",
+        "lead": "6–24 h",
+        "metric": "wind",
+        "count": 3,
+        "mae": 5.466666666666666,
+        "bias": 5.466666666666666,
+        "rmse": 5.520869496736904,
+        "wet": null
+      },
+      {
+        "provider": "icon",
+        "lead": "0–6 h",
+        "metric": "temperature",
+        "count": 7,
+        "mae": 4.271428571428572,
+        "bias": 4.271428571428572,
+        "rmse": 4.436375612076662,
+        "wet": null
+      },
+      {
+        "provider": "icon",
+        "lead": "0–6 h",
+        "metric": "wind",
+        "count": 7,
+        "mae": 4.3,
+        "bias": 4.3,
+        "rmse": 4.505710662196206,
+        "wet": null
+      },
+      {
+        "provider": "icon",
+        "lead": "6–24 h",
+        "metric": "temperature",
+        "count": 2,
+        "mae": 5.500000000000001,
+        "bias": 5.500000000000001,
+        "rmse": 5.503635162326805,
+        "wet": null
+      },
+      {
+        "provider": "icon",
+        "lead": "6–24 h",
+        "metric": "wind",
+        "count": 3,
+        "mae": 4.166666666666667,
+        "bias": 4.166666666666667,
+        "rmse": 4.365394216639165,
+        "wet": null
+      },
+      {
+        "provider": "meteofrance",
+        "lead": "0–6 h",
+        "metric": "temperature",
+        "count": 7,
+        "mae": 3.0857142857142854,
+        "bias": 3.0857142857142854,
+        "rmse": 3.3398032448462764,
+        "wet": null
+      },
+      {
+        "provider": "meteofrance",
+        "lead": "0–6 h",
+        "metric": "wind",
+        "count": 7,
+        "mae": 5.585714285714286,
+        "bias": 5.585714285714286,
+        "rmse": 5.995355345122232,
+        "wet": null
+      },
+      {
+        "provider": "meteofrance",
+        "lead": "6–24 h",
+        "metric": "temperature",
+        "count": 2,
+        "mae": 3.6500000000000004,
+        "bias": 3.6500000000000004,
+        "rmse": 3.6530808915215665,
+        "wet": null
+      },
+      {
+        "provider": "meteofrance",
+        "lead": "6–24 h",
+        "metric": "wind",
+        "count": 3,
+        "mae": 2.5,
+        "bias": 1.7,
+        "rmse": 3.145896798476814,
+        "wet": null
+      },
+      {
+        "provider": "metno",
+        "lead": "0–6 h",
+        "metric": "temperature",
+        "count": 7,
+        "mae": 2.328571428571429,
+        "bias": 2.3000000000000003,
+        "rmse": 2.690459334123345,
+        "wet": null
+      },
+      {
+        "provider": "metno",
+        "lead": "0–6 h",
+        "metric": "wind",
+        "count": 7,
+        "mae": 7.971428571428572,
+        "bias": 7.971428571428572,
+        "rmse": 8.029766052454011,
+        "wet": null
+      },
+      {
+        "provider": "metno",
+        "lead": "6–24 h",
+        "metric": "temperature",
+        "count": 2,
+        "mae": 3.75,
+        "bias": 3.75,
+        "rmse": 3.7503333185198353,
+        "wet": null
+      },
+      {
+        "provider": "metno",
+        "lead": "6–24 h",
+        "metric": "wind",
+        "count": 3,
+        "mae": 6.133333333333333,
+        "bias": 6.133333333333333,
+        "rmse": 6.4596181517692415,
+        "wet": null
+      }
+    ],
+    "matchedHours": 9
+  },
+  "track": {
+    "name": "Portimão",
+    "lat": 37.2319,
+    "lon": -8.6267
+  },
+  "history": [
+    {
+      "fetchedAt": "2026-10-26T21:56:48.645Z",
+      "provider": "gfs",
+      "forecastTime": 1793052000,
+      "temperature": 14.4,
+      "precipitation": 0,
+      "wind": 6.5
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793055600,
+      "temperature": 14.5,
+      "precipitation": 0,
+      "wind": 6.7
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793059200,
+      "temperature": 14.3,
+      "precipitation": 0,
+      "wind": 7.9
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793062800,
+      "temperature": 13.9,
+      "precipitation": 0,
+      "wind": 9.2
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793066400,
+      "temperature": 14.1,
+      "precipitation": 0,
+      "wind": 9.2
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793070000,
+      "temperature": 14.2,
+      "precipitation": 0,
+      "wind": 9.2
+    },
+    {
+      "fetchedAt": "2026-10-26T21:56:48.645Z",
+      "provider": "gfs",
+      "forecastTime": 1793073600,
+      "temperature": 14.2,
+      "precipitation": 0,
+      "wind": 8
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793077200,
+      "temperature": 14.4,
+      "precipitation": 0,
+      "wind": 7.6
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793080800,
+      "temperature": 14,
+      "precipitation": 0,
+      "wind": 7.2
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793084400,
+      "temperature": 13.9,
+      "precipitation": 0,
+      "wind": 8.7
+    },
+    {
+      "fetchedAt": "2026-10-26T21:56:48.643Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793052000,
+      "temperature": 13.6,
+      "precipitation": 0,
+      "wind": 5.3
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793055600,
+      "temperature": 13.8,
+      "precipitation": 0,
+      "wind": 5.7
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793059200,
+      "temperature": 14,
+      "precipitation": 0,
+      "wind": 6.2
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793062800,
+      "temperature": 14.1,
+      "precipitation": 0,
+      "wind": 6.6
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793066400,
+      "temperature": 14.3,
+      "precipitation": 0,
+      "wind": 7
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793070000,
+      "temperature": 14.3,
+      "precipitation": 0,
+      "wind": 7.1
+    },
+    {
+      "fetchedAt": "2026-10-26T21:56:48.643Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793073600,
+      "temperature": 14.2,
+      "precipitation": 0,
+      "wind": 6.3
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793077200,
+      "temperature": 14,
+      "precipitation": 0,
+      "wind": 5.4
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793080800,
+      "temperature": 14.1,
+      "precipitation": 0,
+      "wind": 5.2
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793084400,
+      "temperature": 15,
+      "precipitation": 0,
+      "wind": 5.4
+    },
+    {
+      "fetchedAt": "2026-10-26T21:56:48.646Z",
+      "provider": "icon",
+      "forecastTime": 1793052000,
+      "temperature": 15.7,
+      "precipitation": 0,
+      "wind": 8
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793055600,
+      "temperature": 15.6,
+      "precipitation": 0,
+      "wind": 6.5
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793059200,
+      "temperature": 15.4,
+      "precipitation": 0,
+      "wind": 5.5
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793062800,
+      "temperature": 15,
+      "precipitation": 0,
+      "wind": 5.9
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793066400,
+      "temperature": 15.3,
+      "precipitation": 0,
+      "wind": 7.9
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793070000,
+      "temperature": 15.9,
+      "precipitation": 0,
+      "wind": 6.1
+    },
+    {
+      "fetchedAt": "2026-10-26T21:56:48.646Z",
+      "provider": "icon",
+      "forecastTime": 1793073600,
+      "temperature": 16.3,
+      "precipitation": 0,
+      "wind": 6.4
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793077200,
+      "temperature": 16.1,
+      "precipitation": 0,
+      "wind": 5.6
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793080800,
+      "temperature": 15.4,
+      "precipitation": 0,
+      "wind": 6.9
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793084400,
+      "temperature": 15.1,
+      "precipitation": 0,
+      "wind": 8.2
+    },
+    {
+      "fetchedAt": "2026-10-26T21:56:48.648Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793052000,
+      "temperature": 14.4,
+      "precipitation": 0,
+      "wind": 5.6
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793055600,
+      "temperature": 14,
+      "precipitation": 0,
+      "wind": 6.2
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793059200,
+      "temperature": 14.2,
+      "precipitation": 0,
+      "wind": 7.1
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793062800,
+      "temperature": 14.7,
+      "precipitation": 0,
+      "wind": 12.5
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793066400,
+      "temperature": 14.7,
+      "precipitation": 0,
+      "wind": 9.4
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793070000,
+      "temperature": 14.5,
+      "precipitation": 0,
+      "wind": 7.5
+    },
+    {
+      "fetchedAt": "2026-10-26T21:56:48.648Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793073600,
+      "temperature": 14.4,
+      "precipitation": 0,
+      "wind": 7
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793077200,
+      "temperature": 14.3,
+      "precipitation": 0,
+      "wind": 2
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793080800,
+      "temperature": 14,
+      "precipitation": 0,
+      "wind": 2.5
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793084400,
+      "temperature": 13.3,
+      "precipitation": 0,
+      "wind": 2.7
+    },
+    {
+      "fetchedAt": "2026-10-26T21:29:04.942Z",
+      "provider": "metno",
+      "forecastTime": 1793052000,
+      "temperature": 13.4,
+      "precipitation": 0,
+      "wind": 9.7
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793055600,
+      "temperature": 13.2,
+      "precipitation": 0,
+      "wind": 9.4
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793059200,
+      "temperature": 13.3,
+      "precipitation": 0,
+      "wind": 9
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793062800,
+      "temperature": 13.5,
+      "precipitation": 0,
+      "wind": 11.5
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793066400,
+      "temperature": 13.8,
+      "precipitation": 0,
+      "wind": 10.8
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793070000,
+      "temperature": 13.9,
+      "precipitation": 0,
+      "wind": 10.8
+    },
+    {
+      "fetchedAt": "2026-10-26T21:29:04.942Z",
+      "provider": "metno",
+      "forecastTime": 1793073600,
+      "temperature": 14.3,
+      "precipitation": 0,
+      "wind": 10.8
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793077200,
+      "temperature": 14.6,
+      "precipitation": 0,
+      "wind": 7.9
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793080800,
+      "temperature": 13.9,
+      "precipitation": 0,
+      "wind": 6.1
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793084400,
+      "temperature": 13.6,
+      "precipitation": 0,
+      "wind": 7.9
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "ecmwf",
+      "forecastTime": 1793073600,
+      "temperature": 14.2,
+      "precipitation": 0,
+      "wind": 6.3
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "gfs",
+      "forecastTime": 1793073600,
+      "temperature": 14.2,
+      "precipitation": 0,
+      "wind": 8
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.655Z",
+      "provider": "icon",
+      "forecastTime": 1793073600,
+      "temperature": 16.3,
+      "precipitation": 0,
+      "wind": 6.4
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.658Z",
+      "provider": "meteofrance",
+      "forecastTime": 1793073600,
+      "temperature": 14.4,
+      "precipitation": 0,
+      "wind": 7
+    },
+    {
+      "fetchedAt": "2026-10-26T22:16:48.696Z",
+      "provider": "metno",
+      "forecastTime": 1793073600,
+      "temperature": 14.3,
+      "precipitation": 0,
+      "wind": 10.8
+    }
+  ],
+  "observations": [
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793052000,
+      "temperature": 13.5,
+      "precipitation": null,
+      "wind": 1.8
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793066400,
+      "temperature": 10.4,
+      "precipitation": null,
+      "wind": 1.8
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793055600,
+      "temperature": 12.4,
+      "precipitation": null,
+      "wind": 2.2
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793062800,
+      "temperature": 10.7,
+      "precipitation": null,
+      "wind": 2.5
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793059200,
+      "temperature": 11.5,
+      "precipitation": null,
+      "wind": 2.5
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793073600,
+      "temperature": 10.6,
+      "precipitation": null,
+      "wind": 1.8
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793077200,
+      "temperature": 10.8,
+      "precipitation": null,
+      "wind": 3.2
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793080800,
+      "temperature": null,
+      "precipitation": null,
+      "wind": 1.4
+    },
+    {
+      "station": "Portimão (Aeródromo)",
+      "source": "IPMA hourly station feed; hourly-mean air at 1.5 m (comparison proxy)",
+      "lat": 37.149167,
+      "lon": -8.581389,
+      "time": 1793070000,
+      "temperature": 10.2,
+      "precipitation": null,
+      "wind": 3.6
+    }
+  ]
+}

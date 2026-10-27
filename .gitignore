@@ -1,0 +1,24 @@
+﻿# Local secrets and private exports
+.env
+.env.*
+!.env.example
+*device-backup*.json
+*observations*.csv
+*history*.csv
+!e2e/**
+
+# Dependencies, builds and generated test evidence
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+*.log
+playwright-report/
+test-results/
+blob-report/
+*.bundle
+
+# Local operating-system metadata
+.DS_Store
+Thumbs.db

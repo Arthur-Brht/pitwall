@@ -1,0 +1,9 @@
+node_modules
+dist
+playwright-report
+test-results
+package-lock.json
+web/public/circuits
+web/public/THIRD_PARTY_NOTICES.txt
+web/src/lib/circuit-geometries.json
+docs/images
