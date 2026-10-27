@@ -30,19 +30,8 @@ jobs:
       - run: npm run check
       - run: npm audit --audit-level=high
   browsers:
-    name: Browser flows (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Keep the browser dependency set stable when ubuntu-latest changes.
-          - os: ubuntu-24.04
-            browsers: chromium firefox webkit
-            projects: ""
-          - os: windows-latest
-            browsers: chromium
-            projects: --project=chromium --project=mobile
-    runs-on: ${{ matrix.os }}
+    name: Browser flows (windows-latest)
+    runs-on: windows-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -55,13 +44,40 @@ jobs:
       - run: npm ci
       - name: Install browser dependencies and binaries
         timeout-minutes: 10
-        run: npx playwright install --with-deps ${{ matrix.browsers }}
+        run: npx playwright install chromium
       - run: npm run build
-      - run: npm run test:e2e -- ${{ matrix.projects }}
+      - run: npm run test:e2e -- --project=chromium --project=mobile
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         if: failure()
         with:
-          name: browser-failures-${{ matrix.os }}
+          name: browser-failures-windows
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+  browsers-linux:
+    name: Browser flows (ubuntu-24.04)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      # Match @playwright/test; browsers and OS dependencies are preinstalled.
+      image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
+      options: --init --ipc=host
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        if: failure()
+        with:
+          name: browser-failures-linux
           path: |
             playwright-report/
             test-results/
