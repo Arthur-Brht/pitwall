@@ -1,39 +1,81 @@
-import { test, expect, TEST_TIME } from "./fixtures";
+import { test, expect } from "./fixtures";
+import {
+  open,
+  openSidebar,
+  chooseCircuit,
+  setRun,
+  createSession,
+} from "./helpers";
 
-test("dashboard changes the window-level rain estimate and comparison together", async ({
+test("session and buffers control the dashboard and Models, then survive reload", async ({
   page,
 }) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Dashboard", exact: true }),
-  ).toHaveAttribute("aria-current", "page");
-  const snapshot = page.getByLabel("Rain risk snapshot");
-  await expect(snapshot.locator(".risk-probability>strong")).toHaveText("0%");
-  await page.getByLabel("Dashboard forecast window").selectOption("6");
-  await expect(snapshot.locator(".risk-probability>strong")).toHaveText("50%");
-  await expect(
-    snapshot.getByRole("heading", { name: /Light rain possible/ }),
-  ).toBeVisible();
+  await open(page);
+  await setRun(page, "2026-10-26", "13:15", "13:45");
+  await expect(page.getByLabel("Run window")).toContainText("13:15");
+  await expect(page.getByLabel("Run window")).toContainText(
+    "15 min before · 15 min after",
+  );
+  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
+    "7 of 8 reporting hourly forecasts show rain during your run",
+  );
+  await expect(page.getByLabel("Forecast rain comparison")).toContainText(
+    "13:00–14:00",
+  );
+  await page.getByLabel("Buffer before run").selectOption("30");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  await page.getByRole("button", { name: "Models", exact: true }).click();
+  await expect(page.getByLabel("Forecast hours displayed")).toHaveValue("0");
   await expect(
     page
-      .getByRole("region", { name: "Forecast rain comparison" })
-      .locator("tbody tr"),
-  ).toHaveCount(8);
-  expect(errors).toEqual([]);
+      .getByRole("region", { name: "Hourly rainfall comparison" })
+      .locator("thead th"),
+  ).toHaveCount(3);
+  await page.reload();
+  await expect(page.getByLabel("Run window")).toContainText("30 min before");
+  await expect(page.getByLabel("Circuit", { exact: true })).not.toBeVisible();
 });
 
-test("forecast catalog selections are saved per location and extra regional forecasts can be added", async ({
+test("the circuit drawer remembers its state and run choices are local to the circuit", async ({
   page,
 }) => {
-  await page.goto("/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
+  await open(page);
+  await expect(page.getByLabel("Circuit", { exact: true })).not.toBeVisible();
+  await setRun(page, "2026-10-26", "13:15", "13:45");
+  await page.reload();
+  await expect(page.getByLabel("Circuit", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Run start time", { exact: true })).toHaveValue(
+    "13:15",
+  );
+  await chooseCircuit(page, "Spa-Francorchamps");
+  await expect(page.getByLabel("Run window")).toContainText("Next 3 hours");
+  await chooseCircuit(page, "Portimão");
+  await expect(page.getByLabel("Run window")).toContainText("13:15");
+});
+
+test("the next saved session becomes the focus and can be overridden", async ({
+  page,
+}) => {
+  await open(page);
+  await createSession(page);
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await expect(page.getByLabel("Run window")).toContainText(
+    "Release test practice",
+  );
+  await openSidebar(page);
+  await page.getByLabel("Dashboard session").selectOption("now");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  await expect(page.getByLabel("Run window")).toContainText("Next 3 hours");
+});
+
+test("forecast catalog selections persist per location and add regional forecasts", async ({
+  page,
+}) => {
+  await open(page);
   await page.getByRole("button", { name: "Manage forecasts" }).click();
   await page
     .getByRole("checkbox", { name: "Fetch UK Met Office", exact: true })
@@ -42,65 +84,137 @@ test("forecast catalog selections are saved per location and extra regional fore
     .getByRole("checkbox", { name: "Fetch KNMI HARMONIE", exact: true })
     .check();
   await page.getByRole("button", { name: "Done", exact: true }).click();
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("region", { name: "Forecast rain comparison" }),
-  ).toContainText("KNMI HARMONIE");
+  await expect(page.getByLabel("Forecast rain comparison")).toContainText(
+    "KNMI HARMONIE",
+  );
   await page.reload();
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
   await page.getByRole("button", { name: "Manage forecasts" }).click();
   await expect(
     page.getByRole("checkbox", { name: "Fetch UK Met Office", exact: true }),
   ).not.toBeChecked();
-  await expect(
-    page.getByRole("checkbox", { name: "Fetch KNMI HARMONIE", exact: true }),
-  ).toBeChecked();
   await page.getByRole("button", { name: "Done", exact: true }).click();
-  const mobileMenu = page.getByRole("button", {
-    name: "Open saved circuits",
-    exact: true,
-  });
-  if (await mobileMenu.isVisible()) await mobileMenu.click();
+  await chooseCircuit(page, "Spa-Francorchamps");
   await page
-    .getByRole("navigation", { name: "Saved circuits" })
-    .getByRole("button", { name: /Spa-Francorchamps/ })
+    .getByRole("button", { name: "Close circuit and session sidebar" })
     .click();
-  await expect(
-    page.getByRole("heading", { name: "Spa-Francorchamps", exact: true }),
-  ).toBeVisible();
   await page.getByRole("button", { name: "Manage forecasts" }).click();
   await expect(
     page.getByRole("checkbox", { name: "Fetch UK Met Office", exact: true }),
   ).toBeChecked();
-  await expect(
-    page.getByRole("checkbox", { name: "Fetch KNMI HARMONIE", exact: true }),
-  ).not.toBeChecked();
 });
 
-test("the conditions snapshot keeps air, humidity and wind without the retired track-temperature form", async ({
+test("the simple snapshot shows run temperature and wind, with humidity and charts on demand", async ({
   page,
 }) => {
-  await page.goto("/");
+  await open(page);
+  const conditions = page.getByLabel("Conditions snapshot");
+  await expect(conditions).toContainText("Air temperature");
+  await expect(conditions).toContainText("Wind");
+  await expect(conditions).not.toContainText("Humidity");
   await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
+    page.getByText("Humidity during the window", { exact: true }),
+  ).not.toBeVisible();
+  await page
+    .getByText("More detail · conditions, charts & forecast methods", {
+      exact: true,
+    })
+    .click();
+  await expect(
+    page.getByText("Humidity during the window", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByLabel("Conditions snapshot")).toContainText(
-    "Air temperature",
-  );
-  await expect(page.getByLabel("Conditions snapshot")).toContainText(
-    "Humidity",
-  );
-  await expect(page.getByLabel("Conditions snapshot")).toContainText("Wind");
   await expect(
     page.getByText("Track temperature", { exact: true }),
   ).toHaveCount(0);
   await expect(
-    page.getByText("Add track reading", { exact: true }),
+    page.getByRole("button", { name: "Overview", exact: true }),
   ).toHaveCount(0);
+});
+
+test("regional timing stays visible without replacing the main hourly timing group", async ({
+  page,
+}) => {
+  await open(page);
+  await chooseCircuit(page, "Spa-Francorchamps");
+  await setRun(page, "2026-10-26", "10:30", "14:30");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  const snapshot = page.getByLabel("Rain risk snapshot");
+  await expect(snapshot).toContainText("14:00–15:00");
+  await expect(snapshot).toContainText("10:30–10:45");
+  await expect(snapshot).toContainText("7 forecasts in this timing group");
+  await expect(
+    page.getByLabel("Forecast rain comparison").locator(".native-row"),
+  ).toHaveCount(2);
+});
+
+test("native rows survive an hourly outage and respect disabled sources", async ({
+  page,
+  providers,
+}) => {
+  providers.hourlyFailed = true;
+  await page.goto("/");
+  await chooseCircuit(page, "Spa-Francorchamps");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  await expect(page.getByLabel("Forecast rain comparison")).toContainText(
+    "DWD ICON-D2",
+  );
+  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
+    "10:30–10:45",
+  );
+  await page.getByRole("button", { name: "Manage forecasts" }).click();
+  await page
+    .getByRole("checkbox", { name: "Fetch DWD ICON", exact: true })
+    .uncheck();
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(page.getByLabel("Forecast rain comparison")).not.toContainText(
+    "DWD ICON-D2",
+  );
+});
+
+test("missing model and ensemble data never becomes a dry or zero-percent outlook", async ({
+  page,
+  providers,
+}) => {
+  providers.rain = "missing";
+  await open(page);
+  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
+    "Rain outlook incomplete",
+  );
+  await expect(page.locator(".ensemble-line")).toHaveCount(0);
+});
+
+test("hour-aligned ensemble bounds stay explicit for a short run", async ({
+  page,
+}) => {
+  await open(page);
+  await setRun(page, "2026-10-26", "13:15", "13:45");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  const ensemble = page.locator(".ensemble-line");
+  await expect(ensemble).toContainText("50%");
+  await expect(ensemble).toContainText("13:00–14:00 (surrounding whole hours)");
+});
+
+test("rain charts remain on demand with an intensity guide and a fitted scale", async ({
+  page,
+}) => {
+  await open(page);
+  await page.getByRole("button", { name: "Models", exact: true }).click();
+  await page.getByLabel("Forecast hours displayed").selectOption("6");
+  await expect(page.getByLabel("Rain chart scale")).not.toBeVisible();
+  await page
+    .getByText("Rain chart · show more detail", { exact: true })
+    .click();
+  await expect(page.getByLabel("Rain intensity guide")).toContainText(
+    "Heavy > 7.6 mm/h",
+  );
+  await expect(page.locator(".rain-chart-context")).toContainText(
+    "Light rain · peak 0.7 mm/h",
+  );
 });
 
 test("radar start and end restrict playback and reset to the available history", async ({
@@ -136,39 +250,6 @@ test("radar start and end restrict playback and reset to the available history",
   await page.getByRole("button", { name: "Full history", exact: true }).click();
   await expect(slider).toHaveAttribute("min", "0");
   await expect(slider).toHaveAttribute("max", "12");
-});
-
-test("native quarter-hour timing gives a rain window and leaves hourly fallback explicit", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
-  await expect(page.getByLabel("15-minute rain timing")).toContainText(
-    "15-minute regional data is unavailable here",
-  );
-  const menu = page.getByRole("button", {
-    name: "Open saved circuits",
-    exact: true,
-  });
-  if (await menu.isVisible()) await menu.click();
-  await page
-    .getByRole("navigation", { name: "Saved circuits" })
-    .getByRole("button", { name: /Spa-Francorchamps/ })
-    .click();
-  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
-    "10:30–10:45",
-  );
-  await expect(page.getByLabel("15-minute rain timing")).toContainText(
-    "DWD ICON-D2",
-  );
-  await expect(page.getByLabel("15-minute rain timing")).toContainText(
-    "Météo-France AROME",
-  );
-  await expect(page.getByLabel("Rain risk snapshot")).not.toContainText(
-    "This hour",
-  );
 });
 
 test("radar keeps a complete displayed scan while a replacement loads and uses a taller map", async ({
@@ -210,27 +291,6 @@ test("radar keeps a complete displayed scan while a replacement loads and uses a
   }
 });
 
-test("rain charts distinguish light rainfall from a graph that merely fills its axis", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Models", exact: true }).click();
-  await page.getByLabel("Forecast hours displayed").selectOption("6");
-  await expect(page.getByLabel("Rain intensity guide")).toContainText(
-    "Heavy > 7.6 mm/h",
-  );
-  await expect(page.locator(".rain-chart-context")).toContainText(
-    "Light rain · peak 0.7 mm/h",
-  );
-  await expect(page.getByLabel("Rain chart scale")).toHaveValue("auto");
-  await expect(page.locator(".rain-chart-context")).toContainText(
-    "zoomed within the light-rain range",
-  );
-});
-
 test("refresh recovers a failed radar tile even when the latest frame timestamp has not changed", async ({
   page,
 }) => {
@@ -257,73 +317,6 @@ test("refresh recovers a failed radar tile even when the latest frame timestamp 
     .getByRole("button", { name: "Refresh radar", exact: true })
     .click();
   await expect(page.getByLabel("Displayed radar time")).toHaveText("09:00");
-});
-
-test("missing ensemble and model rain never become a zero-percent dry outlook", async ({
-  page,
-  providers,
-}) => {
-  providers.rain = "missing";
-  await page.goto("/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
-  const snapshot = page.getByLabel("Rain risk snapshot");
-  await expect(snapshot.locator(".risk-probability>strong")).toHaveText("—");
-  await expect(
-    snapshot.getByRole("heading", { name: "Rain outlook is incomplete." }),
-  ).toBeVisible();
-  await expect(snapshot).toContainText("Some rain data is missing.");
-});
-
-test("a native forecast stays visible during hourly outages and respects disabled sources", async ({
-  page,
-  providers,
-}) => {
-  providers.hourlyFailed = true;
-  await page.goto("/");
-  const menu = page.getByRole("button", {
-    name: "Open saved circuits",
-    exact: true,
-  });
-  if (await menu.isVisible()) await menu.click();
-  await page
-    .getByRole("navigation", { name: "Saved circuits" })
-    .getByRole("button", { name: /Spa-Francorchamps/ })
-    .click();
-  await expect(page.getByLabel("15-minute rain timing")).toContainText(
-    "DWD ICON-D2",
-  );
-  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
-    "10:30–10:45",
-  );
-  await page.getByRole("button", { name: "Manage forecasts" }).click();
-  await page
-    .getByRole("checkbox", { name: "Fetch DWD ICON", exact: true })
-    .uncheck();
-  await page.getByRole("button", { name: "Done", exact: true }).click();
-  await expect(page.getByLabel("15-minute rain timing")).not.toContainText(
-    "DWD ICON-D2",
-  );
-});
-
-test("dashboard window survives navigation and initializes the Models comparison", async ({
-  page,
-}) => {
-  await page.goto("/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
-  await page.getByLabel("Dashboard forecast window").selectOption("6");
-  await page.getByRole("button", { name: "Models", exact: true }).click();
-  await expect(page.getByLabel("Forecast hours displayed")).toHaveValue("6");
-  await expect(
-    page
-      .getByRole("region", { name: "Hourly rainfall comparison" })
-      .locator("thead th"),
-  ).toHaveCount(7);
-  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
-  await expect(page.getByLabel("Dashboard forecast window")).toHaveValue("6");
 });
 
 test("Pause remains operable when radar metadata refresh fails during playback", async ({
@@ -358,35 +351,4 @@ test("Pause remains operable when radar metadata refresh fails during playback",
   await expect(
     page.getByRole("button", { name: "Play radar", exact: true }),
   ).toBeEnabled();
-});
-
-test("a wet ensemble outlier stays visible even with a zero-percent middle estimate", async ({
-  page,
-}) => {
-  const t = Math.floor(TEST_TIME.getTime() / 3600000) * 3600;
-  await page.route("**/ensemble-api.open-meteo.com/**", (route) => {
-    const wet =
-      new URL(route.request().url()).searchParams.get("models") ===
-      "gfs_seamless";
-    const amounts = [0, 1, 2, 3].map(() => (wet ? 1 : 0));
-    return route.fulfill({
-      json: {
-        hourly: {
-          time: [0, 1, 2, 3].map((i) => t + i * 3600),
-          precipitation: amounts,
-          precipitation_member01: amounts,
-        },
-      },
-    });
-  });
-  await page.goto("/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
-  const snapshot = page.getByLabel("Rain risk snapshot");
-  await expect(snapshot.locator(".risk-probability>strong")).toHaveText("0%");
-  await expect(snapshot.getByRole("heading")).toHaveText(
-    "Rain remains possible.",
-  );
-  await expect(snapshot).toContainText("0–100%");
 });

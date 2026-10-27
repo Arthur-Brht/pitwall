@@ -30,10 +30,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_SOURCE_IDS } from "@/lib/forecast-catalog";
 import { locationKey } from "@/lib/browser-history";
 import { rainValue } from "@/lib/rain-value";
-type View = "dashboard" | "overview" | "comparison" | "planner" | "history";
+import {
+  DEFAULT_FOCUS,
+  resolveFocus,
+  type FocusSelection,
+} from "@/lib/session-focus";
+type View = "dashboard" | "comparison" | "planner" | "history";
 export const TABS: [View, string][] = [
   ["dashboard", "Dashboard"],
-  ["overview", "Overview"],
   ["planner", "Sessions"],
   ["comparison", "Models"],
   ["history", "History"],
@@ -54,8 +58,10 @@ export function usePitwallState() {
     [threshold, setThreshold] = useState(0.1),
     [settings, setSettings] = useState(false),
     [selectedDay, setSelectedDay] = useState(""),
-    [horizon, setHorizon] = useState(3),
-    [dashboardWindow, setDashboardWindow] = useState(3),
+    [horizon, setHorizon] = useState(0),
+    [focusSelections, setFocusSelections] = useState<
+      Record<string, FocusSelection>
+    >({}),
     [searchOpen, setSearchOpen] = useState(false),
     [query, setQuery] = useState(""),
     [searching, setSearching] = useState(false),
@@ -97,6 +103,11 @@ export function usePitwallState() {
       {},
     );
   const trackKey = locationKey(track.lat, track.lon);
+  const focusSelection = focusSelections[trackKey] ?? DEFAULT_FOCUS;
+  const focus = resolveFocus(track, sessions, clock / 1000, focusSelection);
+  function setFocusSelection(selection: FocusSelection) {
+    setFocusSelections((saved) => ({ ...saved, [trackKey]: selection }));
+  }
   const selectedSourceIds = sourceSelections[trackKey] ?? DEFAULT_SOURCE_IDS;
   const sourceKey = selectedSourceIds.join(",");
   function toggleFetchedSource(id: string) {
@@ -123,6 +134,8 @@ export function usePitwallState() {
         setGustLimit(preferences.gustLimit);
         setSourceSelections(preferences.sourceSelections ?? {});
         setTrackReadings(preferences.trackReadings ?? {});
+        setMobileNav(preferences.sidebarOpen ?? false);
+        setFocusSelections(preferences.focusSelections ?? {});
       }
     } catch {
       setCanSave(false);
@@ -156,6 +169,8 @@ export function usePitwallState() {
             gustLimit,
             sourceSelections,
             trackReadings,
+            sidebarOpen: mobileNav,
+            focusSelections,
           }),
         );
         localStorage.setItem("pitwall-sessions", JSON.stringify(sessions));
@@ -176,6 +191,8 @@ export function usePitwallState() {
     sessions,
     sourceSelections,
     trackReadings,
+    mobileNav,
+    focusSelections,
   ]);
   useEffect(() => {
     if (!hydrated) return;
@@ -301,9 +318,10 @@ export function usePitwallState() {
     };
   }, [query, searchOpen]);
   useEffect(() => {
-    if (view !== "history") return;
+    if (view !== "history" && view !== "dashboard") return;
     const controller = new AbortController();
     setHistoryLoading(true);
+    setHistory([]);
     setHistoryMessage("");
     apiFetch(`/api/history?lat=${track.lat}&lon=${track.lon}`, {
       signal: controller.signal,
@@ -341,7 +359,12 @@ export function usePitwallState() {
   }, [searchOpen, settings]);
   const active = useMemo(
     () =>
-      (data?.forecasts || [])
+      (data?.location.lat.toFixed(4) === track.lat.toFixed(4) &&
+      data.location.lon.toFixed(4) === track.lon.toFixed(4) &&
+      data.location.timezone === track.timezone
+        ? data.forecasts
+        : []
+      )
         .filter(
           (f) => !disabled.includes(f.id) && selectedSourceIds.includes(f.id),
         )
@@ -352,7 +375,7 @@ export function usePitwallState() {
             precipitation: rainValue(h.precipitation),
           })),
         })),
-    [data, disabled, selectedSourceIds],
+    [data, disabled, selectedSourceIds, track.lat, track.lon, track.timezone],
   );
   const consensus = useMemo(
     () => buildConsensus(active, threshold),
@@ -448,7 +471,6 @@ export function usePitwallState() {
     setFavorites((fs) => (fs.some((f) => f.id === t.id) ? fs : [...fs, t]));
     setSearchOpen(false);
     setQuery("");
-    setMobileNav(false);
   }
   function toggleSource(id: string) {
     setDisabled((a) =>
@@ -602,6 +624,8 @@ export function usePitwallState() {
     gustLimit,
     sourceSelections,
     trackReadings,
+    sidebarOpen: mobileNav,
+    focusSelections,
   };
   function saveSession() {
     setSessionError("");
@@ -682,6 +706,8 @@ export function usePitwallState() {
       setGustLimit(merged.preferences.gustLimit);
       setSourceSelections(merged.preferences.sourceSelections ?? {});
       setTrackReadings(merged.preferences.trackReadings ?? {});
+      setMobileNav(merged.preferences.sidebarOpen ?? false);
+      setFocusSelections(merged.preferences.focusSelections ?? {});
       setSessions(merged.sessions);
       setEditingSessionId(null);
       setCanSave(true);
@@ -796,7 +822,12 @@ export function usePitwallState() {
     track,
     favorites,
     setFavorites,
-    data,
+    data:
+      data?.location.lat.toFixed(4) === track.lat.toFixed(4) &&
+      data.location.lon.toFixed(4) === track.lon.toFixed(4) &&
+      data.location.timezone === track.timezone
+        ? data
+        : null,
     loading,
     error,
     disabled,
@@ -807,8 +838,9 @@ export function usePitwallState() {
     setSelectedDay,
     horizon,
     setHorizon,
-    dashboardWindow,
-    setDashboardWindow,
+    focus,
+    focusSelection,
+    setFocusSelection,
     searchOpen,
     setSearchOpen,
     query,

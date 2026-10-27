@@ -1,30 +1,43 @@
-﻿import { useMemo } from "react";
-import { Droplets, SlidersHorizontal, Thermometer, Wind } from "lucide-react";
-import { n, time } from "@/lib/format";
+import { useMemo, useState } from "react";
+import { ArrowRight, Clock3, Thermometer, Wind } from "lucide-react";
+import { compass, day, n, niceDate, time } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
-import { enabledNearRain, rainDecision } from "@/lib/rain-decision";
+import { enabledNearRain } from "@/lib/rain-decision";
+import { rainOutlook } from "@/lib/rain-outlook";
 import { rainIntensity } from "@/lib/rain-intensity";
-import { rainValue } from "@/lib/rain-value";
-import { sourceColor } from "@/lib/theme";
+import {
+  forecastChanges,
+  forecastRows,
+  overlaps,
+  runConditions,
+  runRain,
+  timingCluster,
+} from "@/lib/run-weather";
+import { buildConsensus } from "@/lib/consensus";
 import CircuitMap from "./circuit-map";
-import { RainArrivalView } from "./rain-arrival";
+import { RunTimeline } from "./run-timeline";
+import { MetricChart, RainChart } from "./weather-charts";
 
+const range = (value: { min: number; max: number } | null) =>
+  !value
+    ? "—"
+    : Math.round(value.min) === Math.round(value.max)
+      ? n(value.min)
+      : `${n(value.min)}–${n(value.max)}`;
 export function DashboardView() {
   const {
     track,
-    now,
     data,
     active,
-    current,
     threshold,
-    appearance,
-    setSettings,
     selectedSourceIds,
     disabled,
     loading,
-    dashboardWindow,
-    setDashboardWindow,
-    setHorizon,
+    focus,
+    focusSelection,
+    setMobileNav,
+    history,
+    current,
   } = usePitwall();
   const native = useMemo(
     () =>
@@ -35,303 +48,364 @@ export function DashboardView() {
       ),
     [data?.nearRain, selectedSourceIds, disabled],
   );
-  const decision = useMemo(
+  const rows = useMemo(() => forecastRows(active, native), [active, native]);
+  const rain = useMemo(
+    () => runRain(rows, focus, threshold),
+    [rows, focus, threshold],
+  );
+  const conditions = useMemo(
+    () => runConditions(active, focus.start, focus.end),
+    [active, focus.start, focus.end],
+  );
+  const probabilityStart = Math.floor(focus.start / 3600) * 3600,
+    probabilityEnd = Math.ceil(focus.end / 3600) * 3600;
+  const ensemble = useMemo(
     () =>
-      rainDecision(
-        active,
+      rainOutlook(
+        [],
         data?.ensembles?.forecasts ?? [],
-        native,
-        now,
-        dashboardWindow,
+        probabilityStart,
+        probabilityEnd,
         threshold,
       ),
-    [active, data?.ensembles, native, now, dashboardWindow, threshold],
+    [data?.ensembles, probabilityStart, probabilityEnd, threshold],
   );
-  const { outlook, onset } = decision;
-  const { start, end } = outlook;
+  const changes = useMemo(
+    () => forecastChanges(active, history, focus.start, focus.end, threshold),
+    [active, history, focus.start, focus.end, threshold],
+  );
+  const chartHours = useMemo(
+    () =>
+      buildConsensus(active, threshold).filter((h) =>
+        overlaps(
+          { start: h.time, end: h.time + 3600 },
+          focus.displayStart,
+          focus.displayEnd,
+        ),
+      ),
+    [active, threshold, focus.displayStart, focus.displayEnd],
+  );
+  const [trend, setTrend] = useState<"rain" | "temperature" | "wind">("rain");
   const expected = selectedSourceIds.filter(
     (id) => !disabled.includes(id),
   ).length;
   const unavailable = Math.max(0, expected - active.length);
-  const total = outlook.wetSources + outlook.drySources;
+  const context =
+    focus.kind === "session" ? "during your run" : "in the next 3 hours";
   const headline =
     loading && !data
-      ? "Checking rain forecasts…"
-      : onset
-        ? `${decision.intensity === "Unknown" ? "Rain" : `${decision.intensity} rain`} possible ${time(onset.start, track.timezone)}–${time(onset.end, track.timezone)}.`
-        : decision.conflict
-          ? "Forecasts differ on rain timing."
-          : decision.risk === "possible" || decision.risk === "elevated"
-            ? "Rain remains possible."
-            : !total || outlook.incompleteSources || unavailable
-              ? "Rain outlook is incomplete."
-              : "Available forecasts stay dry.";
-  const times = Array.from(
-    { length: dashboardWindow },
-    (_, i) => start + i * 3600,
+      ? "Checking the weather…"
+      : !rain.reporting
+        ? "Rain outlook incomplete."
+        : rain.wet > rain.reporting / 2
+          ? "Rain forecast during this window."
+          : rain.wet
+            ? "Some forecasts show rain."
+            : rain.regionalWet.length
+              ? "Regional showers possible."
+              : rain.missing || unavailable
+                ? "No hourly rain signal; data is incomplete."
+                : rain.contextWet.length
+                  ? "Rain in the buffer, outside your run."
+                  : `No hourly rain forecast ${context}.`;
+  const intervalLabel = (value: { start: number; end: number } | null) =>
+    value
+      ? `${time(value.start, track.timezone)}–${time(value.end, track.timezone)}`
+      : "—";
+  const regionalCluster = timingCluster(
+    rain.regionalWet.flatMap((r) => (r.first ? [r.first] : [])),
   );
+  const regionalClear = timingCluster(
+    rain.regionalWet.flatMap((r) =>
+      r.context.clearing ? [r.context.clearing] : [],
+    ),
+  );
+  const changeLabels = {
+    wet: "now show rain",
+    dry: "no longer show rain",
+    earlier: "move rain earlier",
+    later: "move rain later",
+    heavier: "show heavier rain",
+    lighter: "show lighter rain",
+  };
   return (
     <>
-      <div className="dashboard-controls">
+      <div className="focus-ribbon" aria-label="Run window">
         <div>
-          <h2>Rain outlook</h2>
-          <p>
-            {time(start, track.timezone, true)}–{time(end, track.timezone)} ·
-            includes this hour
-          </p>
+          <span className="eyebrow">{focus.label}</span>
+          <strong>
+            {niceDate(day(focus.start, track.timezone))} <span>·</span>{" "}
+            {time(focus.start, track.timezone)} <ArrowRight size={14} />{" "}
+            {time(focus.end, track.timezone)}
+            {day(focus.start, track.timezone) !==
+              day(focus.end, track.timezone) && <small> +1 day</small>}
+          </strong>
         </div>
-        <label className="dashboard-window">
-          Forecast window
-          <select
-            value={dashboardWindow}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              setDashboardWindow(value);
-              setHorizon(value);
-            }}
-            aria-label="Dashboard forecast window"
-          >
-            {[1, 3, 6, 12, 24].map((h) => (
-              <option key={h} value={h}>
-                {h === 1 ? "This hour" : `${h}-hour outlook`}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="focus-buffer-label">
+          {focus.kind === "session"
+            ? `${focusSelection.before} min before · ${focusSelection.after} min after`
+            : "Starting now"}
+          <button onClick={() => setMobileNav(true)}>
+            <Clock3 size={14} /> Change times
+          </button>
+        </div>
       </div>
-      <div className="dashboard-summary">
+      <div className="run-snapshot">
         <section
-          className={`panel rain-risk ${decision.risk}`}
+          className={`rain-story ${rain.wet || rain.regionalWet.length ? "has-rain" : ""}`}
           aria-label="Rain risk snapshot"
           aria-busy={loading}
         >
-          <h2 className="rain-decision">{headline}</h2>
-          <p className="decision-basis">
-            {loading && !data
-              ? `Loading ${expected} selected forecasts.`
-              : decision.basis}
-          </p>
-          {decision.conflict && onset && (
-            <p className="timing-difference">
-              15-minute and hourly forecasts differ. The finer regional window
-              is shown first.
+          <span className="eyebrow">Rain {context}</span>
+          <h2>{headline}</h2>
+          <details className="run-agreement">
+            <summary>
+              {rain.wet} of {rain.reporting} reporting hourly forecasts show
+              rain {context}.
+            </summary>
+            <p>
+              {rain.hourly
+                .filter((r) => r.wet)
+                .map((r) => r.row.name)
+                .join(", ") || "No hourly source shows rain."}
             </p>
-          )}
-          {data && <p className="agreement-sentence">{decision.agreement}</p>}
-          <div className="risk-probability">
-            <strong>
-              {outlook.probability === null ? "—" : n(outlook.probability, 0)}
-              {outlook.probability !== null && <small>%</small>}
-            </strong>
-            <div>
-              <span>Hourly ensemble estimate</span>
+            {rain.hourly.some((r) => r.complete && !r.wet) && (
               <p>
-                {outlook.ensembleSystems
-                  ? `${outlook.probabilityMin !== outlook.probabilityMax ? `${n(outlook.probabilityMin, 0)}–${n(outlook.probabilityMax, 0)}% · ` : ""}${outlook.ensembleSystems} ensemble systems`
-                  : "Estimate unavailable"}
+                Below your rain threshold:{" "}
+                {rain.hourly
+                  .filter((r) => r.complete && !r.wet)
+                  .map((r) => r.row.name)
+                  .join(", ")}
+                .
               </p>
-            </div>
-          </div>
-          {!loading && (outlook.incompleteSources > 0 || unavailable > 0) && (
-            <p className="risk-context">
-              {outlook.incompleteSources > 0
-                ? `${outlook.incompleteSources} incomplete hourly forecasts. `
+            )}
+            <p>
+              {rain.missing > 0
+                ? `${rain.missing} hourly forecasts have gaps. `
                 : ""}
               {unavailable > 0
-                ? `${unavailable} selected sources unavailable.`
+                ? `${unavailable} selected sources unavailable. `
                 : ""}
+              Related forecasts share model ancestry; this count is not a
+              probability.
             </p>
-          )}
-          <details className="dashboard-method">
-            <summary>Estimate details</summary>
-            <p>
-              The percentage estimates at least {threshold} mm in any hour of
-              this window. It comes from ensemble model runs; the provider count
-              is a separate comparison.
-            </p>
-            <p>
-              {outlook.wetFamilies} of {outlook.reportingFamilies} reporting
-              model families predict rain. Related forecasts share one family
-              vote.
-            </p>
-            <dl className="ensemble-estimates">
-              {outlook.estimates.map((estimate) => (
-                <div key={estimate.id}>
-                  <dt>{estimate.name.replace(" ensemble", "")}</dt>
-                  <dd>
-                    {estimate.probability === null
-                      ? "Unavailable"
-                      : `${n(estimate.probability, 0)}%`}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <p>
-              Earliest hourly signal:{" "}
-              {outlook.firstRain === null
-                ? "none in available data"
-                : `${time(outlook.firstRain, track.timezone)}–${time(outlook.firstRain + 3600, track.timezone)}`}
-              . Peak hourly forecast: {n(outlook.maxRain, 1)} mm/h (
-              {rainIntensity(outlook.maxRain).toLowerCase()}).
-            </p>
-            <p>
-              The window includes the complete current hour. Models can miss
-              showers; these estimates do not measure grip.
-            </p>
-            <a href="https://github.com/Arthur-Brht/pitwall/blob/preview/2.3/docs/DASHBOARD.md">
-              Calculation notes
-            </a>
           </details>
-        </section>
-        <section
-          className="panel dashboard-conditions"
-          aria-label="Conditions snapshot"
-        >
-          <div className="panel-head">
-            <h2>At the circuit</h2>
-            <span className="panel-hint">This hour</span>
-          </div>
-          <dl className="condition-snapshot">
+          <dl className="run-rain-facts">
             <div>
-              <dt>
-                <Thermometer size={15} /> Air temperature
-              </dt>
+              <dt>First hourly signal</dt>
               <dd>
-                {n(current?.temperature)}
-                <small>°C</small>
-                <span>
-                  {n(current?.tempMin)}–{n(current?.tempMax)}° across forecasts
-                </span>
+                {intervalLabel(rain.cluster)}
+                <small>
+                  {rain.cluster
+                    ? `${rain.cluster.count} forecasts in this timing group`
+                    : "None in the displayed window"}
+                </small>
               </dd>
             </div>
             <div>
-              <dt>
-                <Droplets size={15} /> Humidity
-              </dt>
+              <dt>Rain clearing</dt>
               <dd>
-                {n(current?.humidity)}
-                <small>%</small>
-                <span>Dew point {n(current?.dewpoint, 1)}°C</span>
+                {rain.clearing
+                  ? intervalLabel(rain.clearing)
+                  : rain.contextWet.length
+                    ? "Not yet shown"
+                    : "—"}
+                <small>
+                  {rain.clearing
+                    ? `${rain.clearing.count} forecasts · rain stopping, not track drying`
+                    : rain.contextWet.length
+                      ? "Extend the window to look further"
+                      : "No hourly wet period to clear"}
+                </small>
               </dd>
             </div>
             <div>
-              <dt>
-                <Wind size={15} /> Wind
-              </dt>
+              <dt>Intensity in your window</dt>
               <dd>
-                {n(current?.wind)}
-                <small>km/h</small>
-                <span>Gusts up to {n(current?.gust)} km/h</span>
+                {rain.maxPeak === null ? "—" : rainIntensity(rain.maxPeak)}
+                <small>
+                  {rain.maxPeak === null
+                    ? "No wet signal in available data"
+                    : `Up to ${n(rain.maxPeak, 1)} mm/h across forecasts`}
+                </small>
               </dd>
             </div>
           </dl>
-        </section>
-      </div>
-      <RainArrivalView end={end} />
-      <div className="dashboard-weather-grid">
-        <CircuitMap track={track} />
-        <section className="panel dashboard-comparison">
-          <div className="panel-head wrap">
-            <div>
-              <h2>Who expects rain?</h2>
-              <p className="panel-sub">Hourly rain · mm/h</p>
-            </div>
-            <button
-              className="icon-button"
-              aria-label="Manage forecasts"
-              onClick={() => setSettings(true)}
-            >
-              <SlidersHorizontal size={18} />
-            </button>
-          </div>
-          <div
-            className="table-scroll"
-            role="region"
-            aria-label="Forecast rain comparison"
-            tabIndex={0}
-          >
-            <table className="matrix dashboard-matrix">
-              <thead>
-                <tr>
-                  <th scope="col">Forecast</th>
-                  {times.map((value) => (
-                    <th scope="col" key={value}>
-                      {time(value, track.timezone)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {outlook.rows.map(({ forecast }) => (
-                  <tr key={forecast.id}>
-                    <th scope="row">
-                      <span className="provider-name">
-                        <i
-                          style={{
-                            background: sourceColor(
-                              forecast.color,
-                              appearance.theme,
-                            ),
-                          }}
-                        />
-                        {forecast.name}
-                      </span>
-                      {data?.statuses.some(
-                        (s) => s.id === forecast.id && s.status === "cached",
-                      ) && (
-                        <small className="saved-source">
-                          Saved{" "}
-                          {time(
-                            Date.parse(forecast.fetchedAt) / 1000,
-                            track.timezone,
-                          )}
-                        </small>
-                      )}
-                    </th>
-                    {times.map((value) => {
-                      const rain = rainValue(
-                        forecast.hours.find((h) => h.time === value)
-                          ?.precipitation,
-                      );
-                      const intensity = rainIntensity(rain)
-                        .toLowerCase()
-                        .replaceAll(" ", "-");
-                      return (
-                        <td
-                          key={value}
-                          className={`rain-cell rain-${intensity}`}
-                          title={`${forecast.name} · ${time(value, track.timezone)}–${time(value + 3600, track.timezone)} · ${rain === null ? "Missing data" : `${n(rain, 1)} mm/h · ${rainIntensity(rain)}`}`}
-                        >
-                          {rain === null ? "—" : rain === 0 ? "·" : n(rain, 1)}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!outlook.rows.length && (
-              <p className="empty-table">
-                {loading
-                  ? "Loading forecasts…"
-                  : "No hourly forecasts available."}
+          {rain.regionalWet.length > 0 ? (
+            <p className={`regional-signal ${rain.conflict ? "conflict" : ""}`}>
+              <strong>
+                {rain.regionalWet.length} regional 15-minute forecasts:
+              </strong>{" "}
+              rain {intervalLabel(regionalCluster)}
+              {regionalClear
+                ? `; clearing ${intervalLabel(regionalClear)}`
+                : "; no clearing yet in this window"}
+              .{rain.conflict && " Hourly forecasts differ."}
+            </p>
+          ) : rain.regional.some((r) => r.complete) ? (
+            <p className={`regional-signal ${rain.conflict ? "conflict" : ""}`}>
+              Regional 15-minute forecasts:{" "}
+              {rain.regional.filter((r) => r.complete && !r.wet).length} show no
+              rain {context}.{rain.conflict && " Hourly forecasts differ."}
+            </p>
+          ) : null}
+          {ensemble.ensembleSystems > 0 && (
+            <details className="ensemble-line">
+              <summary>
+                <strong>{n(ensemble.probability)}%</strong> ensemble rain
+                estimate{" "}
+                <span>
+                  · {time(probabilityStart, track.timezone)}–
+                  {time(probabilityEnd, track.timezone)}
+                  {probabilityStart !== focus.start ||
+                  probabilityEnd !== focus.end
+                    ? " (surrounding whole hours)"
+                    : ""}
+                  {ensemble.probabilityMin !== ensemble.probabilityMax
+                    ? ` · systems span ${n(ensemble.probabilityMin)}–${n(ensemble.probabilityMax)}%`
+                    : ""}
+                </span>
+              </summary>
+              <p>
+                Chance of at least {threshold} mm in any whole hour shown, from{" "}
+                {ensemble.ensembleSystems} ensemble systems. It can include rain
+                outside your run. Models wet is a separate count, not a second
+                probability.
               </p>
-            )}
+              {ensemble.estimates.map((e) => (
+                <p key={e.id}>
+                  {e.name}:{" "}
+                  {e.probability === null
+                    ? "Unavailable"
+                    : `${n(e.probability)}%`}{" "}
+                  · {e.validMembers}/{e.totalMembers} members complete
+                </p>
+              ))}
+            </details>
+          )}
+        </section>
+        <section className="run-conditions" aria-label="Conditions snapshot">
+          <span className="eyebrow">During this window</span>
+          <div>
+            <Thermometer size={18} />
+            <dl>
+              <dt>Air temperature</dt>
+              <dd>
+                {range(conditions.temperature)}
+                <small>°C</small>
+              </dd>
+            </dl>
           </div>
-          <details className="forecast-explainer">
-            <summary>Reading the comparison</summary>
-            <p>
-              A dot means zero rain; a dash means missing data. Blue is light,
-              amber moderate and red heavy rain.
-            </p>
-            <p>
-              JMA, NOAA and other agencies run global models, including Europe.
-              Their country names identify the agency; Open-Meteo delivers their
-              forecasts.
-            </p>
-          </details>
+          <div>
+            <Wind size={18} />
+            <dl>
+              <dt>
+                Wind ·{" "}
+                {conditions.direction === null
+                  ? "direction variable / unavailable"
+                  : `from ${compass(conditions.direction)}`}
+              </dt>
+              <dd>
+                {range(conditions.wind)}
+                <small>km/h</small>
+                <p>Gusts up to {n(conditions.gust?.max)} km/h</p>
+              </dd>
+            </dl>
+          </div>
+          <span className="condition-range-note">
+            Ranges across available hourly forecasts.
+          </span>
         </section>
       </div>
+      {changes && (
+        <p className="forecast-change" aria-label="Forecast changes">
+          Since {time(changes.since, track.timezone)}
+          {changes.until !== changes.since
+            ? `–${time(changes.until, track.timezone)}`
+            : ""}
+          :{" "}
+          {changes.changes.length
+            ? Object.entries(changeLabels)
+                .flatMap(([kind, label]) => {
+                  const count = changes.changes.filter(
+                    (c) => c.kind === kind,
+                  ).length;
+                  return count
+                    ? [
+                        `${count} ${count === 1 ? "forecast" : "forecasts"} ${label}`,
+                      ]
+                    : [];
+                })
+                .join("; ")
+            : "rain outlook unchanged"}
+          . Compared {changes.compared} hourly forecasts for the same run hours.
+        </p>
+      )}
+      <div className="run-weather-grid">
+        <RunTimeline rows={rows} />
+        <CircuitMap track={track} />
+      </div>
+      <details className="panel run-details">
+        <summary>
+          More detail · conditions, charts &amp; forecast methods
+        </summary>
+        <div className="run-details-body">
+          <dl className="detail-conditions">
+            <div>
+              <dt>Humidity during the window</dt>
+              <dd>{range(conditions.humidity)}%</dd>
+            </div>
+            <div>
+              <dt>Dew point now</dt>
+              <dd>{n(current?.dewpoint, 1)}°C</dd>
+            </div>
+            <div>
+              <dt>Pressure now</dt>
+              <dd>{n(current?.pressure)} hPa</dd>
+            </div>
+          </dl>
+          <div className="segmented" role="group" aria-label="Chart">
+            {(
+              [
+                ["rain", "Rain"],
+                ["temperature", "Temperature"],
+                ["wind", "Wind"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                aria-pressed={trend === id}
+                onClick={() => setTrend(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {trend === "rain" ? (
+            <RainChart hours={chartHours} forecasts={[]} tz={track.timezone} />
+          ) : (
+            <MetricChart
+              hours={chartHours}
+              tz={track.timezone}
+              metric={trend}
+            />
+          )}
+          <p className="fineprint">
+            Hourly forecasts retain their full interval. Regional blocks show
+            actual 15-minute amounts, expressed as mm/h for the same intensity
+            scale. An interval average can hide a shorter, heavier shower. Rain
+            threshold: {threshold} mm/h.
+          </p>
+          <p className="fineprint">
+            The radar shows recent observations; the timeline shows forecasts.
+            Clear forecasts do not measure standing water or grip. Global
+            agencies, including JMA, forecast Europe too.
+          </p>
+          <a href="https://github.com/Arthur-Brht/pitwall/blob/preview/2.4/docs/DASHBOARD.md">
+            Calculation notes
+          </a>
+        </div>
+      </details>
     </>
   );
 }

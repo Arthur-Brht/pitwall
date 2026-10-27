@@ -51,7 +51,16 @@ export function WorkspaceHeading() {
           <Menu size={18} />
         </button>
         <div className="header-title">
-          <h1>{track.name}</h1>
+          <h1>
+            <button
+              className="active-circuit"
+              onClick={() => setMobileNav((v) => !v)}
+              aria-expanded={mobileNav}
+              aria-controls="saved-circuits"
+            >
+              {track.name}
+            </button>
+          </h1>
           <p className="header-meta">
             <span>{track.country}</span>
             {track.custom && (

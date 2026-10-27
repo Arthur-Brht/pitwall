@@ -1,6 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { test, expect } from "./fixtures";
-import { open, preferences } from "./helpers";
+import { open, preferences, setRun } from "./helpers";
 
 test("appearance follows the system and explicit choices survive reload", async ({
   page,
@@ -40,13 +40,7 @@ for (const theme of ["light", "dark"] as const) {
     test.setTimeout(120_000);
     await page.emulateMedia({ colorScheme: theme });
     await open(page);
-    for (const view of [
-      "Dashboard",
-      "Overview",
-      "Sessions",
-      "Models",
-      "History",
-    ]) {
+    for (const view of ["Dashboard", "Sessions", "Models", "History"]) {
       await page.getByRole("button", { name: view, exact: true }).click();
       expect(
         await page.evaluate(
@@ -86,23 +80,17 @@ for (const rain of ["missing", "partial"] as const) {
   }) => {
     providers.rain = rain;
     await open(page);
-    await expect(
-      page.getByRole("heading", {
-        name:
-          rain === "missing"
-            ? "Rain data unavailable"
-            : "Rain outlook incomplete",
-        exact: true,
-      }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("heading", {
-        name: "No rain forecast in the next 24 hours",
-        exact: true,
-      }),
-    ).toHaveCount(0);
-    await expect(page.getByLabel("Current conditions")).not.toContainText(
-      "First rainNone",
+    if (rain === "partial") {
+      await setRun(page, "2026-10-26", "18:00", "20:00");
+      await page
+        .getByRole("button", { name: "Close circuit and session sidebar" })
+        .click();
+    }
+    await expect(page.getByLabel("Rain risk snapshot")).toContainText(
+      "incomplete",
+    );
+    await expect(page.getByLabel("Rain risk snapshot")).not.toContainText(
+      "No hourly rain forecast",
     );
   });
 }

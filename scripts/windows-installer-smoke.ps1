@@ -38,12 +38,12 @@ function Get-PitwallRegistration([string]$AppName = $identity.name) {
 
 & node scripts/download-baseline.mjs
 if ($LASTEXITCODE -ne 0) { throw 'The reference installer could not be verified.' }
-$baselineDirectory = [IO.Path]::GetFullPath((Join-Path $temporaryRoot 'Pitwall 2.2 reference'))
+$baselineDirectory = [IO.Path]::GetFullPath((Join-Path $temporaryRoot 'Pitwall 2.3 reference'))
 if (-not $baselineDirectory.StartsWith($temporaryRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $baselineDirectory)) { throw 'The reference install must use a new RUNNER_TEMP directory.' }
-if ((Test-Path -LiteralPath (Join-Path $env:APPDATA 'Pitwall')) -or @(Get-PitwallRegistration 'Pitwall').Count) { throw 'The runner must not contain an existing Pitwall installation.' }
+if ((Test-Path -LiteralPath (Join-Path $env:APPDATA 'Pitwall 2.3 Preview')) -or @(Get-PitwallRegistration 'Pitwall 2.3 Preview').Count) { throw 'The runner must not contain an existing Pitwall installation.' }
 Invoke-InstallerProcess (Join-Path $temporaryRoot 'pitwall-baseline.exe') @('/S', '/currentuser', "/D=$baselineDirectory")
-$baselineBinary = Join-Path $baselineDirectory 'Pitwall.exe'
-$baselineShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Pitwall.lnk'
+$baselineBinary = Join-Path $baselineDirectory 'Pitwall 2.3 Preview.exe'
+$baselineShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Pitwall 2.3 Preview.lnk'
 if (-not (Test-Path -LiteralPath $baselineBinary) -or -not (Test-Path -LiteralPath $baselineShortcut)) { throw 'The reference app did not install.' }
 
 foreach ($attempt in @('install', 'reinstall')) {
@@ -77,10 +77,10 @@ if (@(Get-PitwallRegistration).Count -ne 0) { throw 'Uninstall did not remove Wi
 if ((Get-Content -LiteralPath $marker -Raw).Trim() -ne 'retained') {
     throw 'Uninstall must retain saved application data.'
 }
-if (-not (Test-Path -LiteralPath $baselineBinary) -or -not (Test-Path -LiteralPath $baselineShortcut) -or @(Get-PitwallRegistration 'Pitwall').Count -ne 1) { throw 'Removing 2.3 must preserve the 2.2 app, shortcut and registration.' }
-$baselineMarker = Join-Path $env:APPDATA 'Pitwall\coexistence-check.txt'
+if (-not (Test-Path -LiteralPath $baselineBinary) -or -not (Test-Path -LiteralPath $baselineShortcut) -or @(Get-PitwallRegistration 'Pitwall 2.3 Preview').Count -ne 1) { throw 'Removing 2.4 must preserve the 2.3 app, shortcut and registration.' }
+$baselineMarker = Join-Path $env:APPDATA 'Pitwall 2.3 Preview\coexistence-check.txt'
 if ((Get-Content -LiteralPath $baselineMarker -Raw) -ne 'baseline-only') { throw 'The reference profile changed.' }
-Invoke-InstallerProcess (Join-Path $baselineDirectory 'Uninstall Pitwall.exe') @('/S', '/currentuser', "_?=$baselineDirectory")
+Invoke-InstallerProcess (Join-Path $baselineDirectory 'Uninstall Pitwall 2.3 Preview.exe') @('/S', '/currentuser', "_?=$baselineDirectory")
 $signature = (Get-AuthenticodeSignature -LiteralPath $installer.FullName).Status.ToString()
 if ($signature -ne 'NotSigned') { throw 'The preview manifest must match the actual installer signature.' }
 @{

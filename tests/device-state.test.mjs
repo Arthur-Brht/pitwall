@@ -35,6 +35,50 @@ test("device backup round trips real plan fields, coordinates, thresholds and di
   assert.deepEqual(backup.sessions, [session]);
 });
 
+test("run choices and sidebar state survive a validated backup without losing other circuits on merge", () => {
+  const selection = {
+    mode: "custom",
+    date: "2026-10-27",
+    startTime: "14:00",
+    endTime: "14:30",
+    before: 15,
+    after: 30,
+  };
+  const saved = {
+    ...preferences,
+    sidebarOpen: true,
+    focusSelections: { spa: selection },
+  };
+  const backup = parseBackup(JSON.stringify(createBackup(saved, [session])));
+  assert.deepEqual(backup.preferences, saved);
+  const merged = mergeBackup(
+    {
+      ...preferences,
+      focusSelections: { other: { mode: "now", before: 0, after: 0 } },
+    },
+    [],
+    backup,
+    () => "new-id",
+  );
+  assert.deepEqual(merged.preferences.focusSelections.spa, selection);
+  assert.equal(merged.preferences.focusSelections.other.mode, "now");
+  assert.throws(
+    () =>
+      parseBackup(
+        JSON.stringify(
+          createBackup(
+            {
+              ...saved,
+              focusSelections: { spa: { ...selection, before: -15 } },
+            },
+            [],
+          ),
+        ),
+      ),
+    /session focus/,
+  );
+});
+
 test("bad backup formats and invalid sessions are rejected before import", () => {
   for (const text of [
     "broken",

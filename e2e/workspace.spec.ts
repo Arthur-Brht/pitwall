@@ -8,7 +8,7 @@ test("all feeds load and every view navigates without runtime errors", async ({
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await open(page);
-  for (const name of ["Models", "Sessions", "History", "Overview"]) {
+  for (const name of ["Models", "Sessions", "History", "Dashboard"]) {
     const tab = page.getByRole("button", { name, exact: true });
     await tab.click();
     await expect(tab).toHaveAttribute("aria-current", "page");

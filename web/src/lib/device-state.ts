@@ -2,6 +2,7 @@ import type { Session, Track, TrackReading } from "./contracts";
 import { SOURCE_IDS } from "./forecast-catalog.ts";
 import { localEpoch } from "./local-time.ts";
 import { TRACKS, validTrack } from "./tracks.ts";
+import { validFocus, type FocusSelection } from "./session-focus.ts";
 
 export type Preferences = {
   favorites: Track[];
@@ -11,6 +12,8 @@ export type Preferences = {
   gustLimit: number;
   sourceSelections?: Record<string, string[]>;
   trackReadings?: Record<string, TrackReading>;
+  sidebarOpen?: boolean;
+  focusSelections?: Record<string, FocusSelection>;
 };
 export type DeviceBackup = {
   format: "pitwall-device-backup";
@@ -71,6 +74,17 @@ export function parsePreferences(value: unknown): Preferences {
     throw new Error("The backup contains invalid weather preferences.");
   }
   const track = knownTrack(value.track);
+  if (value.sidebarOpen !== undefined && typeof value.sidebarOpen !== "boolean")
+    throw new Error("Invalid saved sidebar preference.");
+  if (
+    value.focusSelections !== undefined &&
+    (!object(value.focusSelections) ||
+      Object.keys(value.focusSelections).length > 500 ||
+      Object.entries(value.focusSelections).some(
+        ([key, selection]) => key.length > 100 || !validFocus(selection),
+      ))
+  )
+    throw new Error("Invalid saved session focus.");
   const sourceSelections: Record<string, string[]> = {};
   if (value.sourceSelections !== undefined) {
     if (
@@ -128,6 +142,12 @@ export function parsePreferences(value: unknown): Preferences {
     ),
     threshold: value.threshold,
     gustLimit: value.gustLimit,
+    ...(value.sidebarOpen !== undefined
+      ? { sidebarOpen: value.sidebarOpen }
+      : {}),
+    ...(value.focusSelections !== undefined
+      ? { focusSelections: value.focusSelections }
+      : {}),
     ...(value.sourceSelections !== undefined ? { sourceSelections } : {}),
     ...(value.trackReadings !== undefined ? { trackReadings } : {}),
   };
@@ -249,6 +269,10 @@ export function mergeBackup(
       sourceSelections: {
         ...current.sourceSelections,
         ...backup.preferences.sourceSelections,
+      },
+      focusSelections: {
+        ...current.focusSelections,
+        ...backup.preferences.focusSelections,
       },
       trackReadings: Object.fromEntries(
         [

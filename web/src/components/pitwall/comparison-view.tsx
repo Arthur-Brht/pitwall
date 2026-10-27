@@ -5,6 +5,7 @@ import { rainIntensity } from "@/lib/rain-intensity";
 import { rainValue } from "@/lib/rain-value";
 import { SourceRow } from "./source-card";
 import { RainChart } from "./weather-charts";
+import { buildConsensus } from "@/lib/consensus";
 
 export function ComparisonView() {
   const {
@@ -17,8 +18,16 @@ export function ComparisonView() {
     future,
     toggleSource,
     appearance,
+    focus,
+    threshold,
   } = usePitwall();
-  const matrix = future.slice(0, horizon);
+  const matrix =
+    horizon === 0
+      ? buildConsensus(active, threshold).filter(
+          (h) =>
+            h.time < focus.displayEnd && h.time + 3600 > focus.displayStart,
+        )
+      : future.slice(0, horizon);
   return (
     <>
       <section className="panel heatmap-panel">
@@ -33,6 +42,7 @@ export function ComparisonView() {
             value={horizon}
             onChange={(e) => setHorizon(+e.target.value)}
           >
+            <option value={0}>Your run + buffers</option>
             {[1, 3, 6, 12, 24, 48, 72].map((h) => (
               <option key={h} value={h}>
                 {h} {h === 1 ? "hour" : "hours"}
@@ -100,12 +110,14 @@ export function ComparisonView() {
           moderate and red heavy rain.
         </p>
       </section>
-      <section className="panel">
+      <details className="panel comparison-chart">
+        <summary>Rain chart · show more detail</summary>
         <div className="panel-head">
           <div>
             <h2>Rain by source</h2>
             <p className="panel-sub">
-              Same {horizon}-hour window · hourly averages
+              {horizon === 0 ? "Your run + buffers" : `${horizon}-hour window`}{" "}
+              · hourly averages
             </p>
           </div>
         </div>
@@ -129,7 +141,7 @@ export function ComparisonView() {
             </span>
           ))}
         </div>
-      </section>
+      </details>
       <section className="panel">
         <div className="panel-head">
           <h2>

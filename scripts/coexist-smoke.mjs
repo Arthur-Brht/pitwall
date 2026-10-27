@@ -34,7 +34,12 @@ const appData = mac
   ? path.join(os.homedir(), "Library/Application Support")
   : process.env.APPDATA;
 const apps = [
-  { binary: baseline, port: 4173, profile: "Pitwall", marker: "baseline-only" },
+  {
+    binary: baseline,
+    port: 4183,
+    profile: "Pitwall 2.3 Preview",
+    marker: "baseline-only",
+  },
   {
     binary: preview,
     port: identity.port,

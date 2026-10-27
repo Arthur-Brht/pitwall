@@ -72,7 +72,7 @@ test("desktop loads all feeds, preserves plans, exports and restores a real back
     .click();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", nextTheme);
-  for (const name of ["Models", "History", "Overview"])
+  for (const name of ["Models", "History", "Dashboard"])
     await page.getByRole("button", { name, exact: true }).click();
   await createSession(page);
   await page.reload();

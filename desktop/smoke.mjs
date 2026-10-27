@@ -9,7 +9,7 @@ export async function packagedSmoke(window, origin) {
         await new Promise(resolve => setTimeout(resolve, 100));
       return Boolean(predicate());
     };
-    const rendered = () => ['Overview', 'Sessions', 'Models', 'History'].every(label =>
+    const rendered = () => ['Dashboard', 'Sessions', 'Models', 'History'].every(label =>
       [...document.querySelectorAll('nav[aria-label="Weather views"] button')].some(button => button.textContent === label));
     await waitFor(() => rendered() && !document.body.innerText.includes('Use Pitwall as an app'));
     const reopen = ${JSON.stringify(process.env.PITWALL_SMOKE_REOPEN === "1")};

@@ -49,3 +49,7 @@ Public weather APIs, quotas, CORS, internet access, browser storage and radar co
 Independent UX and technical reviews of 2.2 informed this preview. Changes cover competing risk numbers, conflicting onset windows, a shared quarter-hour strip, table-first comparison, malformed negative rain, hourly/native failure isolation, and radar controls during metadata failures. New browser scenarios verify window retention, native results during hourly failures, exclusions, and Pause during a metadata outage. Synthetic radar fixtures contain thirteen scans over two hours; production uses only actual returned scans.
 
 The app uses a distinct ID, product name, default profile and local port. Native CI checks production-default coexistence with a checksum-pinned 2.2 app, alongside the existing isolated storage/plan/file checks. Windows verifies that removing 2.3 leaves 2.2 installed. Test markers establish profile isolation, not a live-weather accuracy assessment. No user Mac or existing installation is used for these checks.
+
+## 2.4 session dashboard
+
+The [2.4 review notes](REVIEW_2.4.md) describe the approved scope and isolation. The session window, its buffers, missing data, timing groups and comparable-history rules are exercised by dedicated unit and browser scenarios. Both desktop jobs build from the same tagged source. Production-default coexistence checks use the pinned 2.3 reference; Windows also verifies that removing 2.4 leaves 2.3 installed. Native results are recorded in the release's linked workflow run and manifests.

@@ -379,7 +379,7 @@ export default function CircuitMap({ track }: { track: Track }) {
       <div className="panel-head">
         <div>
           <h2>Radar</h2>
-          <p className="panel-sub">10-minute scans</p>
+          <p className="panel-sub">Recent observations · past 2 hours</p>
         </div>
         <span className={`panel-hint ${stale ? "text-warn" : ""}`}>
           {latestTime !== undefined

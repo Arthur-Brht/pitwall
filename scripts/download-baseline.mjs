@@ -12,11 +12,11 @@ if (
   );
 const mac = process.platform === "darwin";
 const filename = mac
-  ? "Pitwall-2.2.0-mac-universal-preview.dmg"
-  : "Pitwall-2.2.0-windows-x64-preview-setup.exe";
+  ? "Pitwall-2.3.0-mac-universal-preview.dmg"
+  : "Pitwall-2.3.0-windows-x64-preview-setup.exe";
 const expected = mac
-  ? "3806587e187b8b332224af90b2cf7e8a6bcdc73c4cf378807f35227f437a589b"
-  : "bbec57cf4c3a70aa55776ca9fe6bb8e57209b8d5f49dc03073249ef201e93bfe";
+  ? "902d4fe73ae1322bcfd6fbd73fe2bd36d4cf1df3d9b20f78d995609ae10c8a4d"
+  : "fe90defbf724f85e42ade890d59da8c1732892f979fc7d11e24fe1749bcc9c35";
 const destination = path.join(
   process.env.RUNNER_TEMP,
   mac ? "pitwall-baseline.dmg" : "pitwall-baseline.exe",
@@ -30,7 +30,7 @@ await access(destination).then(
   },
 );
 const response = await fetch(
-  `https://github.com/Arthur-Brht/pitwall/releases/download/v2.2.0-preview.2/${filename}`,
+  `https://github.com/Arthur-Brht/pitwall/releases/download/v2.3.0-preview.1/${filename}`,
 );
 if (!response.ok) throw Error(`Reference download failed: ${response.status}`);
 const bytes = Buffer.from(await response.arrayBuffer());
