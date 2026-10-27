@@ -5,6 +5,7 @@ import type {
   RadarResponse,
   SourceStatus,
   WeatherResponse,
+  NearRainResponse,
 } from "./contracts";
 import {
   coordinates,
@@ -25,6 +26,7 @@ import {
 import bundledCircuits from "./circuit-geometries.json" with { type: "json" };
 import { EnsembleClient, ENSEMBLE_SPECS } from "./ensemble.ts";
 import { DEFAULT_SOURCE_IDS, selectedSources } from "./forecast-catalog.ts";
+import { NearRainClient, NEAR_RAIN_SPECS } from "./near-rain.ts";
 
 const inFlight = new Map<string, Promise<unknown>>();
 function once<T>(key: string, load: () => Promise<T>): Promise<T> {
@@ -46,7 +48,8 @@ async function weatherFor(
   refresh = false,
   sourceIds = DEFAULT_SOURCE_IDS,
 ): Promise<WeatherResponse> {
-  const key = `weather-v2:${locationKey(lat, lon)}:${zone}:${[...sourceIds].sort().join(",")}`;
+  const previousKey = `weather-v2:${locationKey(lat, lon)}:${zone}:${[...sourceIds].sort().join(",")}`;
+  const key = previousKey.replace("weather-v2:", "weather-v3:");
   const cached = !refresh && (await readCache<WeatherResponse>(key));
   if (cached)
     return {
@@ -69,6 +72,7 @@ async function weatherFor(
       };
     const fallback =
       (await readCache<WeatherResponse>(key, { allowStale: true })) ??
+      (await readCache<WeatherResponse>(previousKey, { allowStale: true })) ??
       (await readCache<WeatherResponse>(
         `weather-v1:${locationKey(lat, lon)}:${zone}`,
         { allowStale: true },
@@ -83,9 +87,10 @@ async function weatherFor(
       })),
       { id: "metno", name: "MET Norway", load: () => met.forecast(lat, lon) },
     ].filter((source) => sourceIds.includes(source.id));
-    const [results, ensembles] = await Promise.all([
+    const [results, ensembles, nearRain] = await Promise.all([
       Promise.allSettled(sources.map((source) => source.load())),
       ensemblesFor(lat, lon, refresh),
+      nearRainFor(lat, lon, sourceIds, refresh),
     ]);
     const forecasts: Forecast[] = [],
       statuses: SourceStatus[] = [];
@@ -140,6 +145,7 @@ async function weatherFor(
       forecasts,
       statuses,
       ensembles,
+      nearRain,
       notes: [
         "Forecasts come directly from the public providers. Availability and usage limits vary by source.",
         "Forecasts are model estimates at the selected coordinates, not observations of track grip or track-surface temperature.",
@@ -162,6 +168,56 @@ async function weatherFor(
       Date.now() + 86400000,
     );
     return weather;
+  });
+}
+
+async function nearRainFor(
+  lat: number,
+  lon: number,
+  sourceIds: string[],
+  refresh: boolean,
+): Promise<NearRainResponse> {
+  const specs = NEAR_RAIN_SPECS.filter(
+    (spec) => sourceIds.includes(spec.sourceId) && spec.covers(lat, lon),
+  );
+  if (!specs.length) return { forecasts: [], statuses: [] };
+  const key = `near-rain-v1:${locationKey(lat, lon)}:${specs.map((spec) => spec.id).join(",")}`;
+  const saved = !refresh && (await readCache<NearRainResponse>(key));
+  if (saved) return saved;
+  return once(key, async () => {
+    const client = new NearRainClient();
+    const results = await Promise.allSettled(
+      specs.map((spec) => client.forecast(lat, lon, spec)),
+    );
+    const result: NearRainResponse = { forecasts: [], statuses: [] };
+    results.forEach((value, index) => {
+      const spec = specs[index];
+      if (value.status === "fulfilled") {
+        result.forecasts.push(value.value);
+        result.statuses.push({
+          id: spec.id,
+          name: spec.name,
+          status: "ok",
+          fetchedAt: value.value.fetchedAt,
+          message: "Native 15-minute forecast available.",
+        });
+      } else
+        result.statuses.push({
+          id: spec.id,
+          name: spec.name,
+          status: "error",
+          message:
+            value.reason instanceof Error
+              ? value.reason.message
+              : "15-minute data unavailable.",
+        });
+    });
+    await writeCache(
+      key,
+      result,
+      Date.now() + (result.forecasts.length === specs.length ? 600000 : 60000),
+    );
+    return result;
   });
 }
 

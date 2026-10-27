@@ -1,13 +1,13 @@
-# Verification — Pitwall 2.1.0
+# Verification — Pitwall 2.2.0
 
 Release review: 27 October 2026. The application runs locally at http://localhost:4173; GitHub stores source and executes checks. There is no hosted application, login or deployment workflow.
 
 ## Automated evidence
 
-- **79 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links.
-- The browser suite exercises Chromium, Firefox, WebKit and a mobile Chromium viewport. It covers both light and dark appearance, system changes, saved theme choices, incomplete rainfall summaries, all views, source controls, session editing/undo, calendar/history/backup exports, restore/rejection, failed-provider recovery, custom coordinates, location search/timezones, corrupt storage, modal keyboard focus, observation verification and accessibility.
+- **89 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links. New checks cover native quarter-hour intervals, timing gaps and thresholds, absolute intensity scales, load-aware radar playback, cancellation and bounded layer retention.
+- The browser suite passed **102 checks**, with two documented offline harness skips, across Chromium, Firefox, WebKit and a mobile Chromium viewport. It covers both light and dark appearance, system changes, saved theme choices, incomplete rainfall summaries, all views, source controls, session editing/undo, calendar/history/backup exports, restore/rejection, failed-provider recovery, custom coordinates, location search/timezones, corrupt storage, modal keyboard focus, observation verification and accessibility.
 - Accessibility checks cover all five views in both themes plus search/preferences dialogs for critical or serious WCAG-tagged axe violations. They do not constitute a complete accessibility certification.
-- Dashboard checks cover window-level rain estimates, complete ensemble-member denominators, wet outliers, per-location source choices, manual track readings and radar start/end playback. Existing saved forecasts remain available as explicitly stale data during an offline upgrade.
+- Dashboard checks cover window-level rain estimates, complete ensemble-member denominators, wet outliers, per-location source choices, native quarter-hour rain windows, explicit hourly fallback, the removal of track-temperature entry, rain-chart context and radar start/end playback. Delayed-tile tests verify that the previous scan stays displayed while the replacement loads. Existing saved forecasts remain available as explicitly stale data during an offline upgrade.
 - Offline service-worker reload is checked in Chromium. Firefox and WebKit offline navigation are explicitly skipped in this automation harness; their normal application flows remain covered.
 - `npm run check` checks lint, formatting, tests, TypeScript, reproducible pilot calculations and a production build. The dependency audit reports zero findings for the locked tree at review time.
 - CI runs Windows and Ubuntu web checks, Windows Chromium/mobile flows, Ubuntu Chromium/Firefox/WebKit/mobile flows, and a redacted reachable-history secret scan. Actions are pinned to commit hashes and the workflow has read-only repository permissions.
@@ -26,7 +26,7 @@ The [desktop build workflow](https://github.com/Arthur-Brht/pitwall/actions/work
 
 ## Live-provider and local-runtime checks
 
-The production browser loaded all five real feeds: IFS, ICON, GFS and Météo-France through Open-Meteo, plus MET Norway. Actual radar, OSM tiles and attributed circuit geometry loaded under the local server's content security policy. Saved forecast snapshots retain their real source/fetch/valid timestamps.
+The production browser loaded all eight real default feeds at Spa, plus native ICON-D2 quarter-hour rain timing. A separate live request confirmed native AROME HD quarter-hour output at the same coordinates. Assen's native ICON-D2 response also passed normalization; out-of-region data were rejected. Actual radar, OSM tiles and attributed circuit geometry loaded under the local server's content security policy. Saved forecast snapshots retain their real source/fetch/valid timestamps. These checks establish connectivity at review time, not continuous provider availability or forecast accuracy.
 
 The local server binds to 127.0.0.1, serves built files only, rejects foreign hostnames and unexpected writes, and leaves unrelated port owners untouched. Starting another Pitwall launcher reuses the verified address. The app is not exposed on a LAN interface.
 

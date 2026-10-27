@@ -97,7 +97,6 @@ export function usePitwallState() {
   const trackKey = locationKey(track.lat, track.lon);
   const selectedSourceIds = sourceSelections[trackKey] ?? DEFAULT_SOURCE_IDS;
   const sourceKey = selectedSourceIds.join(",");
-  const trackReading = trackReadings[trackKey];
   function toggleFetchedSource(id: string) {
     const prior = sourceSelections[trackKey] ?? DEFAULT_SOURCE_IDS;
     const next = prior.includes(id)
@@ -106,14 +105,6 @@ export function usePitwallState() {
     if (!next.length) return;
     setSourceSelections((saved) => ({ ...saved, [trackKey]: next }));
     setDisabled((saved) => saved.filter((value) => value !== id));
-  }
-  function saveTrackReading(temperature: number) {
-    if (!Number.isFinite(temperature) || temperature < -50 || temperature > 100)
-      throw new RangeError("Enter a track reading between −50 and 100°C.");
-    setTrackReadings((saved) => ({
-      ...saved,
-      [trackKey]: { temperature, recordedAt: new Date().toISOString() },
-    }));
   }
   useModalFocus(searchOpen || settings);
   useEffect(() => {
@@ -788,8 +779,6 @@ export function usePitwallState() {
   return {
     selectedSourceIds,
     toggleFetchedSource,
-    trackReading,
-    saveTrackReading,
     pwa,
     backupInput,
     view,

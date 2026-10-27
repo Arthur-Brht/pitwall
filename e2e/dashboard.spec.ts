@@ -81,29 +81,26 @@ test("forecast catalog selections are saved per location and extra regional fore
   ).not.toBeChecked();
 });
 
-test("manual track temperature stays distinct from forecast air temperature and survives reload", async ({
+test("the conditions snapshot keeps air, humidity and wind without the retired track-temperature form", async ({
   page,
 }) => {
   await page.goto("/");
   await expect(
     page.getByText("8 of 8 sources", { exact: false }),
   ).toBeVisible();
-  await page.getByText("Add track reading", { exact: true }).click();
-  await page.getByLabel("Track temperature (°C)").fill("32.5");
-  await page.getByRole("button", { name: "Save reading", exact: true }).click();
-  await expect(
-    page.getByRole("status").filter({ hasText: "Track reading saved." }),
-  ).toBeVisible();
-  await expect(page.getByLabel("Conditions snapshot")).toContainText("32.5°C");
-  await expect(page.getByLabel("Conditions snapshot")).toContainText("Manual");
-  await page.reload();
-  await expect(page.getByLabel("Conditions snapshot")).toContainText("32.5°C");
-  const preferences = await page.evaluate(() =>
-    JSON.parse(localStorage.getItem("pitwall-preferences") ?? "{}"),
+  await expect(page.getByLabel("Conditions snapshot")).toContainText(
+    "Air temperature",
   );
-  expect(Object.values(preferences.trackReadings)).toEqual([
-    { temperature: 32.5, recordedAt: expect.any(String) },
-  ]);
+  await expect(page.getByLabel("Conditions snapshot")).toContainText(
+    "Humidity",
+  );
+  await expect(page.getByLabel("Conditions snapshot")).toContainText("Wind");
+  await expect(
+    page.getByText("Track temperature", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText("Add track reading", { exact: true }),
+  ).toHaveCount(0);
 });
 
 test("radar start and end restrict playback and reset to the available history", async ({
@@ -116,6 +113,7 @@ test("radar start and end restrict playback and reset to the available history",
   const from = page.getByLabel("Radar start time"),
     to = page.getByLabel("Radar end time"),
     slider = page.getByRole("slider", { name: "Radar frame", exact: true });
+  await page.getByText("Playback range & map options", { exact: true }).click();
   await expect(from.locator("option")).toHaveCount(4);
   const values = await from
     .locator("option")
@@ -129,7 +127,7 @@ test("radar start and end restrict playback and reset to the available history",
   await expect(slider).toHaveAttribute("min", "1");
   await expect(slider).toHaveAttribute("max", "2");
   await page.getByRole("button", { name: "Play radar", exact: true }).click();
-  await page.clock.runFor(1000);
+  await page.clock.runFor(450);
   await expect(slider).toHaveValue("1");
   await to.selectOption(values[1]);
   await expect(
@@ -138,6 +136,99 @@ test("radar start and end restrict playback and reset to the available history",
   await page.getByRole("button", { name: "Full history", exact: true }).click();
   await expect(slider).toHaveAttribute("min", "0");
   await expect(slider).toHaveAttribute("max", "2");
+});
+
+test("native quarter-hour timing gives a rain window and leaves hourly fallback explicit", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByText("8 of 8 sources", { exact: false }),
+  ).toBeVisible();
+  await expect(page.getByLabel("15-minute rain timing")).toContainText(
+    "Hourly timing available",
+  );
+  const menu = page.getByRole("button", {
+    name: "Open saved circuits",
+    exact: true,
+  });
+  if (await menu.isVisible()) await menu.click();
+  await page
+    .getByRole("navigation", { name: "Saved circuits" })
+    .getByRole("button", { name: /Spa-Francorchamps/ })
+    .click();
+  await expect(page.getByLabel("15-minute rain timing")).toContainText(
+    "10:30–10:45",
+  );
+  await expect(page.getByLabel("15-minute rain timing")).toContainText(
+    "DWD ICON-D2",
+  );
+  await expect(page.getByLabel("15-minute rain timing")).toContainText(
+    "Météo-France AROME",
+  );
+  await expect(page.getByLabel("Rain risk snapshot")).not.toContainText(
+    "This hour",
+  );
+});
+
+test("radar keeps a complete displayed scan while a replacement loads and uses a taller map", async ({
+  page,
+}) => {
+  let release: (() => void) | undefined;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route("**/v2/radar/test-600/**", async (route) => {
+    await held;
+    await route.fulfill({
+      contentType: "image/svg+xml",
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" fill="blue"/></svg>',
+    });
+  });
+  try {
+    await page.goto("/");
+    await expect(page.getByLabel("Displayed radar time")).toHaveText("09:00");
+    const map = await page.locator(".map-stage").boundingBox();
+    expect(map!.width / map!.height).toBeLessThanOrEqual(1.6);
+    const active = page.locator(".radar-scan");
+    await page
+      .getByRole("button", { name: "Previous radar scan", exact: true })
+      .click();
+    await expect(page.getByLabel("Displayed radar time")).toHaveText("09:00");
+    expect(
+      await active.evaluateAll((layers) =>
+        layers.some(
+          (layer) => Number((layer as HTMLElement).style.opacity) > 0,
+        ),
+      ),
+    ).toBe(true);
+    release!();
+    await expect(page.getByLabel("Displayed radar time")).toHaveText("08:50");
+    expect(await page.locator(".radar-scan").count()).toBeLessThanOrEqual(3);
+  } finally {
+    release!();
+  }
+});
+
+test("rain charts distinguish light rainfall from a graph that merely fills its axis", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.getByText("8 of 8 sources", { exact: false }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Models", exact: true }).click();
+  await expect(page.getByLabel("Rain intensity guide")).toContainText(
+    "Heavy > 7.6 mm/h",
+  );
+  await expect(page.locator(".rain-chart-context")).toContainText(
+    "Light rain · peak 0.7 mm/h",
+  );
+  await expect(page.getByLabel("Rain chart scale")).toHaveValue("context");
+  await page.getByLabel("Rain chart scale").selectOption("detail");
+  await expect(page.locator(".rain-chart-context")).toContainText(
+    "zoomed within the light-rain range",
+  );
 });
 
 test("missing ensemble and model rain never become a zero-percent dry outlook", async ({

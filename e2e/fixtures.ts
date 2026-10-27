@@ -65,6 +65,25 @@ export const test = base.extend<{
             status: 503,
             json: { error: "Synthetic test provider outage" },
           });
+        if (url.searchParams.has("minutely_15")) {
+          const quarters = Array.from(
+            { length: 26 },
+            (_, index) => start + index * 900,
+          );
+          return json({
+            minutely_15_units: { precipitation: "mm" },
+            minutely_15: {
+              time: quarters,
+              precipitation: quarters.map((_, index) =>
+                state.rain === "missing"
+                  ? null
+                  : index >= 3 && index <= 5
+                    ? 0.2
+                    : 0,
+              ),
+            },
+          });
+        }
         return json({
           hourly: {
             time: times,

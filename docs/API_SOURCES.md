@@ -32,9 +32,11 @@ Session summaries use the actual overlap of hourly intervals. Partial-hour rain 
 
 ## Radar and circuit maps
 
+Native short-range rain timing uses explicit `dwd_icon_d2_15min` and `meteofrance_arome_france_hd_15min` products through Open-Meteo, with conservative regional bounds and no global hourly fallback inside those requests. They are fetched only when the corresponding parent forecast is selected, paced and cached with the other calls. Missing native output stays unavailable; it is not refined from hourly data. [Timing and intensity definitions](DASHBOARD.md#rain-timing-and-intensity).
+
 [RainViewer](https://www.rainviewer.com/api/weather-maps-api.html) supplies past radar composites, normally two hours at ten-minute steps. It is not future radar. Frame-generation times can differ from contributing radar observation times. Native zoom is seven; enlarging pixels over a circuit cannot show corner-level weather. Coverage masks distinguish unverified areas; transparency does not prove dry conditions.
 
-Playback From/To controls select actual returned frames. The slider and loop are bounded to that interval, and selection is clamped to the available history after refresh. They cannot query arbitrary past dates or future radar.
+Playback From/To controls select actual returned frames. The slider and loop are bounded to that interval, and selection is clamped to the available history after refresh. Preloading and cross-fades smooth the display without increasing the source's ten-minute resolution. They cannot query arbitrary past dates or future radar.
 
 Nine bundled outlines come from [F1 Circuits / Tomislav Bacinger](https://github.com/bacinger/f1-circuits), with its MIT licence retained. Nogaro uses [OSM way 95798633](https://www.openstreetmap.org/way/95798633), © OpenStreetMap contributors, ODbL 1.0. Raw source files and provenance are retained under `web/public/circuits/`. Download date is not survey date; circuit layouts can change.
 

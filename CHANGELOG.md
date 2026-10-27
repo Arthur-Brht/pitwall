@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.2.0 — Clearer rain timing and smoother radar
+
+- Made radar maps taller and playback load-aware, keeping the last complete scan while the next loads, preloading neighbours and blending adjacent scans. Added previous/next controls, playback speeds and reduced-motion support, with range/map options collapsed by default.
+- Added native regional 15-minute rain timing where ICON-D2 or AROME data are available. Hourly signals now show their full time window; missing regional data stay missing rather than becoming invented minute-level predictions.
+- Added light/moderate/heavy rain guides, contextual chart scaling, an optional close-up scale, rate labels and interval steps. Hourly averages remain distinct from a brief shower's intensity.
+- Shortened the dashboard explanation, moved detailed calculation notes to documentation, explained how global models cover other countries, and removed the manual track-temperature interface while preserving existing backup data.
+
 ## 2.1.0 — Rain-risk dashboard
 
 - Added a Dashboard tab with selectable forecast windows, ensemble rain estimates and their range, provider agreement, family counts, first rain signal and hourly source comparison.

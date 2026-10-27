@@ -17,16 +17,26 @@ test("capture the illustrated workflow", async ({ page, providers }) => {
       ),
   );
   await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await page
+    .getByRole("navigation", { name: "Saved circuits" })
+    .getByRole("button", { name: /Spa-Francorchamps/ })
+    .click();
+  await expect(page.getByLabel("15-minute rain timing")).toContainText(
+    "10:30–10:45",
+  );
   await page.getByLabel("Dashboard forecast window").selectOption("6");
   await expect(page.locator(".risk-probability>strong")).toHaveText("50%");
   await page.screenshot({ path: "docs/images/dashboard.png" });
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await page.screenshot({ path: "docs/images/dashboard-dark.png" });
   await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await page.getByText("Playback range & map options", { exact: true }).click();
   await page
     .locator(".map-panel")
     .screenshot({ path: "docs/images/radar-window.png" });
+  await page.getByText("Playback range & map options", { exact: true }).click();
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: "docs/images/dashboard-mobile.png" });
   await page.setViewportSize({ width: 1440, height: 1200 });
   await page.getByRole("button", { name: "Overview", exact: true }).click();
@@ -66,5 +76,6 @@ test("capture the illustrated workflow", async ({ page, providers }) => {
   await expect(
     page.getByRole("button", { name: "Open saved circuits" }),
   ).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: "docs/images/overview-mobile.png" });
 });

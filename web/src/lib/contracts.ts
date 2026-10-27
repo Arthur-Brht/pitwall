@@ -66,6 +66,19 @@ export type EnsembleResponse = {
   statuses: SourceStatus[];
 };
 export type TrackReading = { temperature: number; recordedAt: string };
+export type NearRainForecast = {
+  id: string;
+  sourceId: string;
+  name: string;
+  fetchedAt: string;
+  stepSeconds: 900;
+  /** Start of the interval, with the amount accumulated over the following 15 minutes. */
+  points: { time: number; precipitation: number | null }[];
+};
+export type NearRainResponse = {
+  forecasts: NearRainForecast[];
+  statuses: SourceStatus[];
+};
 export type WeatherResponse = {
   fetchedAt: string;
   checkedAt?: string;
@@ -76,6 +89,7 @@ export type WeatherResponse = {
   statuses: SourceStatus[];
   notes: string[];
   ensembles?: EnsembleResponse;
+  nearRain?: NearRainResponse;
 };
 export type ConsensusHour = {
   time: number;

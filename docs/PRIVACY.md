@@ -19,7 +19,7 @@ History records the first 24 forecast hours per source, with a seven-day retenti
 
 ## Backups and removal
 
-Export a JSON backup in Weather preferences for circuits, settings, per-location forecast selections, manual track-temperature readings and sessions. Import merges plans without silently replacing existing sessions, and keeps the newer manual reading for each location. History is separate and exports as CSV. Calendar export downloads a file and never sends anything to a calendar account.
+Export a JSON backup in Weather preferences for circuits, settings, per-location forecast selections and sessions. Import merges plans without silently replacing existing sessions. Retired manual track-temperature readings from older versions remain in backups for compatibility. History is separate and exports as CSV. Calendar export downloads a file and never sends anything to a calendar account.
 
 Appearance is a separate per-device choice and is not included in plan backups.
 

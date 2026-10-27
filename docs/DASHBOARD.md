@@ -29,10 +29,22 @@ MET Norway is grouped with ECMWF, KNMI conservatively with the AROME/Météo-Fra
 
 ## Circuit conditions
 
-Air temperature, humidity, dew point, wind and gusts come from forecasts for this hour. They are not trackside observations. Track temperature stays unavailable until you enter a thermometer reading. Manual readings carry the circuit-local date and time, remain separate from weather estimates, and are labelled older after one hour. They are saved per location and included in device backups.
+Air temperature, humidity, dew point, wind and gusts come from forecasts for this hour. They are not trackside observations. The manual track-temperature feature has been removed. Existing readings from older versions are retained in backups for compatibility but are no longer shown or edited.
+
+## Rain timing and intensity
+
+The hourly first signal is shown as an interval, such as 18:00–19:00. It is not an exact arrival time. The separate Rain timing card uses explicit native 15-minute [ICON-D2](https://open-meteo.com/en/docs/dwd-api) and [AROME](https://open-meteo.com/en/docs/meteofrance-api) products, only where the region is covered, the corresponding forecast is enabled, and recent data are supplied. It reports a 15-minute first-signal window for the chosen outlook, up to six hours, and plots the next two hours. These regional runs are from existing model families and do not add independent votes to the headline.
+
+Open-Meteo's preceding-quarter-hour accumulation is moved to the interval beginning 15 minutes earlier. The amount is multiplied by four only to express the average rate in mm/h. Missing or negative values remain unavailable. Hourly data are never divided or interpolated to claim finer timing. Portimão, for example, is outside the selected native AROME domain; a regional run can also have no current output inside its domain. In those cases the hourly comparison remains available.
+
+Rain charts use approximate hourly-rate guides based on [NOAA's intensity table](https://www.noaa.gov/jetstream/appendix/weather-glossary-r): light up to 2.5 mm/h, moderate above 2.5 through 7.6 mm/h, and heavy above 7.6 mm/h. These are descriptive guides, not tyre or grip limits. The default chart extends to at least 10 mm/h so a small shower does not fill the whole axis. Zoom to forecast gives more detail while retaining the guide. Hourly values are drawn as steps, not interpolated arrival predictions. An hourly average can conceal a brief heavier shower.
+
+The provider comparison includes a short explanation of global models. [JMA's GSM](https://www.jma.go.jp/jma/en/Activities/nwp.html) covers the whole world; the agency's country does not restrict its forecast area.
 
 ## Radar window
 
-From and To select the start and end of the playback loop. The frame slider and play button stay within that range. Full history resets it to all returned frames. Selection is clamped when older frames disappear after refresh; a single selected frame cannot play.
+From and To, under Playback range & map options, select the start and end of the loop. The frame slider and play button stay within that range. Full history resets it to all returned frames. Selection is clamped when older frames disappear after refresh; a single selected frame cannot play. Previous/next controls step through actual scans, and the speed selector changes playback pace.
+
+Playback preloads the next scan and keeps the previous complete scan visible while a replacement loads. Adjacent scans cross-fade; seeking or wrapping to the beginning changes directly to the selected real frame. At most three radar tile layers are retained. Smooth transitions can be disabled, and reduced-motion settings are respected. These are visual blends, not new radar observations or motion forecasts. The timestamp always names a real scan. Tile failures keep the previous scan and its time with a visible warning.
 
 [RainViewer](https://www.rainviewer.com/api/weather-maps-api.html) normally supplies around two hours of past radar at ten-minute steps. The controls cannot retrieve dates outside that history and do not turn historical radar into a forecast. Coverage gaps and tile failures remain visible.

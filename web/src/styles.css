@@ -737,7 +737,9 @@ svg {
   padding: 6px 10px;
 }
 .map-stage {
-  height: 255px;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  min-height: 340px;
   position: relative;
   background: var(--bg);
 }
@@ -787,7 +789,15 @@ svg {
   height: 5px;
   width: 50px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #7db8e8, #4e9c55, #e3ba43, #cb4343);
+  background: linear-gradient(
+    90deg,
+    #88ddee,
+    #0077aa,
+    #004768,
+    #ffee00,
+    #ff4400,
+    #ba0000
+  );
 }
 .leaflet-container .leaflet-control-attribution {
   background: var(--panel);
@@ -1723,7 +1733,9 @@ table caption {
     margin-left: 0;
   }
   .map-stage {
-    height: 265px;
+    height: auto;
+    min-height: 320px;
+    aspect-ratio: 1;
   }
   .segmented button {
     padding: 7px 9px;
@@ -1971,7 +1983,7 @@ table caption {
 }
 .condition-snapshot {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px 20px;
 }
 .condition-snapshot dt {
@@ -1998,36 +2010,6 @@ table caption {
   letter-spacing: 0;
   font-size: 11px;
   color: var(--muted);
-}
-.track-reading {
-  border-top: 1px solid var(--line);
-  margin-top: 25px;
-  padding-top: 16px;
-  font-size: 12px;
-}
-.track-reading summary {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  width: fit-content;
-  cursor: pointer;
-}
-.track-reading p {
-  margin-top: 12px;
-}
-.track-reading form {
-  display: flex;
-  gap: 10px;
-  align-items: end;
-  margin-top: 12px;
-}
-.track-reading form label {
-  display: grid;
-  gap: 5px;
-  flex: 1;
-}
-.track-reading .button {
-  white-space: nowrap;
 }
 .dashboard-comparison {
   margin-bottom: 22px;
@@ -2131,12 +2113,285 @@ table caption {
   color: var(--muted);
   padding: 9px 24px 0;
 }
+.dashboard-weather-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(290px, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+.dashboard-summary {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: start;
+}
+.rain-intensity-note {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+  color: var(--muted);
+}
+.ensemble-estimates {
+  margin: 12px 0;
+}
+.ensemble-estimates > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 4px 0;
+}
+.dashboard-method a {
+  display: inline-block;
+  margin-top: 8px;
+  text-decoration: underline;
+}
+.forecast-explainer,
+.radar-data-note,
+.radar-settings {
+  padding: 12px 22px 18px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.forecast-explainer summary,
+.radar-data-note summary,
+.radar-settings summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.forecast-explainer p,
+.radar-data-note p {
+  margin-top: 10px;
+  max-width: 65ch;
+}
+.radar-settings {
+  padding-bottom: 6px;
+}
+.radar-settings .radar-range,
+.radar-settings .radar-history-note,
+.radar-settings .map-options,
+.radar-settings .fineprint {
+  padding-left: 0;
+  padding-right: 0;
+}
+.radar-settings .map-options {
+  padding-top: 14px;
+}
+.radar-settings .radar-range {
+  grid-template-columns: 1fr 1fr;
+}
+.radar-settings .radar-range > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 3px 0;
+  min-height: 28px;
+}
+.radar-speed {
+  font-size: 11px;
+  width: 57px;
+  min-height: 30px;
+  padding: 3px 4px;
+}
+.radar-playback {
+  padding: 12px 18px 5px;
+  gap: 5px;
+}
+.radar-playback > .icon-button {
+  width: 28px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.radar-playback .radar-time {
+  min-width: 38px;
+  text-align: center;
+}
+.radar-buffer {
+  font-size: 10px;
+  padding: 0 22px;
+  color: var(--muted);
+}
+.rain-arrival {
+  overflow: hidden;
+}
+.arrival-models {
+  padding: 0 22px;
+}
+.arrival-model {
+  padding: 0 0 20px;
+}
+.arrival-model + .arrival-model {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.arrival-model > span,
+.arrival-model > p {
+  color: var(--muted);
+  font-size: 11px;
+}
+.arrival-model > strong {
+  display: block;
+  font-size: 23px;
+  font-weight: 500;
+  margin: 5px 0;
+}
+.arrival-strip {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  list-style: none;
+  margin-top: 20px;
+  gap: 3px;
+}
+.arrival-strip li {
+  text-align: center;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+.arrival-bar {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  height: 48px;
+  border-bottom: 1px solid var(--line);
+}
+.arrival-bar i {
+  display: block;
+  width: 70%;
+  background: var(--rain);
+  border-radius: 3px 3px 0 0;
+}
+.arrival-strip small {
+  display: block;
+  font-size: 8px;
+  margin-top: 6px;
+}
+.arrival-strip b {
+  display: block;
+  color: var(--rain);
+  font-weight: 500;
+  margin-top: 4px;
+}
+.arrival-unavailable {
+  padding: 0 22px 15px;
+}
+.arrival-unavailable strong {
+  font-weight: 500;
+}
+.arrival-unavailable p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 8px;
+}
+.rain-chart-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 0 22px 7px;
+}
+.rain-intensity-guide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 15px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.rain-intensity-guide > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.rain-intensity-guide i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+.intensity-light {
+  background: var(--rain);
+}
+.intensity-moderate {
+  background: var(--warn);
+}
+.intensity-heavy {
+  background: var(--danger);
+}
+.rain-chart-context {
+  padding: 0 22px 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.rain-chart-note {
+  font-size: 10px;
+  color: var(--muted);
+  padding: 7px 22px 3px;
+}
+@media (max-width: 1100px) {
+  .dashboard-summary {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 950px) {
+  .dashboard-weather-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .arrival-models {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 22px;
+  }
+  .arrival-model + .arrival-model {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+@media (max-width: 600px) {
+  .map-stage {
+    min-height: 320px;
+    aspect-ratio: 1;
+  }
+  .radar-playback {
+    flex-wrap: wrap;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .radar-playback .radar-timeline {
+    min-width: 70px;
+  }
+  .radar-settings,
+  .radar-data-note,
+  .forecast-explainer {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+  .condition-snapshot {
+    gap: 15px;
+  }
+  .condition-snapshot dt {
+    font-size: 10px;
+  }
+  .condition-snapshot dt svg {
+    display: none;
+  }
+  .condition-snapshot dd {
+    font-size: 26px;
+  }
+  .condition-snapshot dd small {
+    font-size: 11px;
+  }
+  .condition-snapshot dd > span {
+    font-size: 10px;
+  }
+  .rain-chart-guide {
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+}
 @media (max-width: 1000px) {
   .dashboard-summary {
     grid-template-columns: 1fr;
   }
   .condition-snapshot {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .risk-probability > strong {
     font-size: 64px;
@@ -2181,7 +2436,7 @@ table caption {
     font-size: 16px;
   }
   .condition-snapshot {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 20px;
   }
   .radar-range {

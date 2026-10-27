@@ -86,11 +86,13 @@ export function OverviewView() {
             <dt>First rain</dt>
             <dd>
               {wetHour
-                ? time(wetHour.time, track.timezone)
+                ? `${time(wetHour.time, track.timezone)}–${time(wetHour.time + 3600, track.timezone)}`
                 : fullRainOutlook
                   ? "None"
                   : "—"}
-              <span className="stat-note">Next 24 h, ≥ {threshold} mm/h</span>
+              <span className="stat-note">
+                Hourly window · ≥ {threshold} mm/h
+              </span>
             </dd>
           </div>
           <div>

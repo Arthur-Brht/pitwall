@@ -15,7 +15,10 @@ web/src/lib/providers.ts            Public clients and unit/interval normalizati
 web/src/lib/forecast-catalog.ts     Global/regional source choices and defaults
 web/src/lib/ensemble.ts             Ensemble member normalization and public client
 web/src/lib/rain-outlook.ts         Window-level rain estimates and source comparison
+web/src/lib/near-rain.ts            Native 15-minute rain intervals and onset windows
+web/src/lib/rain-intensity.ts       Descriptive rain-rate guides and chart scale
 web/src/lib/radar-window.ts         Radar playback bounds within available history
+web/src/lib/radar-playback.ts       Bounded scan cache and load-aware cross-fades
 web/src/lib/browser-api.ts          Local dispatch, caching and source isolation
 web/src/lib/browser-history.ts      IndexedDB snapshots and cache retention
 web/src/lib/consensus.ts            Family grouping and descriptive summaries

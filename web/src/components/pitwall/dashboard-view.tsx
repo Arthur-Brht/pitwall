@@ -1,17 +1,12 @@
 import { useMemo, useState } from "react";
-import type { FormEvent } from "react";
-import {
-  Droplets,
-  Plus,
-  SlidersHorizontal,
-  Thermometer,
-  Wind,
-} from "lucide-react";
+import { Droplets, SlidersHorizontal, Thermometer, Wind } from "lucide-react";
 import { n, time } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
 import { rainOutlook } from "@/lib/rain-outlook";
 import { sourceColor } from "@/lib/theme";
 import CircuitMap from "./circuit-map";
+import { RainArrivalView } from "./rain-arrival";
+import { rainIntensity } from "@/lib/rain-intensity";
 
 const RISK = {
   elevated: "Elevated rain risk",
@@ -30,15 +25,11 @@ export function DashboardView() {
     threshold,
     appearance,
     setSettings,
-    trackReading,
-    saveTrackReading,
     selectedSourceIds,
     disabled,
     loading,
   } = usePitwall();
   const [windowHours, setWindowHours] = useState(3);
-  const [manualTemperature, setManualTemperature] = useState("");
-  const [readingMessage, setReadingMessage] = useState("");
   const start = Math.floor(now / 3600) * 3600,
     end = start + windowHours * 3600;
   const outlook = useMemo(
@@ -56,9 +47,6 @@ export function DashboardView() {
     .map((item) => Date.parse(item.fetchedAt))
     .filter(Number.isFinite)
     .sort((a, b) => a - b)[0];
-  const ages = trackReading
-    ? Math.floor((now - Date.parse(trackReading.recordedAt) / 1000) / 60)
-    : null;
   const expected = selectedSourceIds.filter(
     (id) => !disabled.includes(id),
   ).length;
@@ -68,24 +56,6 @@ export function DashboardView() {
     { length: windowHours },
     (_, index) => start + index * 3600,
   );
-  function saveReading(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!manualTemperature.trim()) {
-      setReadingMessage("Enter a track temperature reading.");
-      return;
-    }
-    try {
-      saveTrackReading(Number(manualTemperature));
-      setManualTemperature("");
-      setReadingMessage("Track reading saved.");
-    } catch (error) {
-      setReadingMessage(
-        error instanceof Error
-          ? error.message
-          : "The reading could not be saved.",
-      );
-    }
-  }
   return (
     <>
       <div className="dashboard-controls">
@@ -133,7 +103,7 @@ export function DashboardView() {
               {outlook.probability !== null && <small>%</small>}
             </strong>
             <div>
-              <span>Estimated chance of rain</span>
+              <span>Chance of rain</span>
               <p>
                 {outlook.ensembleSystems
                   ? `${n(outlook.probabilityMin, 0) !== n(outlook.probabilityMax, 0) ? `${n(outlook.probabilityMin, 0)}–${n(outlook.probabilityMax, 0)}% · ` : ""}${outlook.ensembleSystems} ensemble systems`
@@ -156,8 +126,8 @@ export function DashboardView() {
             />
           </div>
           <p className="risk-context">
-            {outlook.wetFamilies} of {outlook.reportingFamilies} model families
-            have a rain signal.
+            {outlook.wetFamilies}/{outlook.reportingFamilies} model families
+            agree.
             {outlook.incompleteSources > 0
               ? ` ${outlook.incompleteSources} forecast${outlook.incompleteSources === 1 ? " is" : "s are"} incomplete.`
               : ""}
@@ -167,59 +137,57 @@ export function DashboardView() {
           </p>
           <dl className="risk-timing">
             <div>
-              <dt>First rain signal</dt>
+              <dt>Earliest hourly signal</dt>
               <dd>
                 {outlook.firstRain === null
                   ? outlook.incompleteSources || unavailable || !agreementTotal
                     ? "Unknown"
                     : "None in window"
-                  : outlook.firstRain <= now
-                    ? "This hour"
-                    : time(outlook.firstRain, track.timezone)}
+                  : `${time(outlook.firstRain, track.timezone)}–${time(outlook.firstRain + 3600, track.timezone)}`}
               </dd>
             </div>
             <div>
-              <dt>Highest hourly forecast</dt>
+              <dt>Heaviest forecast hour</dt>
               <dd>
                 {n(outlook.maxRain, 1)} <small>mm/h</small>
+                <span className="rain-intensity-note">
+                  {rainIntensity(outlook.maxRain)}
+                </span>
               </dd>
             </div>
           </dl>
           <details className="dashboard-method">
-            <summary>How to read this</summary>
+            <summary>Estimate details</summary>
             <p>
-              The percentage estimates at least {threshold} mm in any hour of
-              the selected window. Each complete ensemble member is checked
-              across the whole window; the middle estimate across model families
-              is shown, with their range. Agreement counts are separate from
-              this estimate. These are model estimates, not a calibrated
-              guarantee or a measure of grip.
+              The chance estimates at least {threshold} mm in any hour of this
+              window. It comes from repeated model runs, not the number of
+              providers agreeing.
             </p>
             <p>
-              Rain risk is elevated at an ensemble estimate of 60% or when at
-              least half of three or more reporting model families predict rain.
-              It is possible when any ensemble estimate reaches 20% or any model
-              family signals rain. Otherwise it is low, or limited when there is
-              too little evidence.
+              Models can miss showers. This is a weather estimate, not a grip
+              assessment.
             </p>
-            {outlook.estimates.map((estimate) => (
-              <p key={estimate.id}>
-                {estimate.name}:{" "}
-                {estimate.probability === null
-                  ? "unavailable"
-                  : `${n(estimate.probability, 0)}% · ${estimate.wetMembers}/${estimate.validMembers} complete members`}
-                {estimate.validMembers < estimate.totalMembers
-                  ? ` · ${estimate.totalMembers - estimate.validMembers} incomplete`
-                  : ""}
-              </p>
-            ))}
+            <dl className="ensemble-estimates">
+              {outlook.estimates.map((estimate) => (
+                <div key={estimate.id}>
+                  <dt>{estimate.name.replace(" ensemble", "")}</dt>
+                  <dd>
+                    {estimate.probability === null
+                      ? "Unavailable"
+                      : `${n(estimate.probability, 0)}%`}
+                  </dd>
+                </div>
+              ))}
+            </dl>
             {oldestEnsemble && (
               <p>
-                Oldest ensemble fetched{" "}
-                {time(oldestEnsemble / 1000, track.timezone)}. The forecast
-                window includes the complete current hour.
+                Updated {time(oldestEnsemble / 1000, track.timezone)} · includes
+                the full current hour.
               </p>
             )}
+            <a href="https://github.com/Arthur-Brht/pitwall/blob/main/docs/DASHBOARD.md">
+              Calculation notes
+            </a>
           </details>
         </section>
         <section
@@ -266,55 +234,12 @@ export function DashboardView() {
                 <span>Gusts up to {n(current?.gust)} km/h</span>
               </dd>
             </div>
-            <div>
-              <dt>
-                <Thermometer size={15} /> Track temperature
-              </dt>
-              <dd>
-                {trackReading ? n(trackReading.temperature, 1) : "—"}
-                <small>{trackReading ? "°C" : ""}</small>
-
-                <span>
-                  {trackReading
-                    ? `Manual · ${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: track.timezone }).format(new Date(trackReading.recordedAt))}${ages !== null && ages > 60 ? " · older reading" : ""}`
-                    : "No trackside reading"}
-                </span>
-              </dd>
-            </div>
           </dl>
-          <details className="track-reading">
-            <summary>
-              <Plus size={13} />
-              {trackReading ? "Update track reading" : "Add track reading"}
-            </summary>
-            <p className="fineprint">
-              Enter your thermometer reading. Weather models do not measure
-              asphalt temperature.
-            </p>
-            <form onSubmit={saveReading}>
-              <label>
-                Track temperature (°C)
-                <input
-                  type="number"
-                  min="-50"
-                  max="100"
-                  step="0.1"
-                  value={manualTemperature}
-                  onChange={(event) => setManualTemperature(event.target.value)}
-                  required
-                />
-              </label>
-              <button className="button" type="submit">
-                Save reading
-              </button>
-            </form>
-          </details>
-          {readingMessage && (
-            <p role="status" className="fineprint">
-              {readingMessage}
-            </p>
-          )}
         </section>
+      </div>
+      <div className="dashboard-weather-grid">
+        <CircuitMap track={track} />
+        <RainArrivalView end={end} />
       </div>
       <section className="panel dashboard-comparison">
         <div className="panel-head wrap">
@@ -401,12 +326,18 @@ export function DashboardView() {
             </p>
           )}
         </div>
-        <p className="fineprint">
-          A dash means missing data. More forecasts add perspectives; related
-          models still share one family vote.
-        </p>
+        <details className="forecast-explainer">
+          <summary>Why forecasts from other countries?</summary>
+          <p>
+            JMA, NOAA and other agencies run global models, so they forecast
+            Europe too. The country names identify the agency. Open-Meteo
+            delivers these forecasts to Pitwall.
+          </p>
+          <p>
+            A dash means missing data. Related models share one family vote.
+          </p>
+        </details>
       </section>
-      <CircuitMap track={track} />
     </>
   );
 }

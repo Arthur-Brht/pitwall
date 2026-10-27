@@ -78,3 +78,71 @@ test("source selection requests only chosen forecast products and rejects unknow
   );
   assert.equal(calls.length, before);
 });
+
+test("native timing fetches only the selected regional family and keeps it out of the hourly vote count", async (context) => {
+  const models = [];
+  context.mock.method(globalThis, "fetch", async (input) => {
+    const url = new URL(String(input));
+    const first = Math.floor(Date.now() / 3600000) * 3600;
+    if (url.searchParams.has("minutely_15")) {
+      models.push(url.searchParams.get("models"));
+      return Response.json({
+        minutely_15_units: { precipitation: "mm" },
+        minutely_15: {
+          time: [first + 3600, first + 4500],
+          precipitation: [0, 0.1],
+        },
+      });
+    }
+    return Response.json({
+      hourly: {
+        time: [first, first + 3600],
+        temperature_2m: [15, 15],
+        precipitation: [0, 0],
+      },
+    });
+  });
+  const result = await (
+    await apiFetch(
+      "/api/weather?lat=52.958&lon=6.525&timezone=Europe/Amsterdam&sources=icon",
+    )
+  ).json();
+  assert.deepEqual(models, ["dwd_icon_d2_15min"]);
+  assert.equal(result.nearRain.forecasts.length, 1);
+  assert.equal(result.forecasts.length, 1);
+  assert.equal(result.forecasts[0].id, "icon");
+});
+
+test("a 2.1 saved forecast remains available on an offline upgrade to finer timing", async (context) => {
+  const first = Math.floor(Date.now() / 3600000) * 3600;
+  const weather = {
+    location: { lat: 17, lon: 0, timezone: "UTC" },
+    fetchedAt: new Date().toISOString(),
+    forecasts: [
+      {
+        id: "ecmwf",
+        name: "ECMWF IFS",
+        family: "ecmwf",
+        fetchedAt: new Date().toISOString(),
+        hours: [{ time: first, temperature: 15, precipitation: 0 }],
+      },
+    ],
+    statuses: [],
+    notes: [],
+  };
+  await writeCache(
+    `weather-v2:${locationKey(17, 0)}:UTC:ecmwf`,
+    weather,
+    Date.now() + 600000,
+    Date.now() + 86400000,
+  );
+  context.mock.method(globalThis, "fetch", async () => {
+    throw TypeError("simulated offline upgrade");
+  });
+  const result = await (
+    await apiFetch("/api/weather?lat=17&lon=0&timezone=UTC&sources=ecmwf")
+  ).json();
+  assert.equal(result.delivery, "stale");
+  assert.equal(result.forecasts[0].fetchedAt, weather.forecasts[0].fetchedAt);
+  assert.equal(result.nearRain.forecasts.length, 0);
+});
