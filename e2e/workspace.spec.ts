@@ -235,6 +235,8 @@ test("modal keyboard focus is contained and returns to the opener", async ({
 test("all views fit the viewport and have no serious accessibility violations", async ({
   page,
 }, testInfo) => {
+  // Four complete axe scans take longer on shared CI runners.
+  if (process.env.CI) test.slow();
   await open(page);
   for (const name of [
     "Overview",
