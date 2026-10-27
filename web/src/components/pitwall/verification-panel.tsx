@@ -66,11 +66,13 @@ export function VerificationPanel({
     <section className="panel verification-panel">
       <div className="panel-head">
         <div>
-          <div className="eyebrow">CHECK FORECASTS AGAINST MEASUREMENTS</div>
           <h2>Forecast verification</h2>
+          <p className="panel-sub">
+            Score saved forecasts against your own station data
+          </p>
         </div>
         <button
-          className="button secondary"
+          className="button secondary small"
           onClick={() => input.current?.click()}
         >
           <Upload size={14} />
@@ -85,11 +87,6 @@ export function VerificationPanel({
           onChange={(e) => void load(e.target.files?.[0])}
         />
       </div>
-      <p className="verification-note">
-        Compare saved forecasts with your own hourly station measurements. Files
-        stay in this page until you reload; nothing is uploaded. Forecast
-        changes alone do not establish accuracy.
-      </p>
       {message && (
         <p className="verification-note" role="status">
           {message}
@@ -105,35 +102,31 @@ export function VerificationPanel({
           <p className="verification-note">
             <strong>{observations[0].station}</strong> ·{" "}
             {result.distance?.toFixed(1)} km from the selected coordinates ·{" "}
-            {result.matchedHours} matched valid hours. Source:{" "}
-            {observations[0].source}. Nearby station conditions can differ from
-            the circuit.
+            {result.matchedHours} matched valid hours · {observations[0].source}
           </p>
           {result.matchedHours < 24 && (
             <p className="inline-warning">
-              Limited sample: {result.matchedHours} distinct measured hours.
-              This comparison cannot establish general forecast accuracy.
+              Only {result.matchedHours} measured hours, too few to judge
+              accuracy in general.
             </p>
           )}
           {!result.scores.length ? (
             <p className="verification-note">
-              No eligible matches yet. Keep forecasts captured before the
-              measured UTC hour, then import observations for those same hours.
-              Missing values are excluded.
+              No matches yet. Import measurements for hours Pitwall forecast in
+              advance.
             </p>
           ) : (
             <>
               <div
-                className="session-source-scroll"
+                className="table-scroll"
                 tabIndex={0}
                 role="region"
                 aria-label="Forecast verification results"
               >
-                <table className="session-source-table">
+                <table className="data-table">
                   <caption>
-                    Errors against measured station conditions; lower mean
-                    absolute error is better. Positive bias means
-                    overprediction.
+                    Lower mean absolute error is better. Positive bias means the
+                    forecast ran high.
                   </caption>
                   <thead>
                     <tr>
@@ -141,9 +134,11 @@ export function VerificationPanel({
                       <th scope="col">Lead</th>
                       <th scope="col">Field</th>
                       <th scope="col">Hours</th>
-                      <th scope="col">Mean absolute error</th>
+                      <th scope="col">Mean error</th>
                       <th scope="col">Bias</th>
-                      <th scope="col">Wet hits / misses / false alarms</th>
+                      <th scope="col" title="Hits / misses / false alarms">
+                        Wet calls
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -176,7 +171,7 @@ export function VerificationPanel({
               </div>
               <div className="verification-actions">
                 <button
-                  className="button secondary"
+                  className="button secondary small"
                   onClick={() =>
                     download(
                       `pitwall-${track.id}-verification.csv`,
@@ -227,8 +222,8 @@ export function VerificationPanel({
           )}
         </>
       )}
-      <details className="verification-note">
-        <summary>Observation CSV format and method</summary>
+      <details className="disclosure">
+        <summary>CSV format and method</summary>
         <p>
           Use one station within 25 km. UTC timestamps must mark exact hours.
           Temperature is °C, wind is km/h, and rain is the measured total for

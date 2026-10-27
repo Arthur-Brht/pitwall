@@ -4,11 +4,16 @@ import { writeFile } from "node:fs/promises";
 // Invoked only by the explicit local/CI --pitwall-test launch. No renderer API is exposed.
 export async function packagedSmoke(window, origin) {
   const report = await window.webContents.executeJavaScript(`(async () => {
-    for (let i = 0; i < 100 && !document.body.innerText.includes('Weather desk'); i++)
+    const rendered = () => ['Overview', 'Sessions', 'Models', 'History'].every(label =>
+      [...document.querySelectorAll('nav[aria-label="Weather views"] button')].some(button => button.textContent === label));
+    for (let i = 0; i < 100 && !rendered(); i++)
       await new Promise(resolve => setTimeout(resolve, 100));
     const reopen = ${JSON.stringify(process.env.PITWALL_SMOKE_REOPEN === "1")};
     const previous = localStorage.getItem('pitwall-desktop-smoke');
-    if (!reopen) localStorage.setItem('pitwall-desktop-smoke', 'retained');
+    if (!reopen) {
+      localStorage.setItem('pitwall-desktop-smoke', 'retained');
+      localStorage.setItem('pitwall-theme', 'dark');
+    }
     const dbWorks = await new Promise(resolve => {
       const request = indexedDB.open('pitwall-desktop-smoke', 1);
       request.onupgradeneeded = () => request.result.createObjectStore('checks');
@@ -26,7 +31,8 @@ export async function packagedSmoke(window, origin) {
     });
     return {
       title: document.title,
-      rendered: document.body.innerText.includes('Weather desk'),
+      rendered: rendered(),
+      appearanceRetained: !reopen || document.documentElement.dataset.theme === 'dark',
       desktop: window.pitwallDesktop?.isDesktop === true,
       nodeUnavailable: typeof require === 'undefined' && typeof process === 'undefined',
       installButtonHidden: !document.body.innerText.includes('Use Pitwall as an app'),
@@ -54,6 +60,7 @@ export async function packagedSmoke(window, origin) {
     !report.installButtonHidden ||
     !report.indexedDB ||
     !report.persisted ||
+    !report.appearanceRetained ||
     !report.sandbox ||
     !report.originMatches
   )

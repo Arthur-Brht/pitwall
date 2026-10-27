@@ -1,10 +1,14 @@
 ﻿# Pitwall
 
+V2 puts the outlook, next 24 hours and radar first, with detailed source tables and methods available when you need them. Choose **Light**, **Dark** or **System** in Preferences; the sun/moon button switches appearance directly. Your choice stays on this device.
+
 Compare racetrack forecasts, inspect recent radar over the circuit, and review the weather expected during your sessions.
 
 **A local app for Mac and Windows. No account, Terminal or Node.js installation is needed to use the packaged application.** GitHub holds the source, checks and installer downloads; there is no hosted weather application.
 
-![Pitwall overview showing isolated example weather data](docs/images/overview.png)
+![Pitwall V2 in light mode showing isolated example weather data](docs/images/overview.png)
+
+[See dark mode](docs/images/overview-dark.png) ? [Mobile layout](docs/images/overview-mobile.png)
 
 Screenshots and the [short walkthrough](docs/images/walkthrough.webm) use clearly synthetic browser-test data and an example session. They demonstrate the interface; they are not weather reports. The normal application fetches real provider data and has no seeded demo weather.
 
@@ -47,10 +51,10 @@ The source/browser version runs at **http://localhost:4173/** until stopped with
 
 1. Choose a circuit, search for a location, or enter coordinates and its timezone.
 2. Compare ECMWF IFS, DWD ICON, NOAA GFS and Météo-France through Open-Meteo, alongside MET Norway. Enable or disable feeds to inspect their differences.
-3. Use **Session planner** to enter a date, local start time and duration. Inspect each source's rain/gust coverage and the model-dry windows that fit your session.
+3. Use **Sessions** to enter a date, local start time and duration. Inspect each source's rain/gust coverage and the model-dry windows that fit your session.
 4. Save and edit plans on this device. Download a calendar file or back up plans and preferences as JSON.
 
-The map shows recent historical radar and attributed circuit outlines where available. **History & sources** records actual fetched predictions for the same valid hour; it exports CSV and can compare those predictions with imported station observations. [Forecast verification method and pilot](docs/FORECAST_VERIFICATION.md).
+The map shows recent historical radar and attributed circuit outlines where available. **History** records actual fetched predictions for the same valid hour; it exports CSV and can compare those predictions with imported station observations. [Forecast verification method and pilot](docs/FORECAST_VERIFICATION.md).
 
 ![Per-source session evidence](docs/images/planner.png)
 

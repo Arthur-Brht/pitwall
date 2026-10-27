@@ -2,54 +2,16 @@ import { time } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
 import { TABS } from "@/lib/use-pitwall-state";
 import {
+  AlertTriangle,
   ArrowDownToLine,
-  ChevronRight,
-  Flag,
+  CloudOff,
   History,
-  Info,
-  Loader2,
+  Menu,
+  Moon,
   RefreshCw,
   Settings2,
+  Sun,
 } from "lucide-react";
-
-export function Topbar() {
-  const { track, setSettings, mobileNav, setMobileNav } = usePitwall();
-  return (
-    <header className="topbar">
-      <div className="breadcrumbs">
-        <button
-          className="mobile-menu"
-          onClick={() => setMobileNav((v) => !v)}
-          aria-label="Open saved circuits"
-          aria-expanded={mobileNav}
-          aria-controls="saved-circuits"
-        >
-          <Flag size={17} />
-        </button>
-        <span>Weather desk</span>
-        <ChevronRight size={12} />
-        <strong>{track.name}</strong>
-      </div>
-      <div className="topbar-right">
-        <span className="timezone-label">
-          {track.timezone.replace("_", " ")}
-        </span>
-        <span className="topbar-divider" />
-        <span className="unit">°C · km/h</span>
-        <button
-          className="icon-button"
-          onClick={(event) => {
-            event.currentTarget.focus();
-            setSettings(true);
-          }}
-          aria-label="Weather preferences"
-        >
-          <Settings2 size={16} />
-        </button>
-      </div>
-    </header>
-  );
-}
 
 export function WorkspaceHeading() {
   const {
@@ -63,47 +25,86 @@ export function WorkspaceHeading() {
     setSettings,
     storageMessage,
     active,
-    families,
+    availableCount,
     cachedSources,
-    oldestFetch,
     oldestAge,
     refreshWeather,
     exportForecast,
     dateLabel,
+    mobileNav,
+    setMobileNav,
+    appearance,
   } = usePitwall();
+  const failed = data?.statuses.filter((s) => s.status === "error") ?? [];
+  const rateLimited = failed.some((s) => s.message.includes("rate limit"));
+  const nextTheme = appearance.theme === "dark" ? "light" : "dark";
   return (
-    <>
-      <div className="page-heading">
-        <div>
-          <div className="eyebrow">
-            {track.country.toUpperCase()}{" "}
-            <span className="dot-separator">/</span>{" "}
-            {track.lengthKm
-              ? `${track.lengthKm.toFixed(3)} KM CIRCUIT`
-              : "CUSTOM WEATHER LOCATION"}
-          </div>
-          <h1>
-            {track.name}
-            <span className="heading-dot" />
-          </h1>
-          <p>
-            {dateLabel}
-            <span className="dot-separator">·</span>
-            {track.lat.toFixed(4)}°, {track.lon.toFixed(4)}°
+    <header className="page-header">
+      <div className="header-top">
+        <button
+          className="icon-button mobile-menu"
+          onClick={() => setMobileNav((v) => !v)}
+          aria-label="Open saved circuits"
+          aria-expanded={mobileNav}
+          aria-controls="saved-circuits"
+        >
+          <Menu size={18} />
+        </button>
+        <div className="header-title">
+          <h1>{track.name}</h1>
+          <p className="header-meta">
+            <span>{track.country}</span>
+            <span>{dateLabel}</span>
+            {data?.forecasts.length ? (
+              <span
+                title={
+                  oldestAge === null
+                    ? undefined
+                    : `Oldest enabled forecast fetched ${oldestAge} min ago`
+                }
+              >
+                {active.length} of {availableCount} sources
+                {data.fetchedAt &&
+                  ` · updated ${time(new Date(data.fetchedAt).getTime() / 1000, track.timezone)}`}
+              </span>
+            ) : null}
           </p>
         </div>
-        <div className="heading-actions">
+        <div className="header-actions">
           <button
-            className="button secondary"
+            className="icon-button"
+            onClick={() => appearance.setPreference(nextTheme)}
+            aria-label={`Switch to ${nextTheme} mode`}
+            title={`Switch to ${nextTheme} mode`}
+          >
+            {appearance.theme === "dark" ? (
+              <Sun size={16} />
+            ) : (
+              <Moon size={16} />
+            )}
+          </button>
+          <button
+            className="icon-button"
             aria-label="Export data"
+            title="Export forecast data"
             onClick={exportForecast}
             disabled={!data?.forecasts.length}
           >
-            <ArrowDownToLine size={14} />
-            <span>Export data</span>
+            <ArrowDownToLine size={16} />
           </button>
           <button
-            className="button"
+            className="icon-button"
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setSettings(true);
+            }}
+            aria-label="Weather preferences"
+            title="Preferences"
+          >
+            <Settings2 size={16} />
+          </button>
+          <button
+            className="button refresh-button"
             onClick={refreshWeather}
             disabled={loading}
           >
@@ -113,154 +114,88 @@ export function WorkspaceHeading() {
         </div>
       </div>
       <nav className="view-tabs" aria-label="Weather views">
-        {TABS.map(([id, label, Icon]) => (
+        {TABS.map(([id, label]) => (
           <button
             key={id}
             className={view === id ? "active" : ""}
             aria-current={view === id ? "page" : undefined}
             onClick={() => setView(id)}
           >
-            <Icon size={15} />
             {label}
           </button>
         ))}
-        <span className="updated-label">
-          {loading ? (
-            <>
-              <span className="tiny-dot amber" />
-              Fetching sources
-            </>
-          ) : data ? (
-            <>
-              <span
-                className={`tiny-dot ${cachedSources.length ? "amber" : "lime"}`}
-              />
-              {cachedSources.length
-                ? "Saved data · "
-                : data.delivery === "cache"
-                  ? "Cached · "
-                  : ""}
-              Fetched{" "}
-              {time(new Date(data.fetchedAt).getTime() / 1000, track.timezone)}
-            </>
-          ) : (
-            "Awaiting data"
-          )}
-        </span>
       </nav>
-      {data?.forecasts.length ? (
-        <div className="forecast-provenance">
-          <span>
-            {active.length} enabled feed{active.length === 1 ? "" : "s"} ·{" "}
-            {families} model famil{families === 1 ? "y" : "ies"}
-          </span>
-          <span
-            title={
-              oldestFetch === null
-                ? undefined
-                : `Oldest enabled forecast fetched ${time(oldestFetch, track.timezone, true)}`
-            }
-          >
-            {oldestAge === null
-              ? "No source enabled"
-              : `Oldest fetch ${oldestAge < 60 ? `${oldestAge} min` : `${Math.floor(oldestAge / 60)}h ${oldestAge % 60}m`} ago`}
+      {loading && (
+        <div className="loading-banner" role="status">
+          <span className="sr-only">
+            Updating the forecast for {track.name}
           </span>
         </div>
-      ) : null}
+      )}
       {pwa.offline && (
-        <div className="offline-banner" role="status">
-          <Info size={17} />
-          <div>
-            <strong>You are offline</strong>
-            <p>
-              Saved circuits and sessions are available on this device.
-              Forecasts and radar require a connection; anything still on screen
-              may be out of date.
-            </p>
-          </div>
+        <div className="notice offline-banner" role="status">
+          <CloudOff size={16} />
+          <p>
+            <strong>You are offline.</strong> Saved circuits and sessions still
+            work; forecasts and radar need a connection.
+          </p>
         </div>
       )}
       {cachedSources.length > 0 && (
-        <div className="offline-banner" role="status">
-          <History size={17} />
-          <div>
+        <div className="notice offline-banner" role="status">
+          <History size={16} />
+          <p>
             <strong>
               {data?.delivery === "stale"
-                ? "Showing saved forecasts"
-                : "Some sources are using saved forecasts"}
-            </strong>
-            <p>
-              {cachedSources
-                .map(
-                  (s) =>
-                    `${s.name} (${s.fetchedAt ? time(Date.parse(s.fetchedAt) / 1000, track.timezone, true) : "fetch time unavailable"})`,
-                )
-                .join(" · ")}
-              . These sources could not refresh. Their original fetch times and
-              missing values are preserved.
-            </p>
-          </div>
+                ? "Showing saved forecasts."
+                : "Some sources are showing a saved forecast."}
+            </strong>{" "}
+            {cachedSources
+              .map(
+                (s) =>
+                  `${s.name} from ${s.fetchedAt ? time(Date.parse(s.fetchedAt) / 1000, track.timezone, true) : "an unknown time"}`,
+              )
+              .join(", ")}
+            .
+          </p>
         </div>
       )}
       {(storageMessage ||
         (data?.storage &&
           !data.storage.saved &&
           data.forecasts.length > 0)) && (
-        <div className="offline-banner" role="status">
-          <Info size={17} />
-          <div>
-            <strong>Device storage needs attention</strong>
-            <p>{storageMessage || data?.storage?.message}</p>
-          </div>
-          <button
-            className="button secondary"
-            onClick={() => setSettings(true)}
-          >
-            Backups
-          </button>
+        <div className="notice offline-banner" role="status">
+          <AlertTriangle size={16} />
+          <p>{storageMessage || data?.storage?.message}</p>
+          <button onClick={() => setSettings(true)}>Backups</button>
         </div>
       )}
       {error && (
-        <div className="error-banner" role="alert">
-          <Info size={18} />
-          <div>
-            <strong>Forecast unavailable</strong>
-            <p>{error}</p>
-          </div>
+        <div className="notice error-banner" role="alert">
+          <AlertTriangle size={16} />
+          <p>
+            <strong>Forecast unavailable.</strong> {error}
+          </p>
           <button onClick={refreshWeather} disabled={loading}>
-            Try again <RefreshCw size={13} />
+            Try again
           </button>
         </div>
       )}
-      {!loading &&
-      data?.forecasts.length &&
-      data.statuses.some((s) => s.status === "error") ? (
-        <div className="error-banner" role="status">
-          <Info size={18} />
-          <div>
-            <strong>Some forecast sources are unavailable</strong>
-            <p>
-              {data.statuses.filter((s) => s.status === "error").length} sources
-              could not respond.{" "}
-              {data.statuses.some(
-                (s) => s.status === "error" && s.message.includes("rate limit"),
-              )
-                ? "The provider has rate-limited requests from this connection. Remaining sources still update."
-                : "The comparison uses only the sources that returned data."}
-            </p>
-          </div>
-          <button onClick={() => setView("history")}>
-            View source status <ChevronRight size={13} />
-          </button>
+      {!loading && data?.forecasts.length && failed.length ? (
+        <div className="notice error-banner" role="status">
+          <AlertTriangle size={16} />
+          <p>
+            <strong>
+              {failed.length} source{failed.length === 1 ? "" : "s"} didn’t
+              respond.
+            </strong>{" "}
+            {rateLimited
+              ? "The provider is rate-limiting this connection."
+              : "Pitwall is using the rest."}
+          </p>
+          <button onClick={() => setView("history")}>Details</button>
         </div>
       ) : null}
-      {loading && (
-        <div className="loading-banner" role="status">
-          <Loader2 size={16} className="spin" />
-          Comparing weather sources for {track.name}…
-          <span>Each source can succeed independently.</span>
-        </div>
-      )}
-    </>
+    </header>
   );
 }

@@ -8,6 +8,9 @@ const assets = (await readdir(new URL("../dist/assets/", import.meta.url)))
   .map((name) => `assets/${name}`);
 const revision = createHash("sha256")
   .update(assets.join("\n"))
+  .update(
+    await readFile(new URL("../web/public/theme-init.js", import.meta.url)),
+  )
   .digest("hex")
   .slice(0, 16);
 const template = await readFile(

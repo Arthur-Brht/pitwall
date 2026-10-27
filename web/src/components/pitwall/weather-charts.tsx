@@ -1,5 +1,7 @@
 import type { ConsensusHour, Forecast } from "@/lib/contracts";
 import { n, time } from "@/lib/format";
+import { usePitwall } from "@/lib/pitwall-context";
+import { sourceColor } from "@/lib/theme";
 import {
   Area,
   AreaChart,
@@ -37,6 +39,16 @@ export function ChartTip({
     </div>
   );
 }
+export function useChartTheme() {
+  const { appearance } = usePitwall();
+  const c = appearance.colors;
+  return {
+    colors: c,
+    source: (f: Forecast) => sourceColor(f.color, appearance.theme),
+    grid: <CartesianGrid stroke={c.grid} vertical={false} />,
+    axis: { stroke: c.axis, tickLine: false, axisLine: false, fontSize: 11 },
+  };
+}
 export function RainChart({
   hours,
   forecasts,
@@ -48,6 +60,8 @@ export function RainChart({
   tz: string;
   height?: number;
 }) {
+  const theme = useChartTheme();
+  const { colors } = theme;
   const rows = hours.map((h) => {
     const r: Record<string, any> = {
       time: h.time,
@@ -64,8 +78,8 @@ export function RainChart({
   if (!rows.length)
     return (
       <Empty
-        title="No precipitation forecast"
-        detail="Refresh the forecast or enable a weather source."
+        title="No rain forecast"
+        detail="Refresh or turn on a weather source."
       />
     );
   return (
@@ -77,46 +91,36 @@ export function RainChart({
       >
         <AreaChart
           data={rows}
-          margin={{ top: 12, right: 16, left: -18, bottom: 0 }}
+          margin={{ top: 12, right: 8, left: -22, bottom: 0 }}
         >
           <defs>
             <linearGradient id="rain-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#e2fa76" stopOpacity={0.25} />
-              <stop offset="100%" stopColor="#e2fa76" stopOpacity={0} />
+              <stop offset="0%" stopColor={colors.rain} stopOpacity={0.28} />
+              <stop offset="100%" stopColor={colors.rain} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <CartesianGrid stroke="#ffffff0c" vertical={false} />
+          {theme.grid}
           <XAxis
             dataKey="time"
             tickFormatter={(t) => time(t, tz)}
             minTickGap={35}
-            stroke="#58616b"
-            tickLine={false}
-            axisLine={false}
-            fontSize={10}
+            {...theme.axis}
           />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            stroke="#58616b"
-            fontSize={10}
-            unit=""
-            domain={[0, "auto"]}
-          />
+          <YAxis {...theme.axis} domain={[0, "auto"]} />
           <Tooltip content={<ChartTip tz={tz} />} />
           <Area
             dataKey="range"
             name="Highest forecast · mm/h"
             type="linear"
             stroke="none"
-            fill="#758288"
-            fillOpacity={0.09}
+            fill={colors.rainRange}
+            fillOpacity={0.1}
           />
           <Area
             dataKey="median"
-            name="Family median · mm/h"
+            name="Model median · mm/h"
             type="linear"
-            stroke="#e2fa76"
+            stroke={colors.rain}
             strokeWidth={2}
             fill="url(#rain-fill)"
             connectNulls={false}
@@ -126,12 +130,12 @@ export function RainChart({
               key={f.id}
               dataKey={f.id}
               name={`${f.name} · mm/h`}
-              stroke={f.color}
-              strokeWidth={1.2}
+              stroke={theme.source(f)}
+              strokeWidth={1.4}
               dot={false}
               type="linear"
               connectNulls={false}
-              opacity={0.7}
+              opacity={0.85}
             />
           ))}
         </AreaChart>
@@ -148,40 +152,34 @@ export function MetricChart({
   tz: string;
   metric: "temperature" | "wind";
 }) {
+  const theme = useChartTheme();
+  const { colors } = theme;
   return (
-    <div className="chart" style={{ height: 185 }}>
+    <div className="chart" style={{ height: 220 }}>
       <ResponsiveContainer
         width="100%"
         height="100%"
-        initialDimension={{ width: 320, height: 185 }}
+        initialDimension={{ width: 320, height: 220 }}
       >
         <LineChart
           data={hours}
-          margin={{ top: 12, right: 12, left: -18, bottom: 0 }}
+          margin={{ top: 12, right: 8, left: -22, bottom: 0 }}
         >
-          <CartesianGrid stroke="#ffffff0c" vertical={false} />
+          {theme.grid}
           <XAxis
             dataKey="time"
             tickFormatter={(t) => time(t, tz)}
             minTickGap={40}
-            stroke="#58616b"
-            tickLine={false}
-            axisLine={false}
-            fontSize={10}
+            {...theme.axis}
           />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            stroke="#58616b"
-            fontSize={10}
-          />
+          <YAxis {...theme.axis} />
           <Tooltip content={<ChartTip tz={tz} />} />
           {metric === "temperature" ? (
             <>
               <Line
                 dataKey="temperature"
                 name="Median air · °C"
-                stroke="#edc383"
+                stroke={colors.temperature}
                 strokeWidth={2}
                 dot={false}
                 connectNulls={false}
@@ -189,8 +187,8 @@ export function MetricChart({
               <Line
                 dataKey="dewpoint"
                 name="Median dew point · °C"
-                stroke="#8daaaa"
-                strokeWidth={1.2}
+                stroke={colors.dewpoint}
+                strokeWidth={1.4}
                 strokeDasharray="4 4"
                 dot={false}
                 connectNulls={false}
@@ -201,7 +199,7 @@ export function MetricChart({
               <Line
                 dataKey="wind"
                 name="Median wind · km/h"
-                stroke="#94b4f5"
+                stroke={colors.wind}
                 strokeWidth={2}
                 dot={false}
                 connectNulls={false}
@@ -209,8 +207,8 @@ export function MetricChart({
               <Line
                 dataKey="gust"
                 name="Max gust · km/h"
-                stroke="#bd9de5"
-                strokeWidth={1.2}
+                stroke={colors.gust}
+                strokeWidth={1.4}
                 strokeDasharray="4 4"
                 dot={false}
                 connectNulls={false}

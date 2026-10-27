@@ -1,8 +1,8 @@
 import { time } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
-import { ArrowDownToLine, Info, Loader2, RefreshCw } from "lucide-react";
+import { sourceColor } from "@/lib/theme";
+import { ArrowDownToLine, Loader2, RefreshCw } from "lucide-react";
 import {
-  CartesianGrid,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -10,8 +10,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { SourceCard } from "./source-card";
-import { ChartTip } from "./weather-charts";
+import { ChartTip, useChartTheme } from "./weather-charts";
 import { Empty } from "./weather-common";
 import { VerificationPanel } from "./verification-panel";
 
@@ -20,7 +19,6 @@ export function HistoryView() {
     track,
     threshold,
     data,
-    disabled,
     history,
     historyLoading,
     historyMessage,
@@ -28,7 +26,6 @@ export function HistoryView() {
     setHistoryValidHour,
     historyMetric,
     setHistoryMetric,
-    toggleSource,
     exportHistory,
     validHistoryHours,
     selectedHistoryHour,
@@ -37,286 +34,250 @@ export function HistoryView() {
     historySeries,
     hasHistoryEvolution,
     historyByFetch,
+    appearance,
   } = usePitwall();
+  const chart = useChartTheme();
+  const fallback = [
+    chart.colors.accent,
+    chart.colors.rain,
+    chart.colors.gust,
+    chart.colors.temperature,
+  ];
   return (
     <>
-      <div className="section-intro">
-        <div>
-          <div className="eyebrow">PROVENANCE, WITHOUT THE GUESSWORK</div>
-          <h2>Know what you are looking at.</h2>
-          <p>
-            Every source has a different model, resolution and update cycle.
-            These details matter when you compare forecasts.
-          </p>
-        </div>
-        <button
-          className="button secondary"
-          onClick={() => setHistoryRefresh((v) => v + 1)}
-          disabled={historyLoading}
-        >
-          <RefreshCw size={14} />
-          Reload history
-        </button>
-      </div>
       <section className="panel">
-        <div className="panel-head">
+        <div className="panel-head wrap">
           <div>
-            <div className="eyebrow">LOCAL FETCH LOG</div>
-            <h2>
-              Forecast evolution{" "}
-              <span className="title-unit">{history.length} recorded rows</span>
-            </h2>
+            <h2>Forecast changes</h2>
+            <p className="panel-sub">
+              How each source’s prediction for one hour shifted over time
+            </p>
           </div>
           <div className="history-controls">
-            <label className="history-hour-select">
-              METRIC
-              <select
-                aria-label="Forecast evolution metric"
-                value={historyMetric}
-                onChange={(e) =>
-                  setHistoryMetric(e.target.value as typeof historyMetric)
-                }
-              >
-                <option value="temperature">Air temperature · °C</option>
-                <option value="precipitation">Hourly rainfall · mm/h</option>
-                <option value="wind">Wind speed · km/h</option>
-              </select>
-            </label>
-            <label className="history-hour-select">
-              FORECAST VALID HOUR
-              <select
-                aria-label="Forecast valid hour"
-                value={selectedHistoryHour}
-                onChange={(e) => setHistoryValidHour(+e.target.value)}
-              >
-                {validHistoryHours.map((t) => (
-                  <option key={t} value={t}>
-                    {time(t, track.timezone, true)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <select
+              className="compact-select"
+              aria-label="Forecast evolution metric"
+              value={historyMetric}
+              onChange={(e) =>
+                setHistoryMetric(e.target.value as typeof historyMetric)
+              }
+            >
+              <option value="temperature">Temperature</option>
+              <option value="precipitation">Rain</option>
+              <option value="wind">Wind</option>
+            </select>
+            <select
+              className="compact-select"
+              aria-label="Forecast valid hour"
+              value={selectedHistoryHour}
+              onChange={(e) => setHistoryValidHour(+e.target.value)}
+            >
+              {validHistoryHours.map((t) => (
+                <option key={t} value={t}>
+                  {time(t, track.timezone, true)}
+                </option>
+              ))}
+            </select>
             <button
-              className="button secondary"
+              className="icon-button"
+              onClick={() => setHistoryRefresh((v) => v + 1)}
+              disabled={historyLoading}
+              aria-label="Reload history"
+              title="Reload history"
+            >
+              <RefreshCw size={14} />
+            </button>
+            <button
+              className="icon-button"
               disabled={!history.length || historyLoading}
               onClick={exportHistory}
+              aria-label="Export history"
+              title="Export history (CSV)"
             >
               <ArrowDownToLine size={14} />
-              Export history
             </button>
           </div>
         </div>
         {historyLoading ? (
           <div className="empty-state">
-            <Loader2 className="spin" size={24} />
-            <p>Loading recorded snapshots…</p>
+            <Loader2 className="spin" size={22} />
+            <p>Loading saved snapshots…</p>
           </div>
         ) : hasHistoryEvolution ? (
           <>
-            <div className="history-chart">
+            <div className="chart" style={{ height: 220 }}>
               <ResponsiveContainer
                 width="100%"
                 height="100%"
-                initialDimension={{ width: 320, height: 185 }}
+                initialDimension={{ width: 320, height: 220 }}
               >
                 <LineChart
                   data={historyByFetch}
-                  margin={{ top: 15, right: 20, left: 0, bottom: 0 }}
+                  margin={{ top: 12, right: 8, left: -22, bottom: 0 }}
                 >
-                  <CartesianGrid stroke="#ffffff0c" vertical={false} />
+                  {chart.grid}
                   <XAxis
                     dataKey="time"
                     type="number"
                     domain={["dataMin", "dataMax"]}
                     scale="time"
                     tickFormatter={(v) => time(v, track.timezone)}
-                    stroke="#58616b"
-                    fontSize={10}
-                    tickLine={false}
-                    axisLine={false}
+                    {...chart.axis}
                   />
-                  <YAxis
-                    stroke="#58616b"
-                    fontSize={10}
-                    unit={historyUnit}
-                    tickLine={false}
-                    axisLine={false}
-                  />
+                  <YAxis unit={historyUnit} {...chart.axis} />
                   <Tooltip content={<ChartTip tz={track.timezone} />} />
-                  {historySeries.map(({ id, points }, i) => (
-                    <Line
-                      key={id}
-                      data={points}
-                      dataKey="value"
-                      name={`${data?.forecasts.find((f) => f.id === id)?.name || id} · ${historyUnit}`}
-                      stroke={
-                        data?.forecasts.find((f) => f.id === id)?.color ||
-                        ["#e2fa76", "#91b9ec", "#bd9de5", "#e9bd76"][i % 4]
-                      }
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                      connectNulls={false}
-                    />
-                  ))}
+                  {historySeries.map(({ id, points }, i) => {
+                    const source = data?.forecasts.find((f) => f.id === id);
+                    return (
+                      <Line
+                        key={id}
+                        data={points}
+                        dataKey="value"
+                        name={`${source?.name || id} · ${historyUnit}`}
+                        stroke={
+                          source
+                            ? sourceColor(source.color, appearance.theme)
+                            : fallback[i % fallback.length]
+                        }
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                        connectNulls={false}
+                      />
+                    );
+                  })}
                 </LineChart>
               </ResponsiveContainer>
             </div>
-            <p className="chart-note">
-              Each point is a real fetched prediction for the same selected
-              valid hour. Lines show how each source changed its {historyLabel}{" "}
-              forecast ({historyUnit}). The horizontal axis is fetch time; this
-              is not observed weather or an accuracy score.
+            <p className="fineprint">
+              Each point is a real fetch of the {historyLabel} forecast. This
+              shows change, not accuracy.
             </p>
           </>
         ) : (
           <Empty
             title={
               historyByFetch.length
-                ? "Your history is beginning."
-                : "No logged history yet."
+                ? "History is building up"
+                : "No history yet"
             }
-            detail={`Forecast evolution needs at least two fetched ${historyLabel} values from the same source for this valid hour. ${historyMessage || "Snapshots accumulate from real fetches on this device."}`}
+            detail={
+              historyMessage ||
+              "Pitwall saves each forecast you fetch. Refresh later to see how predictions move."
+            }
           />
         )}
       </section>
+
       <VerificationPanel
         history={history}
         track={track}
         threshold={threshold}
       />
-      <div className="section-label">
-        CONNECTION STATUS{" "}
-        <span>
-          {data?.statuses.filter((s) => s.status === "ok").length || 0} sources
-          responding
-        </span>
-      </div>
-      <div className="connection-list">
-        {data?.statuses.map((s) => (
-          <div key={s.id} className="connection-row">
-            <span className={`connection-symbol ${s.status}`}>
-              <span className="tiny-dot" />
-            </span>
-            <strong>{s.name}</strong>
-            <span className="connection-message">{s.message}</span>
-            <span
-              className={`status-pill ${s.status === "ok" ? "" : s.status === "unconfigured" ? "neutral" : "amber"}`}
-            >
-              {s.status === "ok"
-                ? "Available"
-                : s.status === "cached"
-                  ? "Saved forecast"
-                  : s.status === "unconfigured"
-                    ? "Optional · not configured"
-                    : "Unavailable"}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div className="sources-grid">
-        {data?.forecasts.map((f) => (
-          <SourceCard
-            key={f.id}
-            forecast={f}
-            disabled={disabled.includes(f.id)}
-            toggle={() => toggleSource(f.id)}
-            tz={track.timezone}
-          />
-        ))}
-      </div>
-      <section className="panel methodology">
+
+      <section className="panel">
         <div className="panel-head">
-          <div>
-            <div className="eyebrow">HOW TO READ PITWALL</div>
-            <h2>Useful evidence. Visible limits.</h2>
-          </div>
-          <Info size={18} className="muted" />
+          <h2>
+            Connection status{" "}
+            <span className="count">
+              {data?.statuses.filter((s) => s.status === "ok").length || 0}/
+              {data?.statuses.length || 0}
+            </span>
+          </h2>
         </div>
+        <ul className="list">
+          {data?.statuses.map((s) => (
+            <li key={s.id} className="list-row connection-row">
+              <span className={`status-dot ${s.status}`} aria-hidden="true" />
+              <div className="list-main static">
+                <strong>{s.name}</strong>
+                <span>{s.message}</span>
+              </div>
+              <span className={`status-pill ${s.status}`}>
+                {s.status === "ok"
+                  ? "Online"
+                  : s.status === "cached"
+                    ? "Saved forecast"
+                    : s.status === "unconfigured"
+                      ? "Not set up"
+                      : "Unavailable"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <details className="panel disclosure methodology">
+        <summary>How Pitwall reads the forecast</summary>
         <div className="method-grid">
           <div>
-            <span>01 / CONSENSUS</span>
-            <h3>One model family, one vote.</h3>
+            <h3>One family, one vote</h3>
             <p>
-              Related services are grouped. Each family’s available outputs are
-              summarized by their median for an hour; the median across families
-              describes the center. Wet vote is the fraction of reporting
-              families at or above your rain threshold. It is not a calibrated
-              rain probability.
+              Related services are grouped. The median across families is the
+              centre; “families wet” counts how many reach your rain threshold.
+              It isn’t a calibrated probability.
             </p>
           </div>
           <div>
-            <span>02 / TIME & RAIN</span>
-            <h3>Hourly forecasts, local clock.</h3>
+            <h3>Hourly, local time</h3>
             <p>
-              Series are aligned to the same UTC valid times and shown in the
-              selected circuit’s timezone. Precipitation is an hourly amount.
-              Providers are normalized to the following interval: 14:00 rain
-              describes 14:00–15:00. Instantaneous fields such as air
-              temperature remain at the hour timestamp. Exact shower arrival is
-              not known.
+              All sources are aligned to the same hours in the circuit’s
+              timezone. Rain at 14:00 means the total for 14:00–15:00, so exact
+              shower timing isn’t known.
             </p>
           </div>
           <div>
-            <span>03 / RADAR</span>
-            <h3>Recent observation, not prediction.</h3>
+            <h3>Radar is the past</h3>
             <p>
-              RainViewer supplies recent radar frames. The frame timestamp is
-              not necessarily each underlying radar scan’s time. Native zoom 7
-              limits detail; zooming closer cannot resolve the weather at
-              individual corners. Coverage gaps and delayed scans matter.
+              RainViewer frames show recent observed rain at about zoom 7.
+              Zooming closer adds no detail, and coverage gaps matter.
             </p>
           </div>
           <div>
-            <span>04 / THE SURFACE</span>
-            <h3>Track conditions need context.</h3>
+            <h3>Not the surface</h3>
             <p>
-              Air temperature, dew point and rain signals do not measure grip,
-              surface water, drying rate, or track temperature. Compare radar
-              with trackside observations and official race-control information.
+              None of this measures grip, standing water or track temperature.
+              Combine it with trackside observations and race control.
             </p>
           </div>
         </div>
         {data?.notes?.length ? (
-          <div className="provider-notes">
+          <ul className="provider-notes">
             {data.notes.map((note, i) => (
-              <p key={i}>
-                <Info size={12} />
-                {note}
-              </p>
+              <li key={i}>{note}</li>
             ))}
-          </div>
+          </ul>
         ) : null}
-        <div className="attributions">
+        <p className="attributions">
           <a
             href="https://open-meteo.com/en/docs"
             target="_blank"
             rel="noreferrer"
           >
-            Open-Meteo documentation ↗
+            Open-Meteo docs
           </a>
           <a
             href="https://docs.api.met.no/doc/locationforecast/datamodel.html"
             target="_blank"
             rel="noreferrer"
           >
-            MET Norway documentation ↗
+            MET Norway docs
           </a>
           <a
             href="https://www.rainviewer.com/api/weather-maps-api.html"
             target="_blank"
             rel="noreferrer"
           >
-            RainViewer documentation ↗
+            RainViewer docs
           </a>
           <a
             href="https://www.openstreetmap.org/copyright"
             target="_blank"
             rel="noreferrer"
           >
-            OpenStreetMap attribution ↗
+            OpenStreetMap
           </a>
-        </div>
-      </section>
+        </p>
+      </details>
     </>
   );
 }

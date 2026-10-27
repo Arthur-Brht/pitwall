@@ -68,6 +68,7 @@ try {
     assert.equal(report.nodeUnavailable, true);
     assert.equal(report.sandbox, true);
     assert.equal(report.persisted, true);
+    assert.equal(report.appearanceRetained, true);
     assert.equal(report.indexedDB, true);
     console.log(
       JSON.stringify({ launch: reopen ? "reopen" : "first", ...report }),

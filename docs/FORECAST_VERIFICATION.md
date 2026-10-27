@@ -6,7 +6,7 @@ Pitwall can compare genuine saved predictions with measured station observations
 
 1. Keep Pitwall open occasionally at the circuit so actual predictions are recorded before their valid hours. Export history if you need evidence beyond the browser's retention window.
 2. Obtain hourly observations from a trusted station within 25 km, with coordinates, units, timestamps and measurement-period definitions. A closer station at similar elevation/exposure is preferable; distance alone does not establish representativeness.
-3. In **History & sources → Forecast verification**, download the empty CSV template and fill it with measurements. Import one station/source at a time. No API key, upload or account is involved.
+3. In **History → Forecast verification**, download the empty CSV template and fill it with measurements. Import one station/source at a time. No API key, upload or account is involved.
 4. Review the station distance, matched-hour counts, lead bands and errors. Export the comparison if needed. Imported observations are kept only in that panel until it closes or reloads.
 
 The exact CSV header is:

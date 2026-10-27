@@ -52,7 +52,7 @@ test("desktop loads all feeds, preserves plans, exports and restores a real back
 }) => {
   await page.goto("http://localhost:4175/");
   await expect(
-    page.getByText("5 enabled feeds", { exact: false }),
+    page.getByText("5 of 5 sources", { exact: false }),
   ).toBeVisible();
   expect(
     await page.evaluate(() => ({
@@ -63,7 +63,16 @@ test("desktop loads all feeds, preserves plans, exports and restores a real back
   await expect(
     page.getByRole("button", { name: "Use Pitwall as an app" }),
   ).toHaveCount(0);
-  for (const name of ["Forecast comparison", "History & sources", "Overview"])
+  const nextTheme =
+    (await page.locator("html").getAttribute("data-theme")) === "dark"
+      ? "light"
+      : "dark";
+  await page
+    .getByRole("button", { name: `Switch to ${nextTheme} mode` })
+    .click();
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", nextTheme);
+  for (const name of ["Models", "History", "Overview"])
     await page.getByRole("button", { name, exact: true }).click();
   await createSession(page);
   await page.reload();

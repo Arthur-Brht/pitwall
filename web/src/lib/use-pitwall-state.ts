@@ -24,17 +24,18 @@ import {
   searchTrack,
 } from "@/lib/tracks";
 import { useModalFocus } from "@/lib/use-modal-focus";
-import { Activity, CalendarDays, History, Layers } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import { useEffect, useMemo, useRef, useState } from "react";
 type View = "overview" | "comparison" | "planner" | "history";
-export const TABS: [View, string, typeof Activity][] = [
-  ["overview", "Overview", Activity],
-  ["comparison", "Forecast comparison", Layers],
-  ["planner", "Session planner", CalendarDays],
-  ["history", "History & sources", History],
+export const TABS: [View, string][] = [
+  ["overview", "Overview"],
+  ["planner", "Sessions"],
+  ["comparison", "Models"],
+  ["history", "History"],
 ];
 export function usePitwallState() {
   const pwa = usePwa();
+  const appearance = useTheme();
   const refreshRequested = useRef(false);
   const backupInput = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>("overview"),
@@ -314,6 +315,21 @@ export function usePitwallState() {
     .slice(0, horizon);
   const upcoming = future.slice(0, 12);
   const hasRainEvidence = future.slice(0, 24).some((h) => h.wetShare !== null);
+  const fullRainOutlook =
+    future.length >= 24 &&
+    future[0].time <= now &&
+    future
+      .slice(0, 24)
+      .every(
+        (h, i) =>
+          h.wetShare !== null &&
+          active.every((f) =>
+            f.hours.some(
+              (point) => point.time === h.time && point.precipitation !== null,
+            ),
+          ) &&
+          (i === 0 || h.time === future[i - 1].time + 3600),
+      );
   const wetHour = future
     .slice(0, 24)
     .find((h) => h.rainMax !== null && h.rainMax >= threshold);
@@ -340,19 +356,34 @@ export function usePitwallState() {
       ? null
       : Math.max(0, Math.floor((now - oldestFetch) / 60));
   const first = upcoming[0];
-  const narrative = !active.length
-    ? "Enable a source to compare the forecast."
+  const headline = !active.length
+    ? "No sources enabled"
     : !first
-      ? "Forecast hours are not available for this location."
+      ? "No forecast available"
       : first.wetShare === null
-        ? "Rainfall is unavailable for the current forecast hour. No wet or dry agreement can be assessed for this interval."
+        ? "Rain data unavailable"
+        : dissent
+          ? `Models split on rain around ${time(dissent.time, track.timezone)}`
+          : wetHour
+            ? `Rain in the forecast around ${time(wetHour.time, track.timezone)}`
+            : fullRainOutlook
+              ? "No rain forecast in the next 24 hours"
+              : "Rain outlook incomplete";
+  const narrative = !active.length
+    ? "Turn on a source in preferences to see the forecast."
+    : !first
+      ? "No forecast hours came back for this location."
+      : first.wetShare === null
+        ? "No source reported rainfall for this hour, so wet or dry can't be judged."
         : first.count < 3
-          ? "Fewer than three model families are available. Rain agreement is limited; inspect the individual sources."
+          ? "Fewer than three model families are reporting, so agreement is limited."
           : dissent
-            ? `Models diverge around ${time(dissent.time, track.timezone)}: ${dissent.wetCount} of ${dissent.count} families forecast at least ${threshold} mm in that hourly interval. Keep the radar in view.`
+            ? `${dissent.wetCount} of ${dissent.count} model families expect at least ${threshold} mm in that hour. Keep an eye on the radar.`
             : wetHour
-              ? `The first wet signal appears in the ${time(wetHour.time, track.timezone)} hourly interval: ${wetSignalSources.map((f) => f.name).join(", ")} reaches ${threshold} mm. ${wetHour.wetCount} of ${wetHour.count} family medians cross that threshold; individual related feeds can disagree.`
-              : `No enabled model family crosses ${threshold} mm per hour in the next 24 forecast hours. Local showers can still be missed.`;
+              ? `${wetSignalSources.map((f) => f.name).join(", ")} ${wetSignalSources.length === 1 ? "reaches" : "reach"} ${threshold} mm/h; ${wetHour.wetCount} of ${wetHour.count} model families agree.`
+              : fullRainOutlook
+                ? `No source reaches ${threshold} mm/h. Local showers can still be missed.`
+                : "Some rain data or hours are missing. Check individual sources before planning.";
   function refreshWeather() {
     refreshRequested.current = true;
     setRefresh((v) => v + 1);
@@ -559,7 +590,7 @@ export function usePitwallState() {
         "text/calendar;charset=utf-8",
       );
       setSessionFeedback(
-        "Calendar file downloaded. Import it into your calendar to add these session times.",
+        "Calendar file downloaded. Open it to add these sessions to your calendar.",
       );
     } catch (error) {
       setSessionError(
@@ -590,7 +621,7 @@ export function usePitwallState() {
       setEditingSessionId(null);
       setCanSave(true);
       setBackupMessage(
-        `Backup restored: ${merged.added} session${merged.added === 1 ? "" : "s"} added. Existing circuits and sessions were kept; backup preferences applied.`,
+        `Backup restored: ${merged.added} session${merged.added === 1 ? "" : "s"} added. Your existing plans were kept.`,
       );
     } catch (error) {
       setBackupMessage(
@@ -767,6 +798,7 @@ export function usePitwallState() {
     hours,
     upcoming,
     hasRainEvidence,
+    fullRainOutlook,
     wetHour,
     wetSignalSources,
     dissent,
@@ -776,6 +808,8 @@ export function usePitwallState() {
     oldestFetch,
     oldestAge,
     narrative,
+    headline,
+    appearance,
     refreshWeather,
     choose,
     toggleSource,

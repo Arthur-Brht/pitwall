@@ -2,6 +2,8 @@ import { createBackup } from "@/lib/device-state";
 import { download } from "@/lib/exports";
 import { day } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
+import { sourceColor } from "@/lib/theme";
+import { version } from "../../../../package.json";
 import {
   ArrowDownToLine,
   Check,
@@ -10,7 +12,6 @@ import {
   MapPin,
   Plus,
   Search,
-  ShieldCheck,
   Trash2,
   Upload,
   X,
@@ -55,6 +56,7 @@ export function WorkspaceDialogs() {
     preferences,
     importBackup,
     filteredTracks,
+    appearance,
   } = usePitwall();
   return (
     <>
@@ -68,10 +70,7 @@ export function WorkspaceDialogs() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-head">
-              <div>
-                <div className="eyebrow">EXPAND YOUR WEATHER DESK</div>
-                <h2 id="search-title">Find your circuit.</h2>
-              </div>
+              <h2 id="search-title">Add a location</h2>
               <button
                 className="icon-button"
                 onClick={() => setSearchOpen(false)}
@@ -80,15 +79,19 @@ export function WorkspaceDialogs() {
                 <X size={19} />
               </button>
             </div>
-            <div className="modal-tabs">
+            <div
+              className="segmented modal-tabs"
+              role="group"
+              aria-label="Add by"
+            >
               <button
-                className={!coordinateMode ? "active" : ""}
+                aria-pressed={!coordinateMode}
                 onClick={() => setCoordinateMode(false)}
               >
-                Search locations
+                Search
               </button>
               <button
-                className={coordinateMode ? "active" : ""}
+                aria-pressed={coordinateMode}
                 onClick={() => setCoordinateMode(true)}
               >
                 Coordinates
@@ -97,7 +100,7 @@ export function WorkspaceDialogs() {
             {coordinateMode ? (
               <div className="form-body">
                 <label>
-                  LOCATION NAME
+                  Location name
                   <input
                     autoFocus
                     value={coordName}
@@ -108,7 +111,7 @@ export function WorkspaceDialogs() {
                 </label>
                 <div className="form-pair">
                   <label>
-                    LATITUDE
+                    Latitude
                     <input
                       type="number"
                       min="-90"
@@ -120,7 +123,7 @@ export function WorkspaceDialogs() {
                     />
                   </label>
                   <label>
-                    LONGITUDE
+                    Longitude
                     <input
                       type="number"
                       min="-180"
@@ -133,7 +136,7 @@ export function WorkspaceDialogs() {
                   </label>
                 </div>
                 <label>
-                  TIMEZONE
+                  Timezone
                   <input
                     value={coordTz}
                     onChange={(e) => setCoordTz(e.target.value)}
@@ -149,9 +152,8 @@ export function WorkspaceDialogs() {
                   <Plus size={15} />
                   Add location
                 </button>
-                <p className="field-note">
-                  Use the circuit’s local IANA timezone. Forecast and radar are
-                  requested for these coordinates.
+                <p className="fineprint">
+                  Use an IANA timezone such as Europe/Paris.
                 </p>
               </div>
             ) : (
@@ -169,7 +171,7 @@ export function WorkspaceDialogs() {
                 </div>
                 <div className="search-results">
                   <div className="search-group-label">
-                    {query ? "CIRCUITS" : "POPULAR CIRCUITS"}
+                    {query ? "Circuits" : "Popular circuits"}
                   </div>
                   {filteredTracks.length ? (
                     filteredTracks.map((t) => (
@@ -193,15 +195,12 @@ export function WorkspaceDialogs() {
                     ))
                   ) : (
                     <p className="search-no-results">
-                      No matching circuit in the curated list. Try the city
-                      search below or enter coordinates.
+                      No circuit matches. Try a town, or enter coordinates.
                     </p>
                   )}
                   {query.length >= 2 && (
                     <>
-                      <div className="search-group-label">
-                        PLACES · OPEN-METEO GEOCODING
-                      </div>
+                      <div className="search-group-label">Places</div>
                       {searchResults.map((t) => (
                         <button key={t.id} onClick={() => choose(t)}>
                           <span className="search-pin">
@@ -228,11 +227,9 @@ export function WorkspaceDialogs() {
                 </div>
               </>
             )}
-            <div className="modal-footnote">
-              <ShieldCheck size={13} />
-              Saved locations stay on this browser. City search may not locate
-              the exact track.
-            </div>
+            <p className="modal-footnote">
+              Saved locations stay on this device.
+            </p>
           </section>
         </div>
       )}
@@ -246,10 +243,7 @@ export function WorkspaceDialogs() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-head">
-              <div>
-                <div className="eyebrow">MAKE THE COMPARISON YOURS</div>
-                <h2 id="preferences-title">Weather preferences</h2>
-              </div>
+              <h2 id="preferences-title">Preferences</h2>
               <button
                 className="icon-button"
                 onClick={() => setSettings(false)}
@@ -259,32 +253,52 @@ export function WorkspaceDialogs() {
               </button>
             </div>
             <div className="form-body">
+              <div className="settings-section-label" id="appearance-label">
+                Appearance
+              </div>
+              <div
+                className="segmented full"
+                role="group"
+                aria-labelledby="appearance-label"
+              >
+                {(["system", "light", "dark"] as const).map((option) => (
+                  <button
+                    key={option}
+                    aria-pressed={appearance.preference === option}
+                    onClick={() => appearance.setPreference(option)}
+                  >
+                    {option === "system"
+                      ? "System"
+                      : option === "light"
+                        ? "Light"
+                        : "Dark"}
+                  </button>
+                ))}
+              </div>
               <label>
-                WET VOTE THRESHOLD
+                Rain threshold
                 <select
                   value={threshold}
                   onChange={(e) => setThreshold(+e.target.value)}
                 >
-                  <option value={0.1}>0.1 mm per hour · trace-sensitive</option>
-                  <option value={0.2}>0.2 mm per hour</option>
-                  <option value={0.5}>0.5 mm per hour</option>
-                  <option value={1}>1.0 mm per hour</option>
+                  <option value={0.1}>0.1 mm/h · any trace</option>
+                  <option value={0.2}>0.2 mm/h</option>
+                  <option value={0.5}>0.5 mm/h</option>
+                  <option value={1}>1.0 mm/h</option>
                 </select>
               </label>
-              <p className="field-note">
-                A family votes wet when its hourly precipitation reaches this
-                amount. This is an analytical threshold, not a tyre or grip
-                recommendation.
+              <p className="fineprint">
+                A model counts as wet when its hourly rain reaches this amount.
               </p>
-              <div className="settings-section-label">
-                ENABLED FORECAST SOURCES
-              </div>
+              <div className="settings-section-label">Sources</div>
               {data?.forecasts.length ? (
                 data.forecasts.map((f) => (
                   <label className="source-toggle" key={f.id}>
                     <span
                       className="tiny-dot"
-                      style={{ background: f.color }}
+                      style={{
+                        background: sourceColor(f.color, appearance.theme),
+                      }}
                     />
                     <span>
                       <strong>{f.name}</strong>
@@ -300,11 +314,11 @@ export function WorkspaceDialogs() {
                   </label>
                 ))
               ) : (
-                <p className="field-note">
-                  Sources appear after a successful forecast fetch.
+                <p className="fineprint">
+                  Sources appear after the forecast loads.
                 </p>
               )}
-              <div className="settings-section-label">SAVED CIRCUITS</div>
+              <div className="settings-section-label">Saved circuits</div>
               {favorites.map((f) => (
                 <div className="favorite-setting" key={f.id}>
                   <span>{f.name}</span>
@@ -319,14 +333,11 @@ export function WorkspaceDialogs() {
                   </button>
                 </div>
               ))}
-              <div className="settings-section-label">DEVICE BACKUP</div>
-              <p className="field-note">
-                Export your circuits, weather preferences and {sessions.length}{" "}
-                saved session{sessions.length === 1 ? "" : "s"}. Import adds
-                missing circuits and sessions, keeps existing plans, and applies
-                the backup’s preferences. Forecast history and provider caches
-                are separate; export forecast history as CSV from History &amp;
-                sources.
+              <div className="settings-section-label">Backup</div>
+              <p className="fineprint">
+                Your circuits, preferences and {sessions.length} session
+                {sessions.length === 1 ? "" : "s"}. Importing adds what’s
+                missing and keeps your current plans.
               </p>
               <div className="backup-actions">
                 <button
@@ -341,9 +352,7 @@ export function WorkspaceDialogs() {
                       ),
                       "application/json",
                     );
-                    setBackupMessage(
-                      "Device backup downloaded. Keep the file somewhere you can recover it.",
-                    );
+                    setBackupMessage("Backup downloaded.");
                   }}
                 >
                   <ArrowDownToLine size={14} />
@@ -377,10 +386,8 @@ export function WorkspaceDialogs() {
               >
                 Done <Check size={14} />
               </button>
-              <p className="field-note">
-                Preferences and sessions are stored on this device. Forecast
-                snapshots are recorded in this browser’s local database when
-                storage is available. They do not sync between devices.
+              <p className="modal-footnote">
+                Everything is stored on this device only · Pitwall v{version}
               </p>
             </div>
           </section>

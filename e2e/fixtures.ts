@@ -10,10 +10,26 @@ const tile =
   '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"></svg>';
 
 export const test = base.extend<{
-  providers: { failed: boolean; liveMap: boolean };
+  providers: {
+    failed: boolean;
+    liveMap: boolean;
+    rain: "normal" | "missing" | "partial";
+  };
 }>({
   providers: async ({ context }, provide) => {
-    const state = { failed: false, liveMap: false };
+    const state: {
+      failed: boolean;
+      liveMap: boolean;
+      rain: "normal" | "missing" | "partial";
+    } = { failed: false, liveMap: false, rain: "normal" };
+    const precipitation = (i: number, wet: number) =>
+      state.rain === "missing" || (state.rain === "partial" && i >= 8)
+        ? null
+        : state.rain === "partial"
+          ? 0
+          : i >= 5 && i <= 8
+            ? wet
+            : 0;
     await context.route("**/*", async (route) => {
       const url = new URL(route.request().url());
       if (url.hostname === "localhost" || url.hostname === "127.0.0.1")
@@ -33,7 +49,7 @@ export const test = base.extend<{
             temperature_2m: values(18),
             relative_humidity_2m: values(65),
             dew_point_2m: values(11),
-            precipitation: times.map((_, i) => (i >= 5 && i <= 8 ? 0.7 : 0)),
+            precipitation: times.map((_, i) => precipitation(i, 0.7)),
             cloud_cover: values(35),
             wind_speed_10m: values(12),
             wind_gusts_10m: values(23),
@@ -66,7 +82,7 @@ export const test = base.extend<{
                   },
                 },
                 next_1_hours: {
-                  details: { precipitation_amount: i >= 5 && i <= 8 ? 0.6 : 0 },
+                  details: { precipitation_amount: precipitation(i, 0.6) },
                 },
               },
             })),

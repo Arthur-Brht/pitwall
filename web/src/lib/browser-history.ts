@@ -253,7 +253,7 @@ export async function readHistory(
             .slice(0, MAX_POINTS_PER_LOCATION)
             .map(({ id: _id, locationKey: _key, ...point }) => point),
           message:
-            "Actual forecast snapshots saved in this browser's IndexedDB, up to 30,000 points per location over seven days. Captures older than six hours retain the latest actual fetch per UTC hour. Device-local only; browser clearing removes them. Forecast evolution is not observed weather history.",
+            "Refresh later to see how this forecast changes. Snapshots stay on this device for seven days.",
         });
       request.onerror = () =>
         resolve({

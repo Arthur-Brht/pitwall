@@ -1,7 +1,6 @@
 import { InstallApp } from "@/components/pitwall/install-app";
 import { usePitwall } from "@/lib/pitwall-context";
-import { version } from "../../../../package.json";
-import { ChevronRight, Compass, Plus, SlidersHorizontal } from "lucide-react";
+import { Plus, Settings2 } from "lucide-react";
 
 export function Sidebar() {
   const {
@@ -30,72 +29,36 @@ export function Sidebar() {
             setView("overview");
           }}
         >
-          <span className="brand-mark">
-            <i />
-            <i />
-            <i />
-            <i />
-            <i />
-          </span>
-          <span>
-            Pitwall<span className="brand-period">.</span>
-            <small>RACE WEATHER</small>
-          </span>
+          <span className="brand-mark" aria-hidden="true" />
+          Pitwall
         </a>
-        <div className="workspace-label">
-          <span className="tiny-dot lime" /> YOUR WEATHER DESK
-        </div>
-        <div className="sidebar-heading">
-          MY CIRCUITS{" "}
-          <span>{favorites.length.toString().padStart(2, "0")}</span>
-        </div>
-        <div className="circuit-list">
-          {favorites.map((f, i) => (
+        <div className="sidebar-heading">Circuits</div>
+        <nav className="circuit-list" aria-label="Saved circuits">
+          {favorites.map((f) => (
             <button
               key={f.id}
               className={`circuit-item ${f.id === track.id ? "active" : ""}`}
+              aria-current={f.id === track.id ? "true" : undefined}
               onClick={() => choose(f)}
             >
-              <span className="circuit-number">
-                {(i + 1).toString().padStart(2, "0")}
-              </span>
-              <span>
-                <strong>{f.name}</strong>
-                <small>{f.country}</small>
-              </span>
-              {f.id === track.id ? (
-                <span className="selected-point" />
-              ) : (
-                <ChevronRight size={12} />
-              )}
+              <strong>{f.name}</strong>
+              <small>{f.country}</small>
             </button>
           ))}
-        </div>
+        </nav>
         <button
           className="add-circuit"
+          aria-label="Add a circuit or location"
           onClick={(event) => {
             event.currentTarget.focus();
             setCoordinateMode(false);
             setSearchOpen(true);
           }}
         >
-          <Plus size={15} /> Add a circuit or location
+          <Plus size={15} /> Add location
         </button>
         <div className="sidebar-bottom">
           <InstallApp pwa={pwa} />
-          <div className="sidebar-note">
-            <Compass size={19} />
-            <strong>
-              One circuit.
-              <br />
-              Every perspective.
-            </strong>
-            <p>
-              Compare the forecast.
-              <br />
-              Understand the uncertainty.
-            </p>
-          </div>
           <button
             className="sidebar-settings"
             onClick={(event) => {
@@ -103,12 +66,8 @@ export function Sidebar() {
               setSettings(true);
             }}
           >
-            <SlidersHorizontal size={15} /> Weather preferences{" "}
-            <ChevronRight size={12} />
+            <Settings2 size={15} /> Weather preferences
           </button>
-          <span className="version">
-            PITWALL / V{version} <span>LOCAL WORKSPACE</span>
-          </span>
         </div>
       </aside>
       {mobileNav && (

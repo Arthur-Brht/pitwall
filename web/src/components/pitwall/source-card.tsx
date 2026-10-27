@@ -1,7 +1,8 @@
 import type { Forecast } from "@/lib/contracts";
 import { time } from "@/lib/format";
-import { Info } from "lucide-react";
-export function SourceCard({
+import { usePitwall } from "@/lib/pitwall-context";
+import { sourceColor } from "@/lib/theme";
+export function SourceRow({
   forecast: f,
   disabled,
   toggle,
@@ -12,44 +13,37 @@ export function SourceCard({
   toggle: () => void;
   tz: string;
 }) {
+  const { appearance } = usePitwall();
   return (
-    <article className={`panel source-card ${disabled ? "disabled" : ""}`}>
-      <div className="source-card-top">
-        <span className="source-swatch" style={{ background: f.color }} />
-        <span className="source-provider">{f.provider}</span>
-        <label className="toggle-switch">
-          <input
-            type="checkbox"
-            checked={!disabled}
-            onChange={toggle}
-            aria-label={`Include ${f.name} in comparison`}
-          />
-          <span />
-        </label>
+    <li className={`list-row source-row ${disabled ? "disabled" : ""}`}>
+      <span
+        className="source-swatch"
+        style={{ background: sourceColor(f.color, appearance.theme) }}
+      />
+      <div className="list-main static">
+        <strong>{f.name}</strong>
+        <span>
+          {f.provider} · {f.family} · {f.resolution}
+        </span>
+        {f.caveat && (
+          <details className="source-details">
+            <summary>Model details</summary>
+            <p>{f.caveat}</p>
+          </details>
+        )}
       </div>
-      <h3>{f.name}</h3>
-      <div className="source-detail">
-        <span>MODEL FAMILY</span>
-        <strong>{f.family}</strong>
-      </div>
-      <div className="source-detail">
-        <span>GRID / RESOLUTION</span>
-        <strong>{f.resolution}</strong>
-      </div>
-      <div className="source-detail">
-        <span>DELIVERED THROUGH</span>
-        <strong>{f.transport}</strong>
-      </div>
-      <div className="source-detail">
-        <span>FETCHED · LOCAL TIME</span>
-        <strong>{time(new Date(f.fetchedAt).getTime() / 1000, tz)}</strong>
-      </div>
-      {f.caveat && (
-        <p className="source-caveat">
-          <Info size={12} />
-          {f.caveat}
-        </p>
-      )}
-    </article>
+      <span className="list-meta" title="Fetched, local time">
+        {time(new Date(f.fetchedAt).getTime() / 1000, tz)}
+      </span>
+      <label className="toggle-switch">
+        <input
+          type="checkbox"
+          checked={!disabled}
+          onChange={toggle}
+          aria-label={`Include ${f.name} in comparison`}
+        />
+        <span />
+      </label>
+    </li>
   );
 }

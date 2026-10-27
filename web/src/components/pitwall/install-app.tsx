@@ -1,5 +1,5 @@
 import { useModalFocus } from "@/lib/use-modal-focus";
-import { ArrowDownToLine, Info, Smartphone, X } from "lucide-react";
+import { ArrowDownToLine, Smartphone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -119,7 +119,6 @@ export function InstallApp({ pwa }: { pwa: ReturnType<typeof usePwa> }) {
           >
             <Smartphone size={14} />
             Use Pitwall as an app
-            <Info size={11} />
           </button>
         )}
         {pwa.installError && (
@@ -137,10 +136,7 @@ export function InstallApp({ pwa }: { pwa: ReturnType<typeof usePwa> }) {
               onClick={(event) => event.stopPropagation()}
             >
               <div className="modal-head">
-                <div>
-                  <div className="eyebrow">YOUR WEATHER DESK, ONE TAP AWAY</div>
-                  <h2 id="install-title">Take Pitwall to the paddock.</h2>
-                </div>
+                <h2 id="install-title">Install Pitwall</h2>
                 <button
                   className="icon-button"
                   aria-label="Close app installation help"
@@ -151,33 +147,24 @@ export function InstallApp({ pwa }: { pwa: ReturnType<typeof usePwa> }) {
               </div>
               <div className="form-body">
                 <p className="install-description">
-                  Install this web app to open it in its own window. Your saved
-                  circuits, preferences, sessions and forecast log stay on this
+                  Open Pitwall in its own window. Your data stays on this
                   device.
                 </p>
                 <div className="install-instruction">
                   <strong>Chrome or Edge</strong>
-                  <p>
-                    Use the install icon in the address bar or the browser’s app
-                    menu when offered. An “Install Pitwall” button appears here
-                    when your browser makes installation available.
-                  </p>
+                  <p>Use the install icon in the address bar.</p>
                 </div>
                 <div className="install-instruction">
                   <strong>Safari on iPhone or iPad</strong>
-                  <p>
-                    Open this page in Safari, tap Share, then Add to Home
-                    Screen.
-                  </p>
+                  <p>Tap Share, then Add to Home Screen.</p>
                 </div>
                 <div className="install-instruction">
                   <strong>Safari on Mac</strong>
                   <p>Use File → Add to Dock when available.</p>
                 </div>
-                <p className="field-note">
-                  The app shell can open offline after a successful online
-                  visit. Current weather, map tiles and radar need a connection.
-                  Forecasts are never silently substituted with cached weather.
+                <p className="fineprint">
+                  It opens offline after one visit; forecasts and radar still
+                  need a connection.
                 </p>
                 {pwa.shellUnavailable && (
                   <p className="inline-warning">

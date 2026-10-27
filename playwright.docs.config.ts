@@ -21,6 +21,7 @@ export default defineConfig({
     ...base.use,
     viewport: { width: 1440, height: 1200 },
     reducedMotion: "reduce",
+    colorScheme: "light",
     video: { mode: "on", size: { width: 1440, height: 1200 } },
   },
 });

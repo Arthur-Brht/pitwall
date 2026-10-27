@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+## 2.0.0 ? A clearer weather desk
+
+- Rebuilt the four views around a focused outlook, hourly strip and radar, with shorter copy and detailed methods/source breakdowns behind expandable sections.
+- Added light, dark and system appearance, a one-click theme switch, persistent device preference, and matching chart, map and model colours.
+- Refined responsive layouts, keyboard scrolling, dialog focus and contrast, preserving session editing, calendar/data exports, backups, history and station verification.
+- Kept missing rainfall explicit in the outlook instead of presenting incomplete evidence as a dry 24-hour forecast.
+- Extended browser checks to both appearances and theme persistence; updated packaged-app checks, screenshots and Mac/Windows installers.
+
 ## 1.3.1 — Windows application preview
 
 - Added a self-contained Windows x64 installer with Start menu/desktop shortcuts and Windows Apps registration, requiring no terminal or Node.js installation.

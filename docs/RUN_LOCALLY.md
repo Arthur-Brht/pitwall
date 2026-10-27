@@ -45,7 +45,7 @@ Development uses 5173. Browser tests serve the production build on 4174 in fresh
 
 Use the same browser profile and localhost:4173 origin. Another port, hostname or profile has separate storage. Preferences/circuits/plans use localStorage; actual forecast history and caches use IndexedDB. Nothing is synchronized or uploaded to GitHub.
 
-Export plan/settings JSON from Weather preferences. Import merges missing plans and preserves existing sessions. History is separate: export its CSV from History & sources. Calendar export downloads `.ics`; it never contacts a calendar account. Observation imports stay in the current panel only. [Privacy and retention](PRIVACY.md).
+Export plan/settings JSON from Weather preferences. Import merges missing plans and preserves existing sessions. History is separate: export its CSV from History. Calendar export downloads `.ics`; it never contacts a calendar account. Observation imports stay in the current panel only. [Privacy and retention](PRIVACY.md).
 
 A supported browser can optionally install the app. A successful online visit caches the interface; offline mode does not create new weather or radar. Saved forecasts retain their original timestamps and warnings.
 

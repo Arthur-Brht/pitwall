@@ -1,16 +1,9 @@
 import { apiFetch } from "@/lib/browser-api";
 import type { GeometryResponse, RadarResponse, Track } from "@/lib/contracts";
+import { usePitwall } from "@/lib/pitwall-context";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import {
-  Layers,
-  MapPin,
-  Maximize,
-  Pause,
-  Play,
-  Radio,
-  RefreshCw,
-} from "lucide-react";
+import { Layers, Maximize, Pause, Play, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 function localTime(t: number, tz: string) {
@@ -21,6 +14,9 @@ function localTime(t: number, tz: string) {
   }).format(t * 1000);
 }
 export default function CircuitMap({ track }: { track: Track }) {
+  const { appearance } = usePitwall();
+  const accent = appearance.colors.accent;
+  const casing = appearance.colors.trackCasing;
   const initialCenter = useRef<L.LatLngTuple>([track.lat, track.lon]);
   const node = useRef<HTMLDivElement>(null),
     map = useRef<L.Map | null>(null),
@@ -135,8 +131,8 @@ export default function CircuitMap({ track }: { track: Track }) {
     tooltip.textContent = track.name;
     L.circleMarker([track.lat, track.lon], {
       radius: 5,
-      color: "#e2fa76",
-      fillColor: "#e2fa76",
+      color: accent,
+      fillColor: accent,
       fillOpacity: 1,
       weight: 2,
     })
@@ -144,17 +140,13 @@ export default function CircuitMap({ track }: { track: Track }) {
       .addTo(group);
     geometry?.coordinates?.forEach((line) => {
       if (line.length > 1) {
-        L.polyline(line, { color: "#0d120d", weight: 7, opacity: 1 }).addTo(
-          group,
-        );
-        L.polyline(line, { color: "#e2fa76", weight: 3, opacity: 1 }).addTo(
-          group,
-        );
+        L.polyline(line, { color: casing, weight: 7, opacity: 1 }).addTo(group);
+        L.polyline(line, { color: accent, weight: 3, opacity: 1 }).addTo(group);
       }
     });
     geometryLayer.current = group;
     map.current.setView([track.lat, track.lon], 10);
-  }, [mapReady, track, geometry]);
+  }, [mapReady, track, geometry, accent, casing]);
   useEffect(() => {
     if (!mapReady || !map.current) return;
     if (radarLayer.current) map.current.removeLayer(radarLayer.current);
@@ -237,14 +229,11 @@ export default function CircuitMap({ track }: { track: Track }) {
   return (
     <section className="panel map-panel">
       <div className="panel-head">
-        <div>
-          <div className="eyebrow">
-            <span className="tiny-dot lime" /> WEATHER RADAR
-          </div>
-          <h2>Eyes on the circuit</h2>
-        </div>
-        <span className="subtle-chip">
-          <Radio size={12} /> Observed · past 2h
+        <h2>Radar</h2>
+        <span className={`panel-hint ${stale ? "text-warn" : ""}`}>
+          {current
+            ? `${stale ? "Stale · " : ""}${age} min ago`
+            : "Observed, past 2 h"}
         </span>
       </div>
       <div className="map-stage">
@@ -255,10 +244,6 @@ export default function CircuitMap({ track }: { track: Track }) {
         />
         {error && <div className="map-error">{error}</div>}
         <div className="map-top-controls">
-          <span className="map-location">
-            <MapPin size={12} />
-            {track.name}
-          </span>
           <button
             onClick={() => {
               if (map.current) {
@@ -283,10 +268,9 @@ export default function CircuitMap({ track }: { track: Track }) {
             <Layers size={15} />
           </button>
         </div>
-        <div className="map-key">
-          <span className="line-sample" />
-          Circuit <span className="radar-scale" />
-          <span>Light → heavy</span>
+        <div className="map-key" aria-hidden="true">
+          <span className="radar-scale" />
+          Light to heavy
         </div>
       </div>
       <div className="radar-playback">
@@ -299,24 +283,6 @@ export default function CircuitMap({ track }: { track: Track }) {
           {playing ? <Pause size={14} /> : <Play size={14} />}
         </button>
         <div className="radar-timeline">
-          <div className="between">
-            <span>
-              {radar ? localTime(radar.frames[0].time, track.timezone) : "—"}
-            </span>
-            <strong>
-              {current
-                ? localTime(current.time, track.timezone)
-                : "Loading radar…"}
-            </strong>
-            <span>
-              {radar
-                ? localTime(
-                    radar.frames[radar.frames.length - 1].time,
-                    track.timezone,
-                  )
-                : "—"}
-            </span>
-          </div>
           <input
             aria-label="Radar frame"
             type="range"
@@ -330,6 +296,9 @@ export default function CircuitMap({ track }: { track: Track }) {
             }}
           />
         </div>
+        <strong className="radar-time">
+          {current ? localTime(current.time, track.timezone) : "—"}
+        </strong>
         <button
           className="icon-button"
           onClick={() => setRadarVersion((v) => v + 1)}
@@ -366,32 +335,18 @@ export default function CircuitMap({ track }: { track: Track }) {
             aria-label="Radar opacity"
           />
         </label>
-        <span className={`map-age ${stale ? "stale" : ""}`}>
-          {age === null ? "" : `${stale ? "STALE · " : ""}${age}m old`}
-        </span>
       </div>
-      {(radarError || tileError || stale) && (
-        <p className="inline-warning">
-          {radarError ||
-            tileError ||
-            (stale
-              ? "Latest radar frame is over 20 minutes old. Treat this view as stale."
-              : "")}
-        </p>
+      {(radarError || tileError) && (
+        <p className="inline-warning">{radarError || tileError}</p>
       )}
-      <p className="map-footnote">
+      <p className="fineprint">
         {geoLoading
           ? "Loading circuit outline…"
           : geometry?.coordinates.length
-            ? "Circuit outline · " +
-              geometry.source +
-              " · " +
-              geometry.attribution +
-              ". "
-            : "Center marker only · " +
-              (geometry?.message || "No circuit geometry found.")}{" "}
-        Radar overzoom adds no detail (native zoom 7). Black mask = no coverage;
-        clear pixels do not prove a dry track.
+            ? `Outline: ${geometry.source}, ${geometry.attribution}.`
+            : geometry?.message || "No circuit outline found."}{" "}
+        Dark areas have no radar coverage; clear areas aren’t proof of a dry
+        track.
       </p>
     </section>
   );
