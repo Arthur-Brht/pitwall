@@ -1,42 +1,57 @@
-﻿# Pitwall
+# Pitwall
 
-V2 puts the outlook, next 24 hours and radar first, with detailed source tables and methods available when you need them. Choose **Light**, **Dark** or **System** in Preferences; the sun/moon button switches appearance directly. Your choice stays on this device.
+Pitwall is a desktop app for Mac and Windows that helps you plan around the weather at a racetrack. Pick a circuit, and it puts several weather forecasts side by side, shows recent rain radar over the track, and lays out the rain, wind, gusts and temperatures expected during your sessions.
 
-Compare racetrack forecasts, inspect recent radar over the circuit, and review the weather expected during your sessions.
+Weather models often disagree, and before a track day or a race weekend it helps to see where they agree and where they don't before deciding when to run. Pitwall is a planning aid. It can't tell you how much grip the track will have, and it can't promise that a session will be dry.
 
-**A local app for Mac and Windows. No account, Terminal or Node.js installation is needed to use the packaged application.** GitHub holds the source, checks and installer downloads; there is no hosted weather application.
+You don't need an account, an API key, Terminal or any other software to use it. You download it, install it and open it like any other app.
 
-![Pitwall V2 in light mode showing isolated example weather data](docs/images/overview.png)
+![Pitwall showing the overview for a circuit, with example data](docs/images/overview.png)
 
-[See dark mode](docs/images/overview-dark.png) ? [Mobile layout](docs/images/overview-mobile.png)
+[Dark mode](docs/images/overview-dark.png) · [Mobile layout](docs/images/overview-mobile.png) · [Short walkthrough video](docs/images/walkthrough.webm)
 
-Screenshots and the [short walkthrough](docs/images/walkthrough.webm) use clearly synthetic browser-test data and an example session. They demonstrate the interface; they are not weather reports. The normal application fetches real provider data and has no seeded demo weather.
+The screenshots and video use made-up example data to show the interface. When you use the app, it shows real forecasts.
 
-## Install on your Mac
+## Download
 
-1. Download the universal **Pitwall `.dmg`** from [Releases](https://github.com/Arthur-Brht/pitwall-/releases).
-2. Open the disk image and drag **Pitwall** into **Applications**.
-3. Open Pitwall from Applications, Launchpad or the Dock.
+The latest versions are on the [Releases page](https://github.com/Arthur-Brht/pitwall-/releases).
 
-The application supports Apple silicon and Intel Macs running **macOS 13 Ventura or newer**. Its runtime and interface are bundled. The local server starts and stops automatically; no browser or terminal window needs to remain open.
+**Mac** (macOS 13 Ventura or newer, Apple silicon or Intel): download the `.dmg`, open it and drag Pitwall into Applications. Then open it from Applications, Launchpad or the Dock.
 
-**Release status:** previews are labelled `preview` and are ad-hoc signed, not Developer ID signed or Apple notarized. They are build previews, not the standard public installer; the final signing step requires the maintainer's Apple Developer credentials. [Mac installation and release details](docs/MAC_APP.md).
+**Windows** (Windows 10 or 11, 64-bit Intel or AMD): download the setup `.exe`, run it and follow the steps. Pitwall then appears in the Start menu and on your desktop.
 
-Fresh forecasts, location search, map tiles and radar need internet access. The bundled interface opens offline, with original timestamps on available saved forecasts.
+These are preview builds. The Mac app isn't signed with an Apple Developer ID or notarised by Apple, and the Windows app isn't signed either, so your computer may warn you before opening it or block it. The [Mac notes](docs/MAC_APP.md) and [Windows notes](docs/WINDOWS_APP.md) explain what to expect.
 
-## Install on Windows
+## What it does
 
-1. Download the **Windows x64 setup `.exe`** from [Releases](https://github.com/Arthur-Brht/pitwall-/releases). It supports 64-bit Intel/AMD PCs running Windows 10 or 11.
-2. Run the installer and follow the installation wizard. The default is installation for your Windows user.
-3. Open **Pitwall** from the Start menu or its desktop shortcut.
+Pitwall has four main views.
 
-The runtime is bundled; PowerShell, Command Prompt, Node.js and a browser window are not needed. Closing the Pitwall window stops the app and its local server.
+- **Overview** gives the outlook for your circuit, the next 24 hours and a map with recent rain radar.
+- **Sessions** lets you enter a session's date, start time and length, and see what each forecast expects for rain and gusts during it, including any windows where the models expect it to stay dry. You can save and edit your sessions, add them to your calendar, and back them up to a file.
+- **Models** compares the forecasts in detail. You can switch individual forecasts on or off to see where they differ.
+- **History** keeps the forecasts Pitwall has fetched, so you can look back at what was predicted, export it as a CSV file, and compare it with weather station measurements you import.
 
-**Release status:** the Windows preview is unsigned. SmartScreen, Smart App Control or organizational policy may warn or prevent it from running. No Windows protection is disabled by the installer. [Windows installation, storage and verification](docs/WINDOWS_APP.md).
+You can choose from a list of known circuits, search for any place, or enter coordinates and a timezone yourself. Light, dark and system appearance are all available.
 
-## Run from source (developers)
+![Comparing forecasts for a planned session, with example data](docs/images/planner.png)
 
-Install [Node.js 22.13 or newer](https://nodejs.org/en/download), then:
+## Where the weather comes from
+
+Pitwall uses five forecast feeds. Four come through [Open-Meteo](https://open-meteo.com/): ECMWF IFS (European), DWD ICON (German), NOAA GFS (American) and Météo-France. The fifth is MET Norway. Radar comes from RainViewer.
+
+Five feeds aren't five independent opinions. Some of these models are related, so they can agree with each other and still be wrong. When Pitwall groups them and counts how many expect rain, that's a simple count, not a probability. Radar shows recent rain rather than a forecast, and zooming in on the track doesn't give you corner-by-corner detail. [More on the sources and their limits](docs/API_SOURCES.md).
+
+## Your data
+
+Your circuits, sessions, preferences and saved forecasts stay on your computer. Pitwall doesn't upload your plans or history to a hosted service, and there's no cloud sync. Your computer asks the weather and map providers directly for the location you're looking at, so they see that location and ordinary connection details, as any website would.
+
+Pitwall needs internet for fresh forecasts, search, maps and radar. Offline, it still opens and shows any forecasts you already have, labelled with when they were fetched.
+
+To move your plans to another computer, or from an older browser version of Pitwall, export a backup file from Preferences and import it in the app. History is exported separately as a CSV file. [Privacy and storage details](docs/PRIVACY.md).
+
+## Running it from source
+
+This part is only for people who want to work on the code. You need [Node.js 22.13 or newer](https://nodejs.org/en/download).
 
 ```sh
 git clone https://github.com/Arthur-Brht/pitwall-.git pitwall
@@ -45,34 +60,9 @@ npm ci
 npm start -- --open
 ```
 
-The source/browser version runs at **http://localhost:4173/** until stopped with Ctrl+C. Source launchers are also included. Mac app users do not need these commands. [Source setup](docs/RUN_LOCALLY.md).
+This runs Pitwall in your browser at `http://localhost:4173/` until you stop it with Ctrl+C. See [running locally](docs/RUN_LOCALLY.md) for more.
 
-## Plan a session
-
-1. Choose a circuit, search for a location, or enter coordinates and its timezone.
-2. Compare ECMWF IFS, DWD ICON, NOAA GFS and Météo-France through Open-Meteo, alongside MET Norway. Enable or disable feeds to inspect their differences.
-3. Use **Sessions** to enter a date, local start time and duration. Inspect each source's rain/gust coverage and the model-dry windows that fit your session.
-4. Save and edit plans on this device. Download a calendar file or back up plans and preferences as JSON.
-
-The map shows recent historical radar and attributed circuit outlines where available. **History** records actual fetched predictions for the same valid hour; it exports CSV and can compare those predictions with imported station observations. [Forecast verification method and pilot](docs/FORECAST_VERIFICATION.md).
-
-![Per-source session evidence](docs/images/planner.png)
-
-## What the evidence means
-
-Five feeds use two weather API transports and contain shared model ancestry. Consensus groups related feeds into model families; a wet family vote is a descriptive threshold count, not a calibrated probability. Agreement does not establish accuracy.
-
-Rain refers to the hourly interval beginning at its displayed time. Missing values remain unavailable. Radar is historical, has limited native resolution, and can have gaps; zooming over the track does not create corner-level weather detail. Air temperature and forecast rain do not measure grip, track temperature, standing water or drying rate. [Sources, timing and limits](docs/API_SOURCES.md).
-
-The observation comparison reports sample counts, errors, lead bands and station distance. It rejects forecasts fetched at or after their valid time. A small sample or a nearby station cannot establish track-level accuracy.
-
-## Your data
-
-Circuits, preferences and sessions stay in local storage inside Pitwall's private application profile. Forecast snapshots and caches stay in IndexedDB. Nothing is uploaded to GitHub, synced to another device, or sent to a Pitwall backend. Weather and map providers receive the requested coordinates or map area and normal connection metadata.
-
-The desktop app has a separate profile from Safari, Chrome or Edge. Bring over browser plans/settings by exporting a JSON backup from the old version and importing it in the app's Weather preferences. History exports separately as CSV. Updates preserve the app's profile; keep backups of important plans. [Privacy and storage details](docs/PRIVACY.md).
-
-## Develop and contribute
+For development and tests:
 
 ```sh
 npm ci
@@ -83,12 +73,12 @@ npm run build
 npm run test:e2e
 ```
 
-Development uses port 5173. Browser tests use isolated contexts on port 4174 with clearly synthetic provider fixtures; they do not touch your saved 4173 data or call public weather services. Chromium, Firefox, WebKit and a mobile viewport exercise the interface. Offline service-worker reload checks run in Chromium.
+The development server uses port 5173. The browser tests run on port 4174 with made-up weather data, so they don't touch your saved data or call the real weather services.
 
-The stack is React 19, TypeScript, Vite 8, Recharts and locally bundled Leaflet, with a small loopback server. Electron bundles the interface and runtime as Mac and Windows applications. See [architecture](docs/ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md), [verification](docs/VERIFICATION.md) and the [changelog](CHANGELOG.md).
+Pitwall is built with React, TypeScript and Vite, and Electron packages it as a desktop app. More detail is in [architecture](docs/ARCHITECTURE.md), [forecast verification](docs/FORECAST_VERIFICATION.md), [testing and verification](docs/VERIFICATION.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md) and the [changelog](CHANGELOG.md).
 
-## Licence and data terms
+## Licence
 
-Pitwall's original code and documentation use the [MIT licence](LICENSE). Dependencies, circuit geometry, weather and radar retain their own licences and service conditions; they are **not** relicensed under MIT. Full bundled library notices are generated during build. [Third-party attribution and terms](THIRD_PARTY.md).
+Pitwall's code and documentation are under the [MIT licence](LICENSE). The weather data, radar, circuit outlines and libraries it uses keep their own licences and terms. See [third-party terms](THIRD_PARTY.md).
 
-Open-Meteo's free service is for non-commercial use within its limits. A public source repository does not grant commercial access to any provider's free API. Check the providers' current terms before redistribution or commercial use.
+Open-Meteo's free service is for non-commercial use within its limits. The code's licence doesn't include commercial access to these providers, so check their terms before redistributing Pitwall or using it commercially.
