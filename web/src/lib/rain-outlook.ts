@@ -1,4 +1,5 @@
 import type { EnsembleForecast, Forecast } from "./contracts";
+import { validRain } from "./rain-value.ts";
 const finite = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 const median = (values: number[]) => {
@@ -36,10 +37,10 @@ export function rainOutlook(
   const rows = forecasts.map((forecast) => {
     const byTime = new Map(forecast.hours.map((hour) => [hour.time, hour]));
     const hours = times.map((time) => byTime.get(time));
-    const covered = hours.filter((hour) => finite(hour?.precipitation));
+    const covered = hours.filter((hour) => validRain(hour?.precipitation));
     const wet = hours.filter(
       (hour) =>
-        finite(hour?.precipitation) && hour!.precipitation! >= threshold,
+        validRain(hour?.precipitation) && hour!.precipitation! >= threshold,
     );
     return {
       forecast,
@@ -77,7 +78,7 @@ export function rainOutlook(
       wet = 0;
     for (let member = 0; member < forecast.memberCount; member++) {
       const values = times.map((time) => byTime.get(time)?.[member]);
-      if (values.every(finite)) {
+      if (values.every(validRain)) {
         valid++;
         if (values.some((value) => value! >= threshold)) wet++;
       }

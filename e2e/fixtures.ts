@@ -12,6 +12,7 @@ const tile =
 export const test = base.extend<{
   providers: {
     failed: boolean;
+    hourlyFailed: boolean;
     liveMap: boolean;
     rain: "normal" | "missing" | "partial";
   };
@@ -19,9 +20,10 @@ export const test = base.extend<{
   providers: async ({ context }, provide) => {
     const state: {
       failed: boolean;
+      hourlyFailed: boolean;
       liveMap: boolean;
       rain: "normal" | "missing" | "partial";
-    } = { failed: false, liveMap: false, rain: "normal" };
+    } = { failed: false, hourlyFailed: false, liveMap: false, rain: "normal" };
     const precipitation = (i: number, wet: number) =>
       state.rain === "missing" || (state.rain === "partial" && i >= 8)
         ? null
@@ -60,7 +62,10 @@ export const test = base.extend<{
         });
       }
       if (url.hostname === "api.open-meteo.com") {
-        if (state.failed)
+        if (
+          state.failed ||
+          (state.hourlyFailed && !url.searchParams.has("minutely_15"))
+        )
           return route.fulfill({
             status: 503,
             json: { error: "Synthetic test provider outage" },
@@ -102,7 +107,7 @@ export const test = base.extend<{
         });
       }
       if (url.hostname === "api.met.no") {
-        if (state.failed)
+        if (state.failed || state.hourlyFailed)
           return route.fulfill({
             status: 503,
             json: { error: "Synthetic test provider outage" },
@@ -148,10 +153,12 @@ export const test = base.extend<{
           host: "https://tilecache.rainviewer.com",
           generated: start + 900,
           radar: {
-            past: [0, 600, 1200].map((offset) => ({
-              time: start - 1200 + offset,
-              path: `/v2/radar/test-${offset}`,
-            })),
+            past: Array.from({ length: 13 }, (_, i) => i * 600).map(
+              (offset) => ({
+                time: start - 7200 + offset,
+                path: `/v2/radar/test-${offset}`,
+              }),
+            ),
           },
         });
       if (

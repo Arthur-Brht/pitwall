@@ -1,4 +1,5 @@
 import type { Forecast, Hour, ConsensusHour } from "./contracts";
+import { rainValue } from "./rain-value.ts";
 
 export const finite = (x: unknown): x is number =>
   typeof x === "number" && Number.isFinite(x);
@@ -43,7 +44,7 @@ export function buildConsensus(
       const family = f.family || f.id;
       const atTime = byTime.get(h.time) || new Map<string, Hour[]>();
       const group = atTime.get(family) || [];
-      group.push(h);
+      group.push({ ...h, precipitation: rainValue(h.precipitation) });
       atTime.set(family, group);
       byTime.set(h.time, atTime);
     }

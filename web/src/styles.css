@@ -2455,3 +2455,144 @@ table caption {
     padding-right: 17px;
   }
 }
+
+/* 2.3 comparison preview: one decision, with detail available on demand. */
+.rain-decision {
+  font-size: clamp(24px, 2.5vw, 32px);
+  line-height: 1.25;
+  letter-spacing: -0.04em;
+  max-width: 25ch;
+}
+.decision-basis,
+.timing-difference {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 8px;
+  max-width: 58ch;
+}
+.agreement-sentence {
+  font-size: 14px;
+  margin-top: 22px;
+}
+.risk-probability {
+  gap: 14px;
+  margin: 16px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.risk-probability > strong {
+  font-size: 36px;
+  letter-spacing: -0.04em;
+}
+.risk-probability > strong small {
+  font-size: 19px;
+}
+.risk-probability > div > span {
+  font-size: 12px;
+}
+.risk-probability p {
+  font-size: 11px;
+}
+.risk-context {
+  margin-top: 12px;
+}
+.dashboard-weather-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.dashboard-matrix {
+  font-size: 11px;
+}
+.dashboard-matrix th:first-child {
+  min-width: 150px;
+}
+.dashboard-matrix td {
+  min-width: 50px;
+}
+.saved-source {
+  display: block;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 400;
+  margin: 3px 0 0 15px;
+}
+.matrix td.rain-cell,
+.heatmap td.rain-cell {
+  text-align: center;
+  border: 2px solid var(--panel);
+  font-variant-numeric: tabular-nums;
+}
+.matrix td.rain-light,
+.heatmap td.rain-light {
+  color: var(--rain);
+  background: var(--rain-soft);
+  font-weight: 600;
+}
+.matrix td.rain-moderate,
+.heatmap td.rain-moderate {
+  color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 14%, var(--panel));
+  font-weight: 600;
+}
+.matrix td.rain-heavy,
+.heatmap td.rain-heavy {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, var(--panel));
+  font-weight: 600;
+}
+.matrix td.rain-no-rain,
+.heatmap td.rain-no-rain {
+  color: var(--muted);
+}
+.matrix td.rain-unknown,
+.heatmap td.rain-unknown {
+  color: var(--muted);
+  background: var(--bg);
+}
+.arrival-matrix {
+  width: 100%;
+  font-size: 12px;
+}
+.arrival-matrix th:first-child {
+  min-width: 170px;
+}
+.arrival-matrix th:not(:first-child),
+.arrival-matrix td {
+  min-width: 65px;
+  text-align: center;
+}
+.arrival-matrix td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+.preview-badge {
+  display: inline-block;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  margin-left: 8px;
+}
+@media (max-width: 1100px) {
+  .dashboard-weather-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+@media (max-width: 600px) {
+  .rain-decision {
+    font-size: 25px;
+  }
+  .risk-probability > strong {
+    font-size: 34px;
+  }
+  .arrival-matrix {
+    font-size: 11px;
+  }
+  .arrival-matrix th:first-child {
+    min-width: 142px;
+  }
+  .arrival-matrix th:not(:first-child),
+  .arrival-matrix td {
+    min-width: 55px;
+  }
+}

@@ -21,7 +21,7 @@ test("capture the illustrated workflow", async ({ page, providers }) => {
     .getByRole("navigation", { name: "Saved circuits" })
     .getByRole("button", { name: /Spa-Francorchamps/ })
     .click();
-  await expect(page.getByLabel("15-minute rain timing")).toContainText(
+  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
     "10:30–10:45",
   );
   await page.getByLabel("Dashboard forecast window").selectOption("6");

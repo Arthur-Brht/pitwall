@@ -161,11 +161,11 @@ export default function CircuitMap({ track }: { track: Track }) {
     const tooltip = document.createElement("span");
     tooltip.textContent = track.name;
     L.circleMarker([track.lat, track.lon], {
-      radius: 5,
-      color: accent,
+      radius: 7,
+      color: "#fff",
       fillColor: accent,
       fillOpacity: 1,
-      weight: 2,
+      weight: 3,
     })
       .bindTooltip(tooltip)
       .addTo(group);
@@ -368,11 +368,12 @@ export default function CircuitMap({ track }: { track: Track }) {
     };
   }, []);
   const current = displayed;
-  const age = current
-    ? Math.max(0, Math.round((clock / 1000 - current.time) / 60))
-    : null;
   const latestTime = radar?.frames[radar.frames.length - 1]?.time;
-  const stale = latestTime !== undefined && clock / 1000 - latestTime > 20 * 60;
+  const age =
+    latestTime === undefined
+      ? null
+      : Math.max(0, Math.round((clock / 1000 - latestTime) / 60));
+  const stale = age !== null && age >= 30;
   return (
     <section className="panel map-panel">
       <div className="panel-head">
@@ -381,8 +382,8 @@ export default function CircuitMap({ track }: { track: Track }) {
           <p className="panel-sub">10-minute scans</p>
         </div>
         <span className={`panel-hint ${stale ? "text-warn" : ""}`}>
-          {current
-            ? `${stale ? "Stale · " : ""}${age} min ago`
+          {latestTime !== undefined
+            ? `Latest scan ${localTime(latestTime, track.timezone)} · ${age} min ago`
             : "Loading scans…"}
         </span>
       </div>
@@ -438,10 +439,11 @@ export default function CircuitMap({ track }: { track: Track }) {
         <button
           className="play-button"
           disabled={
-            !radar ||
-            !radarOn ||
-            !!radarError ||
-            windowRange.start === windowRange.end
+            !playing &&
+            (!radar ||
+              !radarOn ||
+              !!radarError ||
+              windowRange.start === windowRange.end)
           }
           onClick={() => setPlaying((value) => !value)}
           aria-label={playing ? "Pause radar" : "Play radar"}

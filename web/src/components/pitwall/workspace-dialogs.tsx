@@ -391,7 +391,9 @@ export function WorkspaceDialogs() {
                 Done <Check size={14} />
               </button>
               <p className="modal-footnote">
-                Everything is stored on this device only · Pitwall v{version}
+                Pitwall v{version} Preview uses separate storage from 2.2.
+                Import a device backup to copy your plans here. Everything stays
+                on this device.
               </p>
             </div>
           </section>

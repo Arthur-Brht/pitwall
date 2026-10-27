@@ -1,4 +1,5 @@
 const signed = process.env.PITWALL_SIGNED_RELEASE === "1";
+const identity = require("./desktop/app-identity.json");
 if (
   signed &&
   [
@@ -13,8 +14,8 @@ if (
     "A signed release requires the signing certificate and Apple notarization credentials.",
   );
 module.exports = {
-  appId: "io.github.arthurbrht.pitwall",
-  productName: "Pitwall",
+  appId: identity.appId,
+  productName: identity.name,
   directories: {
     app: ".desktop-app",
     output: "release",
@@ -54,7 +55,7 @@ module.exports = {
       : "Pitwall-${version}-mac-universal-preview.${ext}",
   },
   dmg: {
-    title: signed ? "Pitwall" : "Pitwall preview (not notarized)",
+    title: signed ? identity.name : `${identity.name} (not notarized)`,
     sign: signed,
     contents: [
       { x: 150, y: 170 },
@@ -77,8 +78,8 @@ module.exports = {
     packElevateHelper: false,
     createDesktopShortcut: true,
     createStartMenuShortcut: true,
-    shortcutName: "Pitwall",
-    uninstallDisplayName: "Pitwall",
+    shortcutName: identity.name,
+    uninstallDisplayName: identity.name,
     runAfterFinish: false,
     deleteAppDataOnUninstall: false,
   },

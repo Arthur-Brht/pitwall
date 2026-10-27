@@ -1,7 +1,7 @@
 ﻿name: Check Pitwall
 on:
   push:
-    branches: [main]
+    branches: [main, "preview/**"]
   pull_request:
   workflow_dispatch:
 permissions:

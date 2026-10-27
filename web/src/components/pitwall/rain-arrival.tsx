@@ -1,130 +1,112 @@
-import { usePitwall } from "@/lib/pitwall-context";
-import { rainArrival } from "@/lib/near-rain";
+﻿import { usePitwall } from "@/lib/pitwall-context";
+import { enabledNearRain } from "@/lib/rain-decision";
+import { NEAR_RAIN_SPECS } from "@/lib/near-rain";
 import { rainIntensity } from "@/lib/rain-intensity";
+import { rainValue } from "@/lib/rain-value";
 import { n, time } from "@/lib/format";
 
 export function RainArrivalView({ end }: { end: number }) {
-  const { data, active, now, threshold, track, loading } = usePitwall();
-  const forecasts = (data?.nearRain?.forecasts ?? []).filter((forecast) =>
-    active.some((source) => source.id === forecast.sourceId),
+  const { data, selectedSourceIds, disabled, now, track, loading } =
+    usePitwall();
+  const forecasts = enabledNearRain(
+    data?.nearRain?.forecasts ?? [],
+    selectedSourceIds,
+    disabled,
   );
-  const finish = Math.min(end, now + 6 * 3600);
   const first = Math.floor(now / 900) * 900;
   const times = Array.from(
-    { length: Math.min(8, Math.ceil((finish - first) / 900)) },
-    (_, index) => first + index * 900,
+    { length: Math.min(8, Math.ceil((end - first) / 900)) },
+    (_, i) => first + i * 900,
   );
   return (
     <section className="panel rain-arrival" aria-label="15-minute rain timing">
       <div className="panel-head">
         <div>
           <h2>Rain timing</h2>
-          <p className="panel-sub">15-minute regional forecasts</p>
+          <p className="panel-sub">
+            15-minute regional forecasts · {time(first, track.timezone)}–
+            {time(first + times.length * 900, track.timezone)}
+          </p>
         </div>
       </div>
       {forecasts.length ? (
-        <>
-          <div className="arrival-models">
-            {forecasts.map((forecast) => {
-              const arrival = rainArrival(
-                forecast.points,
-                900,
-                now,
-                finish,
-                threshold,
-              );
-              return (
-                <div className="arrival-model" key={forecast.id}>
-                  <span>{forecast.name}</span>
-                  <strong>
-                    {arrival.first
-                      ? `${time(arrival.first.start, track.timezone)}–${time(arrival.first.end, track.timezone)}`
-                      : arrival.complete
-                        ? "No rain in window"
-                        : "Timing incomplete"}
-                  </strong>
-                  <p>
-                    {arrival.first
-                      ? arrival.complete
-                        ? "First model rain signal"
-                        : "First available signal · incomplete window"
-                      : `Until ${time(finish, track.timezone)}`}
-                  </p>
-                  <ol
-                    className="arrival-strip"
-                    aria-label={`${forecast.name}, next ${times.length * 15} minutes`}
-                  >
-                    {times.map((value) => {
-                      const point = forecast.points.find(
-                        (point) => point.time === value,
-                      );
-                      const rate =
-                        point?.precipitation == null
-                          ? null
-                          : point.precipitation * 4;
-                      const label = `${time(value, track.timezone)}–${time(value + 900, track.timezone)}: ${rate === null ? "unavailable" : `${rainIntensity(rate)} rain, ${n(rate, 1)} mm/h average`}`;
-                      return (
-                        <li key={value} title={label} aria-label={label}>
-                          <span className="arrival-bar" aria-hidden="true">
-                            <i
-                              style={{
-                                height:
-                                  rate === null
-                                    ? "0"
-                                    : `${Math.min(100, Math.max(rate > 0 ? 8 : 2, (rate / 10) * 100))}%`,
-                              }}
-                            />
-                          </span>
-                          <small>{time(value, track.timezone)}</small>
-                          <b>
-                            {rate === null
-                              ? "—"
-                              : rate === 0
-                                ? "·"
-                                : n(rate, 1)}
-                          </b>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </div>
-              );
-            })}
-          </div>
-          <p className="fineprint">
-            Bars show the next {times.length * 15} minutes in mm/h. Start times
-            are forecast windows, not exact arrival times.
-          </p>
-        </>
-      ) : (
-        <div className="arrival-unavailable">
-          <strong>
-            {loading ? "Checking finer timing…" : "Hourly timing available"}
-          </strong>
-          <p>
-            Native 15-minute data{" "}
-            {loading
-              ? "is loading."
-              : "is unavailable here. Use the one-hour windows in the rain snapshot."}
-          </p>
+        <div
+          className="table-scroll"
+          role="region"
+          aria-label="15-minute forecast comparison"
+          tabIndex={0}
+        >
+          <table className="matrix arrival-matrix">
+            <thead>
+              <tr>
+                <th scope="col">Forecast</th>
+                {times.map((t) => (
+                  <th key={t} scope="col">
+                    {time(t, track.timezone)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {forecasts.map((f) => (
+                <tr key={f.id}>
+                  <th scope="row">{f.name}</th>
+                  {times.map((t) => {
+                    const amount = rainValue(
+                      f.points.find((p) => p.time === t)?.precipitation,
+                    );
+                    const rate = amount === null ? null : amount * 4;
+                    const intensity = rainIntensity(rate);
+                    const label = `${f.name} · ${time(t, track.timezone)}–${time(t + 900, track.timezone)}: ${rate === null ? "unavailable" : `${intensity}, ${n(rate, 1)} mm/h average`}`;
+                    return (
+                      <td
+                        key={t}
+                        className={`rain-cell rain-${intensity.toLowerCase().replaceAll(" ", "-")}`}
+                        title={label}
+                        aria-label={label}
+                      >
+                        {rate === null ? "—" : rate === 0 ? "·" : n(rate, 1)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      ) : (
+        <p className="arrival-unavailable">
+          {loading
+            ? "Checking finer timing…"
+            : "15-minute regional data is unavailable here. Use hourly windows for timing."}
+        </p>
       )}
       <details className="forecast-explainer">
-        <summary>Timing limits</summary>
+        <summary>Timing and units</summary>
         <p>
-          Only native ICON-D2 and AROME 15-minute output is used here, when
-          available and enabled. These are separate regional runs from the same
-          model families, not extra independent votes.
+          Cells show average mm/h in each 15-minute window. A dot means zero; a
+          dash means missing data. These are regional model forecasts, not radar
+          observations or exact arrival times.
         </p>
         <p>
-          Some regions and model runs have no data. The app keeps those gaps
-          rather than interpolating hourly amounts into more precise times.
+          Only native ICON-D2 and AROME output is shown, when enabled and
+          available. Hourly values are never interpolated into finer times.
+          Related regional forecasts do not add independent family votes.
         </p>
         {data?.nearRain?.statuses
-          .filter((status) => status.status === "error")
-          .map((status) => (
-            <p key={status.id}>
-              {status.name}: {status.message}
+          .filter(
+            (s) =>
+              s.status === "error" &&
+              NEAR_RAIN_SPECS.some(
+                (spec) =>
+                  spec.id === s.id &&
+                  selectedSourceIds.includes(spec.sourceId) &&
+                  !disabled.includes(spec.sourceId),
+              ),
+          )
+          .map((s) => (
+            <p key={s.id}>
+              {s.name}: {s.message}
             </p>
           ))}
       </details>

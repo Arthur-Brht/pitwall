@@ -1,8 +1,9 @@
-import { day, n, time } from "@/lib/format";
+﻿import { day, n, time } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
 import { sourceColor } from "@/lib/theme";
+import { rainIntensity } from "@/lib/rain-intensity";
+import { rainValue } from "@/lib/rain-value";
 import { SourceRow } from "./source-card";
-import type { CSSProperties } from "react";
 import { RainChart } from "./weather-charts";
 
 export function ComparisonView() {
@@ -10,7 +11,6 @@ export function ComparisonView() {
     track,
     data,
     disabled,
-    threshold,
     horizon,
     setHorizon,
     active,
@@ -18,14 +18,14 @@ export function ComparisonView() {
     toggleSource,
     appearance,
   } = usePitwall();
-  const matrix = future.slice(0, 24);
+  const matrix = future.slice(0, horizon);
   return (
     <>
-      <section className="panel">
+      <section className="panel heatmap-panel">
         <div className="panel-head">
           <div>
-            <h2>Rain by source</h2>
-            <p className="panel-sub">mm in each hour</p>
+            <h2>Hour by hour</h2>
+            <p className="panel-sub">Compare rain amounts · mm/h</p>
           </div>
           <select
             className="compact-select"
@@ -33,38 +33,12 @@ export function ComparisonView() {
             value={horizon}
             onChange={(e) => setHorizon(+e.target.value)}
           >
-            <option value={12}>12 hours</option>
-            <option value={24}>24 hours</option>
-            <option value={48}>48 hours</option>
-            <option value={72}>72 hours</option>
+            {[1, 3, 6, 12, 24, 48, 72].map((h) => (
+              <option key={h} value={h}>
+                {h} {h === 1 ? "hour" : "hours"}
+              </option>
+            ))}
           </select>
-        </div>
-        <RainChart
-          hours={future.slice(0, horizon)}
-          forecasts={active}
-          tz={track.timezone}
-          height={260}
-        />
-        <div className="chart-legend">
-          <span>
-            <i className="legend-median" />
-            Median
-          </span>
-          {active.map((f) => (
-            <span key={f.id}>
-              <i
-                style={{ background: sourceColor(f.color, appearance.theme) }}
-              />
-              {f.name}
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel heatmap-panel">
-        <div className="panel-head">
-          <h2>Hour by hour</h2>
-          <span className="panel-hint">Highlighted at ≥ {threshold} mm/h</span>
         </div>
         <div
           className="table-scroll"
@@ -75,14 +49,14 @@ export function ComparisonView() {
           <table className="heatmap">
             <thead>
               <tr>
-                <th scope="col">
-                  <span className="sr-only">Source</span>
-                </th>
+                <th scope="col">Forecast</th>
                 {matrix.map((h) => (
                   <th scope="col" key={h.time}>
-                    {time(h.time, track.timezone).slice(0, 2)}
+                    {time(h.time, track.timezone)}
                     {day(h.time, track.timezone) !==
-                      day(matrix[0].time, track.timezone) && <small>+1</small>}
+                      day(matrix[0].time, track.timezone) && (
+                      <small>{day(h.time, track.timezone).slice(5)}</small>
+                    )}
                   </th>
                 ))}
               </tr>
@@ -99,58 +73,63 @@ export function ComparisonView() {
                     {f.name}
                   </th>
                   {matrix.map((h) => {
-                    const v =
-                      f.hours.find((x) => x.time === h.time)?.precipitation ??
-                      null;
-                    const wet = v !== null && v >= threshold;
+                    const value = rainValue(
+                      f.hours.find((x) => x.time === h.time)?.precipitation,
+                    );
+                    const intensity = rainIntensity(value);
                     return (
                       <td
                         key={h.time}
-                        className={v === null ? "missing" : wet ? "wet" : ""}
-                        title={`${f.name} · ${time(h.time, track.timezone, true)} · ${n(v, 2)} mm`}
-                        style={
-                          wet
-                            ? ({
-                                "--wet": Math.min(1, 0.35 + v * 0.3),
-                              } as CSSProperties)
-                            : undefined
-                        }
+                        className={`rain-cell rain-${intensity.toLowerCase().replaceAll(" ", "-")}`}
+                        title={`${f.name} · ${time(h.time, track.timezone, true)}–${time(h.time + 3600, track.timezone)} · ${value === null ? "Missing data" : `${n(value, 2)} mm/h · ${intensity}`}`}
                       >
-                        {v === null ? "—" : v === 0 ? "·" : n(v, 1)}
+                        {value === null ? "—" : value === 0 ? "·" : n(value, 1)}
                       </td>
                     );
                   })}
                 </tr>
               ))}
-              <tr className="consensus-row">
-                <th
-                  scope="row"
-                  title="Model families at or above the threshold; not a probability"
-                >
-                  Families wet
-                </th>
-                {matrix.map((h) => (
-                  <td
-                    key={h.time}
-                    className={
-                      h.agreement === "split" || h.agreement === "mixed"
-                        ? "split-cell"
-                        : ""
-                    }
-                  >
-                    {h.wetShare === null ? "—" : `${h.wetCount}/${h.count}`}
-                  </td>
-                ))}
-              </tr>
             </tbody>
           </table>
         </div>
+        {!matrix.length && (
+          <p className="empty-table">No hourly rain data available.</p>
+        )}
         <p className="fineprint">
-          A dash means no data, never zero. Hourly totals can hide short, heavy
-          showers.
+          A dot means zero; a dash means missing data. Blue is light, amber
+          moderate and red heavy rain.
         </p>
       </section>
-
+      <section className="panel">
+        <div className="panel-head">
+          <div>
+            <h2>Rain by source</h2>
+            <p className="panel-sub">
+              Same {horizon}-hour window · hourly averages
+            </p>
+          </div>
+        </div>
+        <RainChart
+          hours={matrix}
+          forecasts={active}
+          tz={track.timezone}
+          height={240}
+        />
+        <div className="chart-legend">
+          <span>
+            <i className="legend-median" />
+            Median
+          </span>
+          {active.map((f) => (
+            <span key={f.id}>
+              <i
+                style={{ background: sourceColor(f.color, appearance.theme) }}
+              />
+              {f.name}
+            </span>
+          ))}
+        </div>
+      </section>
       <section className="panel">
         <div className="panel-head">
           <h2>

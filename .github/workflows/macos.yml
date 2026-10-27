@@ -53,10 +53,20 @@ jobs:
           npm run desktop:mac
       - name: Check both architectures and the application signature
         run: |
-          binary="release/mac-universal/Pitwall.app/Contents/MacOS/Pitwall"
+          app_name="$(node -p 'JSON.parse(require("fs").readFileSync("desktop/app-identity.json", "utf8")).name')"
+          binary="release/mac-universal/$app_name.app/Contents/MacOS/$app_name"
           lipo -archs "$binary" | grep -q arm64
           lipo -archs "$binary" | grep -q x86_64
-          codesign --verify --deep --strict "release/mac-universal/Pitwall.app"
+          codesign --verify --deep --strict "release/mac-universal/$app_name.app"
+      - name: Open 2.2 and 2.3 together with production profiles and addresses
+        run: |
+          node scripts/download-baseline.mjs
+          volume="$RUNNER_TEMP/pitwall-baseline-volume"
+          mkdir "$volume"
+          hdiutil attach "$RUNNER_TEMP/pitwall-baseline.dmg" -readonly -nobrowse -mountpoint "$volume"
+          trap 'hdiutil detach "$volume"' EXIT
+          ditto "$volume/Pitwall.app" "$RUNNER_TEMP/Pitwall.app"
+          node scripts/coexist-smoke.mjs "$RUNNER_TEMP/Pitwall.app/Contents/MacOS/Pitwall"
       - name: Launch the packaged app twice and verify storage and isolation
         run: npm run desktop:smoke
       - name: Run desktop provider, plan and native file tests
@@ -67,8 +77,9 @@ jobs:
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: |
-          spctl --assess --type execute --verbose "release/mac-universal/Pitwall.app"
-          xcrun stapler validate "release/mac-universal/Pitwall.app"
+          app_name="$(node -p 'JSON.parse(require("fs").readFileSync("desktop/app-identity.json", "utf8")).name')"
+          spctl --assess --type execute --verbose "release/mac-universal/$app_name.app"
+          xcrun stapler validate "release/mac-universal/$app_name.app"
           for dmg in release/*.dmg; do
             xcrun notarytool submit "$dmg" --key "$APPLE_API_KEY" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
             xcrun stapler staple "$dmg"

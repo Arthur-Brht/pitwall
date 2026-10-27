@@ -2,6 +2,9 @@ import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 const metadata = JSON.parse(await readFile("package.json", "utf8"));
+const identity = JSON.parse(
+  await readFile("desktop/app-identity.json", "utf8"),
+);
 const windows = process.platform === "win32";
 const prefix = windows ? "WINDOWS-" : "";
 const lines = [];
@@ -24,7 +27,10 @@ await writeFile(
   `release/${prefix}BUILD-INFO.json`,
   JSON.stringify(
     {
-      application: "Pitwall",
+      application: identity.name,
+      applicationId: identity.appId,
+      profile: identity.profile,
+      localPort: identity.port,
       version: metadata.version,
       commit: process.env.GITHUB_SHA ?? null,
       platform: process.platform,

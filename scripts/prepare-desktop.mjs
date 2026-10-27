@@ -8,6 +8,9 @@ const metadata = JSON.parse(
   await readFile(path.join(root, "package.json"), "utf8"),
 );
 const stage = path.join(root, ".desktop-app");
+const identity = JSON.parse(
+  await readFile(path.join(root, "desktop/app-identity.json"), "utf8"),
+);
 await access(path.join(root, "dist/index.html"));
 if (path.dirname(stage) !== path.resolve(root))
   throw new Error("Invalid app staging directory.");
@@ -15,6 +18,7 @@ await rm(stage, { recursive: true, force: true });
 await mkdir(stage, { recursive: true });
 for (const relative of [
   "desktop/main.mjs",
+  "desktop/app-identity.json",
   "desktop/server.mjs",
   "desktop/policy.mjs",
   "desktop/preload.cjs",
@@ -34,6 +38,7 @@ await writeFile(
   JSON.stringify(
     {
       name: metadata.name,
+      productName: identity.name,
       version: metadata.version,
       description: metadata.description,
       author: "Pitwall contributors",

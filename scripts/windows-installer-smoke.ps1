@@ -19,9 +19,10 @@ $installers = @(Get-ChildItem -LiteralPath 'release' -Filter '*-windows-x64-prev
 if ($installers.Count -ne 1) { throw 'Expected exactly one Windows installer.' }
 $installer = $installers[0]
 $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
-$binary = Join-Path $installDirectory 'Pitwall.exe'
-$shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Pitwall.lnk'
-$profile = Join-Path $env:APPDATA 'Pitwall'
+$identity = Get-Content -LiteralPath 'desktop/app-identity.json' -Raw | ConvertFrom-Json
+$binary = Join-Path $installDirectory ($identity.name + '.exe')
+$shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) ($identity.name + '.lnk')
+$profile = Join-Path $env:APPDATA $identity.profile
 $marker = Join-Path $profile 'installer-preservation-check.txt'
 if (Test-Path -LiteralPath $profile) { throw 'The CI app profile must be new.' }
 
@@ -30,10 +31,20 @@ function Invoke-InstallerProcess([string]$File, [string[]]$InstallerArguments) {
     if ($process.ExitCode -ne 0) { throw "Installer process exited $($process.ExitCode)." }
 }
 
-function Get-PitwallRegistration {
-    @(Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' |
-        Where-Object { $_.PSObject.Properties.Name -contains 'DisplayName' -and $_.DisplayName -eq 'Pitwall' })
+function Get-PitwallRegistration([string]$AppName = $identity.name) {
+    @(Get-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue |
+        Where-Object { $_.PSObject.Properties.Name -contains 'DisplayName' -and $_.DisplayName -eq $AppName })
 }
+
+& node scripts/download-baseline.mjs
+if ($LASTEXITCODE -ne 0) { throw 'The reference installer could not be verified.' }
+$baselineDirectory = [IO.Path]::GetFullPath((Join-Path $temporaryRoot 'Pitwall 2.2 reference'))
+if (-not $baselineDirectory.StartsWith($temporaryRoot + '\', [StringComparison]::OrdinalIgnoreCase) -or (Test-Path -LiteralPath $baselineDirectory)) { throw 'The reference install must use a new RUNNER_TEMP directory.' }
+if ((Test-Path -LiteralPath (Join-Path $env:APPDATA 'Pitwall')) -or @(Get-PitwallRegistration 'Pitwall').Count) { throw 'The runner must not contain an existing Pitwall installation.' }
+Invoke-InstallerProcess (Join-Path $temporaryRoot 'pitwall-baseline.exe') @('/S', '/currentuser', "/D=$baselineDirectory")
+$baselineBinary = Join-Path $baselineDirectory 'Pitwall.exe'
+$baselineShortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'Pitwall.lnk'
+if (-not (Test-Path -LiteralPath $baselineBinary) -or -not (Test-Path -LiteralPath $baselineShortcut)) { throw 'The reference app did not install.' }
 
 foreach ($attempt in @('install', 'reinstall')) {
     Invoke-InstallerProcess $installer.FullName @('/S', '/currentuser', "/D=$installDirectory")
@@ -54,7 +65,9 @@ foreach ($attempt in @('install', 'reinstall')) {
     if ($LASTEXITCODE -ne 0) { throw "The installed app failed its $attempt launch/reopen check." }
 }
 
-$uninstaller = Join-Path $installDirectory 'Uninstall Pitwall.exe'
+& node scripts/coexist-smoke.mjs $baselineBinary $binary
+if ($LASTEXITCODE -ne 0) { throw 'Production side-by-side launch failed.' }
+$uninstaller = Join-Path $installDirectory ('Uninstall ' + $identity.name + '.exe')
 if (-not (Test-Path -LiteralPath $uninstaller)) { throw 'The app uninstaller is missing.' }
 Invoke-InstallerProcess $uninstaller @('/S', '/currentuser', "_?=$installDirectory")
 if ((Test-Path -LiteralPath $binary) -or (Test-Path -LiteralPath $shortcut)) {
@@ -64,6 +77,10 @@ if (@(Get-PitwallRegistration).Count -ne 0) { throw 'Uninstall did not remove Wi
 if ((Get-Content -LiteralPath $marker -Raw).Trim() -ne 'retained') {
     throw 'Uninstall must retain saved application data.'
 }
+if (-not (Test-Path -LiteralPath $baselineBinary) -or -not (Test-Path -LiteralPath $baselineShortcut) -or @(Get-PitwallRegistration 'Pitwall').Count -ne 1) { throw 'Removing 2.3 must preserve the 2.2 app, shortcut and registration.' }
+$baselineMarker = Join-Path $env:APPDATA 'Pitwall\coexistence-check.txt'
+if ((Get-Content -LiteralPath $baselineMarker -Raw) -ne 'baseline-only') { throw 'The reference profile changed.' }
+Invoke-InstallerProcess (Join-Path $baselineDirectory 'Uninstall Pitwall.exe') @('/S', '/currentuser', "_?=$baselineDirectory")
 $signature = (Get-AuthenticodeSignature -LiteralPath $installer.FullName).Status.ToString()
 if ($signature -ne 'NotSigned') { throw 'The preview manifest must match the actual installer signature.' }
 @{
@@ -75,4 +92,6 @@ if ($signature -ne 'NotSigned') { throw 'The preview manifest must match the act
     launchAndReopenPassed = $true
     uninstalled = $true
     appDataRetained = $true
+    baselineAppPreserved = $true
+    productionCoexistencePassed = $true
 } | ConvertTo-Json

@@ -1,5 +1,6 @@
 import type { Forecast, Hour } from "./contracts";
 import { finite } from "./consensus.ts";
+import { validRain } from "./rain-value.ts";
 
 const maximum = (values: (number | null)[]) => {
   const available = values.filter(finite);
@@ -60,7 +61,7 @@ export function sessionSources(
 ) {
   return forecasts.map((forecast) => {
     const hours = overlappingHours(forecast.hours, start, end);
-    const rain = hours.filter((h) => finite(h.precipitation));
+    const rain = hours.filter((h) => validRain(h.precipitation));
     const gusts = hours.filter((h) => finite(h.gust));
     return {
       id: forecast.id,
@@ -158,7 +159,8 @@ export function getDryWindows(
     const qualifies =
       rows.every(
         (r) =>
-          finite(r.hour?.precipitation) && r.hour!.precipitation! < threshold,
+          validRain(r.hour?.precipitation) &&
+          r.hour!.precipitation! < threshold,
       ) &&
       new Set(gusts.map((r) => r.family)).size >= 2 &&
       peak !== null &&

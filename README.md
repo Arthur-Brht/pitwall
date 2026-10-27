@@ -1,4 +1,4 @@
-# Pitwall
+# Pitwall 2.3 Preview
 
 Pitwall is a desktop app for Mac and Windows that helps you plan around the weather at a racetrack. Pick a circuit, and it puts several weather forecasts side by side, shows recent rain radar over the track, and lays out the rain, wind, gusts and temperatures expected during your sessions.
 
@@ -14,11 +14,13 @@ The screenshots and video use made-up example data to show the interface. When y
 
 ## Download
 
-The latest versions are on the [Releases page](https://github.com/Arthur-Brht/pitwall/releases).
+This branch contains the **2.3 comparison preview**. It installs as **Pitwall 2.3 Preview**, alongside the existing Pitwall 2.2 app, with separate plans, preferences and forecast history. Nothing is copied automatically; export a backup from 2.2 and import it in 2.3 if you want the same plans. History CSV files remain separate.
 
-**Mac** (macOS 13 Ventura or newer, Apple silicon or Intel): download the `.dmg`, open it and drag Pitwall into Applications. Then open it from Applications, Launchpad or the Dock.
+Download [2.3 Preview](https://github.com/Arthur-Brht/pitwall/releases/tag/v2.3.0-preview.1), or keep [2.2 Preview](https://github.com/Arthur-Brht/pitwall/releases/tag/v2.2.0-preview.2) for comparison. The [Releases page](https://github.com/Arthur-Brht/pitwall/releases) keeps both versions.
 
-**Windows** (Windows 10 or 11, 64-bit Intel or AMD): download the setup `.exe`, run it and follow the steps. Pitwall then appears in the Start menu and on your desktop.
+**Mac** (macOS 13 Ventura or newer, Apple silicon or Intel): download the `.dmg`, open it and drag Pitwall 2.3 Preview into Applications. Then open it from Applications, Launchpad or the Dock.
+
+**Windows** (Windows 10 or 11, 64-bit Intel or AMD): download the setup `.exe`, run it and follow the steps. Pitwall 2.3 Preview then appears in the Start menu and on your desktop.
 
 These are preview builds. The Mac app isn't signed with an Apple Developer ID or notarised by Apple, and the Windows app isn't signed either, so your computer may warn you before opening it or block it. The [Mac notes](docs/MAC_APP.md) and [Windows notes](docs/WINDOWS_APP.md) explain what to expect.
 
@@ -26,11 +28,11 @@ These are preview builds. The Mac app isn't signed with an Apple Developer ID or
 
 Pitwall has five main views.
 
-- **Dashboard** brings together the estimated chance of rain, forecast agreement, humidity, air temperature and wind for a window you choose. Rain timing uses 15-minute regional forecasts where available and hourly windows elsewhere. [How to read the dashboard](docs/DASHBOARD.md).
+- **Dashboard** leads with one rain outlook for a window you choose, then gives the hourly ensemble estimate, provider agreement, humidity, air temperature and wind. Rain timing uses 15-minute regional forecasts where available and hourly windows elsewhere. [How to read the dashboard](docs/DASHBOARD.md).
 
 - **Overview** gives the outlook for your circuit, the next 24 hours and a map with recent rain radar.
 - **Sessions** lets you enter a session's date, start time and length, and see what each forecast expects for rain and gusts during it, including any windows where the models expect it to stay dry. You can save and edit your sessions, add them to your calendar, and back them up to a file.
-- **Models** compares the forecasts in detail. Light, moderate and heavy rain guides give the charts context. You can switch individual forecasts on or off to see where they differ.
+- **Models** opens with an intensity-shaded comparison table, followed by a chart for the same window. Small amounts are enlarged automatically while keeping the light/moderate/heavy guide visible. Light, moderate and heavy rain guides give the charts context. You can switch individual forecasts on or off to see where they differ.
 - **History** keeps the forecasts Pitwall has fetched, so you can look back at what was predicted, export it as a CSV file, and compare it with weather station measurements you import.
 
 You can choose from a list of known circuits, including Dijon-Prenois, search for any place, or enter coordinates and a timezone yourself. Light, dark and system appearance are all available. The radar has a taller map, smooth transitions, playback speeds and From/To controls under its map options. It still shows real scans ten minutes apart; blending doesn't add observations between them.
@@ -58,7 +60,7 @@ To move your plans to another computer, or from an older browser version of Pitw
 This part is only for people who want to work on the code. You need [Node.js 22.13 or newer](https://nodejs.org/en/download).
 
 ```sh
-git clone https://github.com/Arthur-Brht/pitwall.git pitwall
+git clone --branch preview/2.3 https://github.com/Arthur-Brht/pitwall.git pitwall
 cd pitwall
 npm ci
 npm start -- --open

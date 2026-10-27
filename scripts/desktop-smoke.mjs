@@ -6,6 +6,9 @@ import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
+const identity = JSON.parse(
+  await readFile(path.join(root, "desktop/app-identity.json"), "utf8"),
+);
 const mac = process.platform === "darwin";
 const packaged = !process.argv.includes("--development");
 const executableIndex = process.argv.indexOf("--executable");
@@ -19,8 +22,8 @@ const binary =
           root,
           "release",
           mac
-            ? "mac-universal/Pitwall.app/Contents/MacOS/Pitwall"
-            : "win-unpacked/Pitwall.exe",
+            ? `mac-universal/${identity.name}.app/Contents/MacOS/${identity.name}`
+            : `win-unpacked/${identity.name}.exe`,
         )
       : (await import("electron")).default;
 await access(binary);

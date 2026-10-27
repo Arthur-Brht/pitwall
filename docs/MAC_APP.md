@@ -1,20 +1,24 @@
 # Pitwall for Mac
 
-The universal disk image contains a complete application for Apple silicon and Intel Macs on macOS 13 or newer. Open the `.dmg`, drag Pitwall to Applications, then launch it normally. Node.js, Git, npm and Terminal are not needed to use the app.
+The universal disk image contains a complete application for Apple silicon and Intel Macs on macOS 13 or newer. Open the `.dmg`, drag Pitwall 2.3 Preview to Applications, then launch it normally. Node.js, Git, npm and Terminal are not needed to use the app.
 
 Previews have `preview` in their filenames and are ad-hoc signed, not Apple notarized. They demonstrate the build and are not the standard public installer. A standard release requires a Developer ID certificate, Apple Developer membership and successful Apple notarization. Credentials are never included in source control. `BUILD-INFO.json` records which installer was produced.
 
 macOS may block an unverified preview on first launch. [Apple explains these alerts and the available choices](https://support.apple.com/en-us/102445). The preview does not require a Terminal command or a system-wide change to Gatekeeper. A normal verified public release remains a separate signing/notarization step.
 
+## Compare with 2.2
+
+This version installs as **Pitwall 2.3 Preview** with its own application identity, shortcuts, profile and local address. Keep the original Pitwall app to compare both. Plans and history are separate; use a manual backup export/import to copy plans. Uninstalling 2.3 retains its profile and leaves the 2.2 installation alone.
+
 ## Everyday use and storage
 
-Pitwall starts its bundled server at `http://localhost:4173` on this computer only. Opening it again focuses its existing window. Closing the Mac window leaves the Dock app running; use Pitwall > Quit Pitwall or Command-Q to stop it and its server.
+Pitwall starts its bundled server at `http://localhost:4183` on this computer only. Opening it again focuses its existing window. Closing the Mac window leaves the Dock app running; use Pitwall 2.3 Preview > Quit Pitwall 2.3 Preview or Command-Q to stop it and its server.
 
-If another app or an older source server owns port 4173, Pitwall explains the conflict and offers Try again or Quit. It leaves the other process untouched and never silently loads its content.
+If another app or an older source server owns port 4183, Pitwall explains the conflict and offers Try again or Quit. It leaves the other process untouched and never silently loads its content.
 
 Fresh forecasts, location search, radar and map tiles need internet. The bundled interface opens offline. Saved forecasts retain their original receipt time.
 
-The private profile is at `~/Library/Application Support/Pitwall`. It is separate from Safari/Chrome. Transfer circuits, preferences and plans using Export backup in the old browser and Import backup in the app. History exports separately as CSV; it is not part of the JSON plan backup.
+The private profile is at `~/Library/Application Support/Pitwall 2.3 Preview`. It is separate from Safari/Chrome. Transfer circuits, preferences and plans using Export backup in the old browser and Import backup in the app. History exports separately as CSV; it is not part of the JSON plan backup.
 
 To update, quit Pitwall and replace it in Applications with the new download. Data lives outside the app bundle. Back up important plans before updating. To uninstall, quit and move the app to the Trash; its profile is retained. Removing that profile permanently removes its local data, with no server copy to recover it.
 
@@ -44,3 +48,5 @@ Select the workflow's explicit **signed** option after adding these GitHub Actio
 Signed builds fail when credentials are missing. They use hardened runtime, submit the application to Apple, assess it and validate its ticket, then notarize/staple/validate the DMG. Only after those checks does the build report say signed and notarized. The temporary key is removed after the job. Never paste certificates, keys or passwords into source, issues, logs or chat.
 
 Preparing an installer does not buy Apple Developer membership, create credentials or publish a release.
+
+The comparison check downloads a checksum-pinned 2.2 installer on the disposable GitHub runner and opens both actual packaged apps simultaneously with no test profile or port overrides. It verifies different profiles and addresses. Windows also checks separate installed entries/shortcuts and preservation of 2.2 after uninstalling 2.3. These checks establish coexistence, not live forecast accuracy; the separate native synthetic-data flow covers plan and backup persistence.

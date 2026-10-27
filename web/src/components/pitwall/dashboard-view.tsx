@@ -1,19 +1,13 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo } from "react";
 import { Droplets, SlidersHorizontal, Thermometer, Wind } from "lucide-react";
 import { n, time } from "@/lib/format";
 import { usePitwall } from "@/lib/pitwall-context";
-import { rainOutlook } from "@/lib/rain-outlook";
+import { enabledNearRain, rainDecision } from "@/lib/rain-decision";
+import { rainIntensity } from "@/lib/rain-intensity";
+import { rainValue } from "@/lib/rain-value";
 import { sourceColor } from "@/lib/theme";
 import CircuitMap from "./circuit-map";
 import { RainArrivalView } from "./rain-arrival";
-import { rainIntensity } from "@/lib/rain-intensity";
-
-const RISK = {
-  elevated: "Elevated rain risk",
-  possible: "Rain is possible",
-  low: "Low rain signal",
-  limited: "Limited rain data",
-} as const;
 
 export function DashboardView() {
   const {
@@ -28,33 +22,53 @@ export function DashboardView() {
     selectedSourceIds,
     disabled,
     loading,
+    dashboardWindow,
+    setDashboardWindow,
+    setHorizon,
   } = usePitwall();
-  const [windowHours, setWindowHours] = useState(3);
-  const start = Math.floor(now / 3600) * 3600,
-    end = start + windowHours * 3600;
-  const outlook = useMemo(
+  const native = useMemo(
     () =>
-      rainOutlook(
+      enabledNearRain(
+        data?.nearRain?.forecasts ?? [],
+        selectedSourceIds,
+        disabled,
+      ),
+    [data?.nearRain, selectedSourceIds, disabled],
+  );
+  const decision = useMemo(
+    () =>
+      rainDecision(
         active,
         data?.ensembles?.forecasts ?? [],
-        start,
-        end,
+        native,
+        now,
+        dashboardWindow,
         threshold,
       ),
-    [active, data?.ensembles, start, end, threshold],
+    [active, data?.ensembles, native, now, dashboardWindow, threshold],
   );
-  const oldestEnsemble = outlook.estimates
-    .map((item) => Date.parse(item.fetchedAt))
-    .filter(Number.isFinite)
-    .sort((a, b) => a - b)[0];
+  const { outlook, onset } = decision;
+  const { start, end } = outlook;
   const expected = selectedSourceIds.filter(
     (id) => !disabled.includes(id),
   ).length;
   const unavailable = Math.max(0, expected - active.length);
-  const agreementTotal = outlook.wetSources + outlook.drySources;
+  const total = outlook.wetSources + outlook.drySources;
+  const headline =
+    loading && !data
+      ? "Checking rain forecasts…"
+      : onset
+        ? `${decision.intensity === "Unknown" ? "Rain" : `${decision.intensity} rain`} possible ${time(onset.start, track.timezone)}–${time(onset.end, track.timezone)}.`
+        : decision.conflict
+          ? "Forecasts differ on rain timing."
+          : decision.risk === "possible" || decision.risk === "elevated"
+            ? "Rain remains possible."
+            : !total || outlook.incompleteSources || unavailable
+              ? "Rain outlook is incomplete."
+              : "Available forecasts stay dry.";
   const times = Array.from(
-    { length: windowHours },
-    (_, index) => start + index * 3600,
+    { length: dashboardWindow },
+    (_, i) => start + i * 3600,
   );
   return (
     <>
@@ -62,110 +76,83 @@ export function DashboardView() {
         <div>
           <h2>Rain outlook</h2>
           <p>
-            {new Intl.DateTimeFormat("en-GB", {
-              day: "numeric",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-              timeZone: track.timezone,
-            }).formatRange(new Date(start * 1000), new Date(end * 1000))}{" "}
-            · {track.timezone.replaceAll("_", " ")}
+            {time(start, track.timezone, true)}–{time(end, track.timezone)} ·
+            includes this hour
           </p>
         </div>
         <label className="dashboard-window">
           Forecast window
           <select
-            value={windowHours}
-            onChange={(event) => setWindowHours(Number(event.target.value))}
+            value={dashboardWindow}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              setDashboardWindow(value);
+              setHorizon(value);
+            }}
             aria-label="Dashboard forecast window"
           >
-            <option value={1}>This hour</option>
-            <option value={3}>Next 3 hours</option>
-            <option value={6}>Next 6 hours</option>
-            <option value={12}>Next 12 hours</option>
-            <option value={24}>Next 24 hours</option>
+            {[1, 3, 6, 12, 24].map((h) => (
+              <option key={h} value={h}>
+                {h === 1 ? "This hour" : `${h}-hour outlook`}
+              </option>
+            ))}
           </select>
         </label>
       </div>
       <div className="dashboard-summary">
         <section
-          className={`panel rain-risk ${outlook.risk}`}
+          className={`panel rain-risk ${decision.risk}`}
           aria-label="Rain risk snapshot"
           aria-busy={loading}
         >
-          <div className="panel-head">
-            <h2>{RISK[outlook.risk]}</h2>
-            <span className="tag">≥ {threshold} mm/h</span>
-          </div>
+          <h2 className="rain-decision">{headline}</h2>
+          <p className="decision-basis">
+            {loading && !data
+              ? `Loading ${expected} selected forecasts.`
+              : decision.basis}
+          </p>
+          {decision.conflict && onset && (
+            <p className="timing-difference">
+              15-minute and hourly forecasts differ. The finer regional window
+              is shown first.
+            </p>
+          )}
+          {data && <p className="agreement-sentence">{decision.agreement}</p>}
           <div className="risk-probability">
             <strong>
               {outlook.probability === null ? "—" : n(outlook.probability, 0)}
               {outlook.probability !== null && <small>%</small>}
             </strong>
             <div>
-              <span>Chance of rain</span>
+              <span>Hourly ensemble estimate</span>
               <p>
                 {outlook.ensembleSystems
-                  ? `${n(outlook.probabilityMin, 0) !== n(outlook.probabilityMax, 0) ? `${n(outlook.probabilityMin, 0)}–${n(outlook.probabilityMax, 0)}% · ` : ""}${outlook.ensembleSystems} ensemble systems`
-                  : "Ensemble estimate unavailable"}
+                  ? `${outlook.probabilityMin !== outlook.probabilityMax ? `${n(outlook.probabilityMin, 0)}–${n(outlook.probabilityMax, 0)}% · ` : ""}${outlook.ensembleSystems} ensemble systems`
+                  : "Estimate unavailable"}
               </p>
             </div>
           </div>
-          <div className="agreement-line">
-            <strong>
-              {outlook.wetSources}
-              <span> of {agreementTotal}</span>
-            </strong>
-            <span>forecasts expect rain</span>
-          </div>
-          <div className="agreement-bar" aria-hidden="true">
-            <i
-              style={{
-                width: `${agreementTotal ? (outlook.wetSources / agreementTotal) * 100 : 0}%`,
-              }}
-            />
-          </div>
-          <p className="risk-context">
-            {outlook.wetFamilies}/{outlook.reportingFamilies} model families
-            agree.
-            {outlook.incompleteSources > 0
-              ? ` ${outlook.incompleteSources} forecast${outlook.incompleteSources === 1 ? " is" : "s are"} incomplete.`
-              : ""}
-            {unavailable > 0
-              ? ` ${unavailable} selected source${unavailable === 1 ? " is" : "s are"} unavailable.`
-              : ""}
-          </p>
-          <dl className="risk-timing">
-            <div>
-              <dt>Earliest hourly signal</dt>
-              <dd>
-                {outlook.firstRain === null
-                  ? outlook.incompleteSources || unavailable || !agreementTotal
-                    ? "Unknown"
-                    : "None in window"
-                  : `${time(outlook.firstRain, track.timezone)}–${time(outlook.firstRain + 3600, track.timezone)}`}
-              </dd>
-            </div>
-            <div>
-              <dt>Heaviest forecast hour</dt>
-              <dd>
-                {n(outlook.maxRain, 1)} <small>mm/h</small>
-                <span className="rain-intensity-note">
-                  {rainIntensity(outlook.maxRain)}
-                </span>
-              </dd>
-            </div>
-          </dl>
+          {!loading && (outlook.incompleteSources > 0 || unavailable > 0) && (
+            <p className="risk-context">
+              {outlook.incompleteSources > 0
+                ? `${outlook.incompleteSources} incomplete hourly forecasts. `
+                : ""}
+              {unavailable > 0
+                ? `${unavailable} selected sources unavailable.`
+                : ""}
+            </p>
+          )}
           <details className="dashboard-method">
             <summary>Estimate details</summary>
             <p>
-              The chance estimates at least {threshold} mm in any hour of this
-              window. It comes from repeated model runs, not the number of
-              providers agreeing.
+              The percentage estimates at least {threshold} mm in any hour of
+              this window. It comes from ensemble model runs; the provider count
+              is a separate comparison.
             </p>
             <p>
-              Models can miss showers. This is a weather estimate, not a grip
-              assessment.
+              {outlook.wetFamilies} of {outlook.reportingFamilies} reporting
+              model families predict rain. Related forecasts share one family
+              vote.
             </p>
             <dl className="ensemble-estimates">
               {outlook.estimates.map((estimate) => (
@@ -179,13 +166,19 @@ export function DashboardView() {
                 </div>
               ))}
             </dl>
-            {oldestEnsemble && (
-              <p>
-                Updated {time(oldestEnsemble / 1000, track.timezone)} · includes
-                the full current hour.
-              </p>
-            )}
-            <a href="https://github.com/Arthur-Brht/pitwall/blob/main/docs/DASHBOARD.md">
+            <p>
+              Earliest hourly signal:{" "}
+              {outlook.firstRain === null
+                ? "none in available data"
+                : `${time(outlook.firstRain, track.timezone)}–${time(outlook.firstRain + 3600, track.timezone)}`}
+              . Peak hourly forecast: {n(outlook.maxRain, 1)} mm/h (
+              {rainIntensity(outlook.maxRain).toLowerCase()}).
+            </p>
+            <p>
+              The window includes the complete current hour. Models can miss
+              showers; these estimates do not measure grip.
+            </p>
+            <a href="https://github.com/Arthur-Brht/pitwall/blob/preview/2.3/docs/DASHBOARD.md">
               Calculation notes
             </a>
           </details>
@@ -206,7 +199,6 @@ export function DashboardView() {
               <dd>
                 {n(current?.temperature)}
                 <small>°C</small>
-
                 <span>
                   {n(current?.tempMin)}–{n(current?.tempMax)}° across forecasts
                 </span>
@@ -219,7 +211,6 @@ export function DashboardView() {
               <dd>
                 {n(current?.humidity)}
                 <small>%</small>
-
                 <span>Dew point {n(current?.dewpoint, 1)}°C</span>
               </dd>
             </div>
@@ -230,114 +221,117 @@ export function DashboardView() {
               <dd>
                 {n(current?.wind)}
                 <small>km/h</small>
-
                 <span>Gusts up to {n(current?.gust)} km/h</span>
               </dd>
             </div>
           </dl>
         </section>
       </div>
+      <RainArrivalView end={end} />
       <div className="dashboard-weather-grid">
         <CircuitMap track={track} />
-        <RainArrivalView end={end} />
-      </div>
-      <section className="panel dashboard-comparison">
-        <div className="panel-head wrap">
-          <div>
-            <h2>Who expects rain?</h2>
-            <p className="panel-sub">
-              Hourly rain in mm · {time(start, track.timezone)}–
-              {time(end, track.timezone)}
-            </p>
+        <section className="panel dashboard-comparison">
+          <div className="panel-head wrap">
+            <div>
+              <h2>Who expects rain?</h2>
+              <p className="panel-sub">Hourly rain · mm/h</p>
+            </div>
+            <button
+              className="icon-button"
+              aria-label="Manage forecasts"
+              onClick={() => setSettings(true)}
+            >
+              <SlidersHorizontal size={18} />
+            </button>
           </div>
-          <button
-            className="button secondary"
-            onClick={() => setSettings(true)}
+          <div
+            className="table-scroll"
+            role="region"
+            aria-label="Forecast rain comparison"
+            tabIndex={0}
           >
-            <SlidersHorizontal size={14} /> Manage forecasts
-          </button>
-        </div>
-        <div
-          className="table-scroll"
-          role="region"
-          aria-label="Forecast rain comparison"
-          tabIndex={0}
-        >
-          <table className="matrix dashboard-matrix">
-            <thead>
-              <tr>
-                <th scope="col">Forecast</th>
-                <th scope="col">Outlook</th>
-                {times.map((value) => (
-                  <th scope="col" key={value}>
-                    {time(value, track.timezone)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {outlook.rows.map((row) => (
-                <tr key={row.forecast.id}>
-                  <th scope="row">
-                    <span className="provider-name">
-                      <i
-                        style={{
-                          background: sourceColor(
-                            row.forecast.color,
-                            appearance.theme,
-                          ),
-                        }}
-                      />
-                      {row.forecast.name}
-                    </span>
-                  </th>
-                  <td className={row.wet ? "text-rain" : ""}>
-                    {row.wet ? "Rain" : row.complete ? "Dry" : "Incomplete"}
-                  </td>
-                  {times.map((value) => {
-                    const hour = row.forecast.hours.find(
-                        (item) => item.time === value,
-                      ),
-                      rain = hour?.precipitation;
-                    return (
-                      <td
-                        key={value}
-                        className={
-                          rain !== null &&
-                          rain !== undefined &&
-                          rain >= threshold
-                            ? "wet-cell"
-                            : ""
-                        }
-                      >
-                        {n(rain, 1)}
-                      </td>
-                    );
-                  })}
+            <table className="matrix dashboard-matrix">
+              <thead>
+                <tr>
+                  <th scope="col">Forecast</th>
+                  {times.map((value) => (
+                    <th scope="col" key={value}>
+                      {time(value, track.timezone)}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {!outlook.rows.length && (
-            <p className="empty-table">
-              {loading
-                ? "Loading forecasts…"
-                : "No forecasts available for comparison."}
+              </thead>
+              <tbody>
+                {outlook.rows.map(({ forecast }) => (
+                  <tr key={forecast.id}>
+                    <th scope="row">
+                      <span className="provider-name">
+                        <i
+                          style={{
+                            background: sourceColor(
+                              forecast.color,
+                              appearance.theme,
+                            ),
+                          }}
+                        />
+                        {forecast.name}
+                      </span>
+                      {data?.statuses.some(
+                        (s) => s.id === forecast.id && s.status === "cached",
+                      ) && (
+                        <small className="saved-source">
+                          Saved{" "}
+                          {time(
+                            Date.parse(forecast.fetchedAt) / 1000,
+                            track.timezone,
+                          )}
+                        </small>
+                      )}
+                    </th>
+                    {times.map((value) => {
+                      const rain = rainValue(
+                        forecast.hours.find((h) => h.time === value)
+                          ?.precipitation,
+                      );
+                      const intensity = rainIntensity(rain)
+                        .toLowerCase()
+                        .replaceAll(" ", "-");
+                      return (
+                        <td
+                          key={value}
+                          className={`rain-cell rain-${intensity}`}
+                          title={`${forecast.name} · ${time(value, track.timezone)}–${time(value + 3600, track.timezone)} · ${rain === null ? "Missing data" : `${n(rain, 1)} mm/h · ${rainIntensity(rain)}`}`}
+                        >
+                          {rain === null ? "—" : rain === 0 ? "·" : n(rain, 1)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!outlook.rows.length && (
+              <p className="empty-table">
+                {loading
+                  ? "Loading forecasts…"
+                  : "No hourly forecasts available."}
+              </p>
+            )}
+          </div>
+          <details className="forecast-explainer">
+            <summary>Reading the comparison</summary>
+            <p>
+              A dot means zero rain; a dash means missing data. Blue is light,
+              amber moderate and red heavy rain.
             </p>
-          )}
-        </div>
-        <details className="forecast-explainer">
-          <summary>Why forecasts from other countries?</summary>
-          <p>
-            JMA, NOAA and other agencies run global models, so they forecast
-            Europe too. The country names identify the agency. Open-Meteo
-            delivers these forecasts to Pitwall.
-          </p>
-          <p>
-            A dash means missing data. Related models share one family vote.
-          </p>
-        </details>
-      </section>
+            <p>
+              JMA, NOAA and other agencies run global models, including Europe.
+              Their country names identify the agency; Open-Meteo delivers their
+              forecasts.
+            </p>
+          </details>
+        </section>
+      </div>
     </>
   );
 }

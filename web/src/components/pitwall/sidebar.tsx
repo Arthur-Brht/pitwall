@@ -31,6 +31,9 @@ export function Sidebar() {
         >
           <span className="brand-mark" aria-hidden="true" />
           Pitwall
+          <small className="preview-badge" title="2.3 comparison preview">
+            2.3
+          </small>
         </a>
         <div className="sidebar-heading">Circuits</div>
         <nav className="circuit-list" aria-label="Saved circuits">

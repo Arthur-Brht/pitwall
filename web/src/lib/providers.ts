@@ -2,6 +2,7 @@ import type { Forecast, Hour } from "./contracts";
 import type { ModelSpec } from "./forecast-catalog.ts";
 export { MODEL_SPECS } from "./forecast-catalog.ts";
 import { readCache, writeCache } from "./browser-history.ts";
+import { rainValue } from "./rain-value.ts";
 
 export class ProviderError extends Error {
   constructor(
@@ -202,7 +203,7 @@ export function normalizeOpenMeteo(
     );
   const h = data.hourly;
   const amountByEnd = new Map<number, number | null>(
-    h.time.map((t: number, i: number) => [t, finite(h.precipitation?.[i])]),
+    h.time.map((t: number, i: number) => [t, rainValue(h.precipitation?.[i])]),
   );
   const gustByEnd = new Map<number, number | null>(
     h.time.map((t: number, i: number) => [t, finite(h.wind_gusts_10m?.[i])]),
@@ -304,7 +305,7 @@ export function normalizeMetNorway(
       return {
         time,
         temperature: temp,
-        precipitation: finite(next?.precipitation_amount),
+        precipitation: rainValue(next?.precipitation_amount),
         probability: finite(next?.probability_of_precipitation),
         wind:
           finite(v.wind_speed) === null

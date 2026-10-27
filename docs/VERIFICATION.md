@@ -1,10 +1,10 @@
-# Verification — Pitwall 2.2.0
+# Verification — Pitwall 2.3.0 Preview
 
-Release review: 27 October 2026. The application runs locally at http://localhost:4173; GitHub stores source and executes checks. There is no hosted application, login or deployment workflow.
+Release review: 27 October 2026. The 2.3 desktop preview runs locally at http://localhost:4183 (source startup remains 4173); GitHub stores source and executes checks. There is no hosted application, login or deployment workflow.
 
 ## Automated evidence
 
-- **89 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links. New checks cover native quarter-hour intervals, timing gaps and thresholds, absolute intensity scales, load-aware radar playback, cancellation and bounded layer retention.
+- **96 unit/integration tests** cover provider normalization, UTC rain/gust alignment, model-family votes, missing values, DST, session coverage/dry windows, backup merging, calendar/CSV exports, IndexedDB retention, custom-location identity, observation validation/scoring, local serving and documentation links. New checks cover native quarter-hour intervals, timing gaps and thresholds, absolute intensity scales, load-aware radar playback, cancellation and bounded layer retention.
 - The browser suite exercises Chromium, Firefox, WebKit and a mobile Chromium viewport. It covers both light and dark appearance, system changes, saved theme choices, incomplete rainfall summaries, all views, source controls, session editing/undo, calendar/history/backup exports, restore/rejection, failed-provider recovery, custom coordinates, location search/timezones, corrupt storage, modal keyboard focus, observation verification and accessibility. Two offline harness skips remain documented below.
 - Accessibility checks cover all five views in both themes plus search/preferences dialogs for critical or serious WCAG-tagged axe violations. They do not constitute a complete accessibility certification.
 - Dashboard checks cover window-level rain estimates, complete ensemble-member denominators, wet outliers, per-location source choices, native quarter-hour rain windows, explicit hourly fallback, the removal of track-temperature entry, rain-chart context and radar start/end playback. Delayed-tile tests verify that the previous scan stays displayed while the replacement loads. Recovery checks verify that Refresh retries failed tiles even when the radar frame timestamp is unchanged. Existing saved forecasts remain available as explicitly stale data during an offline upgrade.
@@ -43,3 +43,9 @@ The release source is a standalone app-only history. Legacy project materials an
 README screenshots and the walkthrough use labelled synthetic test weather and an example session with real attributed OSM base tiles. No example forecasts or history are seeded in the normal application. Browser testing uses isolated origins/contexts and does not alter real localhost:4173 plans.
 
 Public weather APIs, quotas, CORS, internet access, browser storage and radar coverage remain external limits. No software test or small station comparison establishes track grip, safety or precise shower timing. The source launcher is optional; packaged Mac lifecycle checks run on GitHub macOS rather than a personal Mac.
+
+## 2.3 comparison review
+
+Independent UX and technical reviews of 2.2 informed this preview. Changes cover competing risk numbers, conflicting onset windows, a shared quarter-hour strip, table-first comparison, malformed negative rain, hourly/native failure isolation, and radar controls during metadata failures. New browser scenarios verify window retention, native results during hourly failures, exclusions, and Pause during a metadata outage. Synthetic radar fixtures contain thirteen scans over two hours; production uses only actual returned scans.
+
+The app uses a distinct ID, product name, default profile and local port. Native CI checks production-default coexistence with a checksum-pinned 2.2 app, alongside the existing isolated storage/plan/file checks. Windows verifies that removing 2.3 leaves 2.2 installed. Test markers establish profile isolation, not a live-weather accuracy assessment. No user Mac or existing installation is used for these checks.

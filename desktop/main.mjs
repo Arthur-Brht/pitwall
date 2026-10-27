@@ -3,15 +3,17 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { startDesktopServer } from "./server.mjs";
 import { externalLink, isAppPage, isAppDownload } from "./policy.mjs";
+import identity from "./app-identity.json" with { type: "json" };
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const testing = process.argv.includes("--pitwall-test");
-app.setName("Pitwall");
+app.setName(identity.name);
+if (process.platform === "win32") app.setAppUserModelId(identity.appId);
 app.setPath(
   "userData",
   testing && process.env.PITWALL_TEST_PROFILE
     ? process.env.PITWALL_TEST_PROFILE
-    : path.join(app.getPath("appData"), "Pitwall"),
+    : path.join(app.getPath("appData"), identity.profile),
 );
 app.enableSandbox();
 let server;
@@ -51,7 +53,7 @@ async function openExternal(value) {
 async function createWindow() {
   if (!server) return;
   mainWindow = new BrowserWindow({
-    title: "Pitwall",
+    title: identity.name,
     width: 1440,
     height: 1000,
     minWidth: 800,
@@ -70,6 +72,10 @@ async function createWindow() {
     },
   });
   const window = mainWindow;
+  window.on("page-title-updated", (event) => {
+    event.preventDefault();
+    window.setTitle(identity.name);
+  });
   window.on("closed", () => {
     mainWindow = undefined;
   });
@@ -114,9 +120,9 @@ async function createWindow() {
 
 async function start() {
   app.setAboutPanelOptions({
-    applicationName: "Pitwall",
+    applicationName: identity.name,
     applicationVersion: app.getVersion(),
-    website: "https://github.com/Arthur-Brht/pitwall-",
+    website: "https://github.com/Arthur-Brht/pitwall",
     copyright:
       "MIT licensed software. Weather and map data retain their own terms.",
   });
@@ -159,7 +165,7 @@ async function start() {
           {
             label: "Pitwall documentation",
             click: () =>
-              void openExternal("https://github.com/Arthur-Brht/pitwall-"),
+              void openExternal("https://github.com/Arthur-Brht/pitwall"),
           },
         ],
       },
@@ -169,7 +175,9 @@ async function start() {
     try {
       server = await startDesktopServer(
         path.join(root, "dist"),
-        testing ? Number(process.env.PITWALL_TEST_PORT || 4175) : 4173,
+        testing && process.env.PITWALL_TEST_PORT
+          ? Number(process.env.PITWALL_TEST_PORT)
+          : identity.port,
       );
     } catch (error) {
       if (testing) throw error;

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.3.0 — Comparison preview
+
+- Lead the dashboard with a single rain sentence; keep hourly ensemble probability and provider agreement separate and move calculation detail behind disclosure.
+- Prefer available native 15-minute timing near term, explain disagreements with hourly forecasts, and use a compact shared intensity-shaded timing strip.
+- Open Models with the provider table, synchronize its initial window with the dashboard, shade intensity consistently, and automatically fit light-rain charts while retaining the absolute guide.
+- Preserve native timing during hourly outages, reject negative rainfall as missing at provider/calculation boundaries, and keep radar Pause usable during metadata outages.
+- Label the latest radar scan separately from the displayed historical frame and improve the circuit marker contrast.
+- Package Pitwall 2.3 Preview with a separate identity, profile and local address, preserving 2.2 for comparison. Extend native CI to launch both with production defaults and verify Windows installation/uninstallation isolation.
+
 ## 2.2.0 — Clearer rain timing and smoother radar
 
 - Made radar maps taller and playback load-aware, keeping the last complete scan while the next loads, preloading neighbours and blending adjacent scans. Added previous/next controls, playback speeds and reduced-motion support, with range/map options collapsed by default.

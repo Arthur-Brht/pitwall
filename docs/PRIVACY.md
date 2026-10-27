@@ -26,3 +26,5 @@ Appearance is a separate per-device choice and is not included in plan backups.
 Backup, history, calendar and observation files can contain locations and planned activities. Review them before sharing. Browser storage can be cleared or evicted. Removing site data for localhost:4173 deletes Pitwall's local plans, history and cached shell; export anything you want to keep first. No server-side copy exists to recover it.
 
 Corrupt storage pauses automatic saving to preserve existing values. Storage failures are shown visibly. Dependency and provider failures can still occur; keep important plans outside browser storage as well.
+
+The 2.3 comparison app uses its own Pitwall 2.3 Preview profile and localhost:4183 origin, separate from 2.2's Pitwall profile and localhost:4173. It does not read or migrate the other profile. A manual JSON backup import copies plans/settings only; forecast history stays separate.

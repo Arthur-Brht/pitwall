@@ -37,7 +37,7 @@ Weather is represented by nullable fields at UTC valid timestamps. Rain and prec
 
 Consensus groups related forecasts by family before calculating descriptive medians and threshold votes. Session windows separately require complete rain evidence from every enabled feed. Field-specific coverage makes absent gusts visible.
 
-The production origin is `http://localhost:4173`. Preferences and plans use localStorage. Actual weather snapshots and caches use IndexedDB. Recent history retains distinct real fetches; older history keeps the latest real fetch per source, valid hour and UTC capture hour. Cache fallback preserves its original receipt time. The app has no telemetry endpoint, cloud database or authentication.
+The 2.3 desktop comparison origin is `http://localhost:4183`; source/browser startup defaults to `http://localhost:4173`. The desktop app identity and profile come from `desktop/app-identity.json`. They differ from 2.2 so both native apps can run together. Preferences and plans use localStorage. Actual weather snapshots and caches use IndexedDB. Recent history retains distinct real fetches; older history keeps the latest real fetch per source, valid hour and UTC capture hour. Cache fallback preserves its original receipt time. The app has no telemetry endpoint, cloud database or authentication.
 
 An offline worker precaches local build assets. Each asset build produces a new worker revision, so old cache generations can be retired after a successful install. Navigation replaces cached HTML only after its referenced assets are available. External provider responses and tiles are excluded.
 

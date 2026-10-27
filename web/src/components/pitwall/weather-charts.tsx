@@ -78,7 +78,7 @@ export function RainChart({
   height?: number;
 }) {
   const theme = useChartTheme();
-  const [detail, setDetail] = useState(false);
+  const [scale, setScale] = useState("auto");
   const { colors } = theme;
   const rows = hours.map((h) => {
     const r: Record<string, any> = {
@@ -94,6 +94,8 @@ export function RainChart({
     return r;
   });
   const peak = Math.max(0, ...hours.map((hour) => hour.rainMax ?? 0));
+  const detail =
+    scale === "detail" || (scale === "auto" && peak <= RAIN_MODERATE);
   const ymax = rainChartMaximum(
     hours.map((hour) => hour.rainMax),
     detail,
@@ -125,9 +127,10 @@ export function RainChart({
         <select
           className="compact-select"
           aria-label="Rain chart scale"
-          value={detail ? "detail" : "context"}
-          onChange={(event) => setDetail(event.target.value === "detail")}
+          value={scale}
+          onChange={(event) => setScale(event.target.value)}
         >
+          <option value="auto">Automatic scale</option>
           <option value="context">Intensity scale</option>
           <option value="detail">Zoom to forecast</option>
         </select>

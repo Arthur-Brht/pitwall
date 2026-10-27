@@ -1,5 +1,6 @@
 import type { NearRainForecast } from "./contracts";
 import { JsonAPIClient, ProviderError, finite } from "./providers.ts";
+import { validRain } from "./rain-value.ts";
 
 // Explicit native domains avoid returning interpolated global hourly output as
 // apparent quarter-hour timing. Outside these conservative European bounds the
@@ -110,13 +111,13 @@ export function rainArrival(
   );
   const wet = slots.find(
     (point) =>
-      point.precipitation !== null &&
+      validRain(point.precipitation) &&
       (point.precipitation * 3600) / step >= threshold,
   );
   const complete =
     new Set(
       slots
-        .filter((point) => point.precipitation !== null)
+        .filter((point) => validRain(point.precipitation))
         .map((point) => point.time),
     ).size === expected;
   return {

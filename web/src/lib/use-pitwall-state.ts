@@ -29,6 +29,7 @@ import { useTheme } from "@/lib/theme";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { DEFAULT_SOURCE_IDS } from "@/lib/forecast-catalog";
 import { locationKey } from "@/lib/browser-history";
+import { rainValue } from "@/lib/rain-value";
 type View = "dashboard" | "overview" | "comparison" | "planner" | "history";
 export const TABS: [View, string][] = [
   ["dashboard", "Dashboard"],
@@ -53,7 +54,8 @@ export function usePitwallState() {
     [threshold, setThreshold] = useState(0.1),
     [settings, setSettings] = useState(false),
     [selectedDay, setSelectedDay] = useState(""),
-    [horizon, setHorizon] = useState(24),
+    [horizon, setHorizon] = useState(3),
+    [dashboardWindow, setDashboardWindow] = useState(3),
     [searchOpen, setSearchOpen] = useState(false),
     [query, setQuery] = useState(""),
     [searching, setSearching] = useState(false),
@@ -339,9 +341,17 @@ export function usePitwallState() {
   }, [searchOpen, settings]);
   const active = useMemo(
     () =>
-      (data?.forecasts || []).filter(
-        (f) => !disabled.includes(f.id) && selectedSourceIds.includes(f.id),
-      ),
+      (data?.forecasts || [])
+        .filter(
+          (f) => !disabled.includes(f.id) && selectedSourceIds.includes(f.id),
+        )
+        .map((f) => ({
+          ...f,
+          hours: f.hours.map((h) => ({
+            ...h,
+            precipitation: rainValue(h.precipitation),
+          })),
+        })),
     [data, disabled, selectedSourceIds],
   );
   const consensus = useMemo(
@@ -797,6 +807,8 @@ export function usePitwallState() {
     setSelectedDay,
     horizon,
     setHorizon,
+    dashboardWindow,
+    setDashboardWindow,
     searchOpen,
     setSearchOpen,
     query,

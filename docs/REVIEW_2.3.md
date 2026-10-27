@@ -1,0 +1,14 @@
+﻿# Pitwall 2.3 review decisions
+
+Baseline: 2.2 at 88189848be5440f591ebb2f92c0e84b95992942e. Independent reviews: COS (UX) and Coder (technical). The root review used fresh synthetic-weather captures, not a track-level accuracy assessment.
+
+1. **Dashboard:** implemented one leading rain sentence, a secondary hourly ensemble estimate and one plain provider-count sentence. Family counts and calculation notes remain in details. Window choices now say “3-hour outlook” with explicit start/end and inclusion of the current hour. Initial loading does not declare unavailable sources prematurely.
+2. **Timing:** implemented native regional interval precedence with an explicit conflict message; the hourly probability retains its original meaning. Complete regional dry data cannot silently turn hourly rain into a dry headline. A shared shaded quarter-hour table replaces repeated per-provider time/bar blocks.
+3. **Models:** implemented table-first reading order, shared intensity classes, a default short comparison window inherited from Dashboard, and automatic scaling for light rain. The absolute intensity guide and manual full-scale option remain visible.
+4. **Radar:** retained actual full-history defaults and the existing three-layer preload/crossfade design. The test fixture now exercises thirteen real-shaped historical slots instead of three. Latest-scan freshness is separate from the selected historical time; the 30-minute emphasis is an app policy, not a RainViewer guarantee. Pause stays operable during metadata failures and the circuit marker has a white halo.
+5. **Malformed and partial data:** reject negative hourly precipitation at both provider boundaries and in calculations that can consume saved data. Negative temperatures remain valid. Native regional responses are gated by user choices independently of hourly success.
+6. **Comparison installation:** distinct application ID, bundle/executable name, shortcut, app profile, single-instance scope and port. No automatic profile migration. The 2.2 release and main checkout are preserved.
+
+The Overview tab name is retained in this comparison so existing users can navigate familiar views; renaming it was a secondary suggestion, not a confirmed defect. No new providers or invented radar interpolation were added: this release concentrates on interpreting existing evidence.
+
+Verification covers unit/integration logic, synthetic browser flows, light/dark mobile layouts and automated accessibility rules. Native CI additionally opens both actual packaged versions with their production defaults; isolated native flows cover storage, plans and file export/import. Filesystem markers in the coexistence test establish profile isolation, not that different plans were manually entered into both production windows. Public-provider forecast skill and an actual user Mac install remain outside these checks.
