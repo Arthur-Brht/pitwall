@@ -15,6 +15,7 @@ export const test = base.extend<{
     hourlyFailed: boolean;
     liveMap: boolean;
     rain: "normal" | "missing" | "partial";
+    wind: "normal" | "turning" | "missing" | "calm";
   };
 }>({
   providers: async ({ context }, provide) => {
@@ -23,7 +24,22 @@ export const test = base.extend<{
       hourlyFailed: boolean;
       liveMap: boolean;
       rain: "normal" | "missing" | "partial";
-    } = { failed: false, hourlyFailed: false, liveMap: false, rain: "normal" };
+      wind: "normal" | "turning" | "missing" | "calm";
+    } = {
+      failed: false,
+      hourlyFailed: false,
+      liveMap: false,
+      rain: "normal",
+      wind: "normal",
+    };
+    const direction = (i: number, normal: number) =>
+      state.wind === "missing"
+        ? null
+        : state.wind === "turning"
+          ? i === 0
+            ? 220
+            : 40
+          : normal;
     const precipitation = (i: number, wet: number) =>
       state.rain === "missing" || (state.rain === "partial" && i >= 8)
         ? null
@@ -97,9 +113,11 @@ export const test = base.extend<{
             dew_point_2m: values(11),
             precipitation: times.map((_, i) => precipitation(i, 0.7)),
             cloud_cover: values(35),
-            wind_speed_10m: values(12),
+            wind_speed_10m: times.map(() =>
+              state.wind === "missing" ? null : state.wind === "calm" ? 0 : 12,
+            ),
             wind_gusts_10m: values(23),
-            wind_direction_10m: values(230),
+            wind_direction_10m: times.map((_, i) => direction(i, 230)),
             pressure_msl: values(1015),
             weather_code: values(2),
             visibility: values(15000),
@@ -121,8 +139,13 @@ export const test = base.extend<{
                   details: {
                     air_temperature: 17,
                     relative_humidity: 70,
-                    wind_speed: 3,
-                    wind_from_direction: 220,
+                    wind_speed:
+                      state.wind === "missing"
+                        ? null
+                        : state.wind === "calm"
+                          ? 0
+                          : 3,
+                    wind_from_direction: direction(i, 220),
                     cloud_area_fraction: 40,
                     air_pressure_at_sea_level: 1014,
                   },

@@ -1,6 +1,6 @@
 {
   "name": "pitwall-weather",
-  "version": "2.4.2",
+  "version": "2.4.3",
   "license": "MIT",
   "private": true,
   "description": "Local racetrack weather comparison and session planning application",

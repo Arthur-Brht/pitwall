@@ -12,6 +12,7 @@ test("capture the illustrated workflow", async ({ page, providers }) => {
   await expect(page.getByLabel("Rain risk snapshot")).toContainText(
     "14:00–15:00",
   );
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: "docs/images/run-sidebar.png" });
   await page
     .getByRole("button", { name: "Close circuit and session sidebar" })
@@ -23,6 +24,7 @@ test("capture the illustrated workflow", async ({ page, providers }) => {
       ),
     ].some((image) => image.complete && image.naturalWidth > 0),
   );
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: "docs/images/dashboard.png" });
   await page.getByRole("button", { name: "Switch to dark mode" }).click();
   await page.screenshot({ path: "docs/images/dashboard-dark.png" });

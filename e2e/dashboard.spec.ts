@@ -168,7 +168,7 @@ test("native rows survive an hourly outage and respect disabled sources", async 
     "Regional showers possible; hourly data unavailable.",
   );
   await expect(
-    page.getByText("First regional signal", { exact: true }),
+    page.getByText("Rain arrival · regional", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Manage forecasts" }).click();
   await page
@@ -208,7 +208,7 @@ test("clearing stays visible beyond the run buffer without hiding an unresolved 
     .getByRole("button", { name: "Close circuit and session sidebar" })
     .click();
   const clearing = page
-    .getByText("Main clearing signal", { exact: true })
+    .getByText("Rain stopping · hourly", { exact: true })
     .locator("..");
   await expect(clearing).toContainText("17:00–18:00");
   await expect(clearing).toContainText("6 of 7 wet hourly forecasts");
@@ -231,10 +231,10 @@ test("regional-only rain supplies the main arrival and clearing facts while hour
     .getByRole("button", { name: "Close circuit and session sidebar" })
     .click();
   await expect(
-    page.getByText("First regional signal", { exact: true }).locator(".."),
+    page.getByText("Rain arrival · regional", { exact: true }).locator(".."),
   ).toContainText("10:30–10:45");
   await expect(
-    page.getByText("Main clearing signal", { exact: true }).locator(".."),
+    page.getByText("Rain stopping · regional", { exact: true }).locator(".."),
   ).toContainText("11:15–11:30");
   await expect(page.getByLabel("Rain risk snapshot")).toContainText(
     "Regional showers possible.",

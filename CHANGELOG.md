@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.4.3 — Wind direction and clearer source outlooks
+
+- Show an animated compass with explicit wind-from and blowing-towards labels, plus real hourly directions and speed ranges through the selected run. Keep calm, missing and conflicting directions distinct; respect reduced motion and provide a single animation pause control.
+- Explain every source's rain periods, intensity, next known dry interval, temperature, wind and gusts directly beside its timeline. Show fetch times and saved-data labels; regional rows remain rain-only. Keep separate showers, gaps and outside-run rain explicit.
+- Use clearer arrival/stopping labels and a short explanation of disagreement. Keep real hourly and quarter-hour intervals, the same session controls, map defaults and 2.4 profile/data.
+
 ## 2.4.2 — Clearer timing without extra controls
 
 - Qualify the main clearing group against all wet forecasts, retaining sources that clear later or have no confirmed stop. Follow contiguous known intervals up to six hours beyond the timeline, with outside-window and date labels; never bridge gaps.

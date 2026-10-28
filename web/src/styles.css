@@ -3242,3 +3242,207 @@ table caption {
 .run-rain-facts small {
   letter-spacing: normal;
 }
+
+/* Direction is a forecast at the circuit, not a simulated geographical wind field. */
+.run-explanation {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 650px;
+  margin-top: 10px;
+}
+.wind-direction {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.wind-direction svg {
+  width: 82px;
+  height: 82px;
+  flex: 0 0 82px;
+  overflow: visible;
+  margin: 0;
+  color: var(--accent);
+}
+.wind-direction svg text {
+  fill: var(--muted);
+  font-size: 10px;
+  text-anchor: middle;
+  font-family: inherit;
+}
+.wind-compass-ring {
+  fill: var(--accent-soft);
+  stroke: var(--line);
+}
+.wind-arrow,
+.wind-stream {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wind-arrow {
+  stroke-width: 3;
+}
+.wind-stream {
+  stroke-width: 2;
+  stroke-dasharray: 5 11;
+  opacity: 0.5;
+  animation: wind-flow var(--wind-duration, 2.5s) linear infinite;
+}
+@keyframes wind-flow {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+.wind-direction svg .wind-unknown {
+  font-size: 24px;
+}
+.wind-direction-copy {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.wind-direction-copy strong {
+  font-weight: 550;
+  color: var(--text);
+}
+.wind-direction-copy span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.run-conditions > .wind-snapshot {
+  display: block;
+}
+.run-map-column {
+  display: contents;
+}
+.run-weather-grid {
+  grid-template-areas: "timeline radar" "timeline wind";
+}
+.run-weather-grid .run-timeline {
+  grid-area: timeline;
+}
+.run-weather-grid .map-panel {
+  grid-area: radar;
+}
+.wind-hourly {
+  grid-area: wind;
+  margin-top: 0;
+}
+.wind-hourly .panel-head > .icon-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  width: auto;
+  font-size: 10px;
+}
+.wind-hours {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 0 18px 16px;
+}
+.wind-hours > div {
+  display: flex;
+  flex: 0 0 82px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+}
+.wind-hours strong {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.wind-hours span {
+  font-size: 11px;
+}
+.wind-hours small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.wind-direction.compact svg {
+  width: 62px;
+  height: 62px;
+  flex-basis: 62px;
+}
+.wind-paused .wind-stream {
+  animation-play-state: paused;
+}
+.wind-method {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+}
+.timeline-row {
+  padding-block: 10px;
+  border-top: 1px solid var(--line);
+  row-gap: 7px;
+}
+.timeline-explanation {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.timeline-explanation strong {
+  font-weight: 500;
+}
+.timeline-explanation span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.timeline-explanation.wet strong {
+  color: var(--rain);
+}
+.timeline-explanation.missing strong {
+  color: var(--warn);
+}
+.timeline-source small {
+  line-height: 1.5;
+}
+@media (max-width: 1200px) {
+  .sidebar-open .run-weather-grid {
+    grid-template-areas: "wind" "timeline" "radar";
+  }
+}
+@media (max-width: 950px) {
+  .run-weather-grid {
+    grid-template-areas: "wind" "timeline" "radar";
+  }
+}
+@media (max-width: 650px) {
+  .run-conditions > .wind-snapshot {
+    grid-column: 1 / -1;
+  }
+  .wind-direction svg {
+    width: 74px;
+    height: 74px;
+    flex-basis: 74px;
+  }
+  .wind-direction-copy {
+    flex: 1;
+  }
+  .timeline-row {
+    padding-block: 12px;
+  }
+  .timeline-explanation {
+    font-size: 11px;
+  }
+  .run-map-column {
+    margin-top: 18px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wind-stream {
+    animation: none;
+  }
+}

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
-import { ArrowRight, Clock3, Thermometer, Wind } from "lucide-react";
+import { ArrowRight, Clock3, Thermometer, Pause, Play } from "lucide-react";
 import { compass, day, n, niceDate, time } from "@/lib/format";
+import { windOutlook, windHours } from "@/lib/wind-outlook";
+import { WindDirection } from "./wind-direction";
 import { usePitwall } from "@/lib/pitwall-context";
 import { enabledNearRain } from "@/lib/rain-decision";
 import { rainOutlook } from "@/lib/rain-outlook";
@@ -56,6 +58,14 @@ export function DashboardView() {
     () => runConditions(active, focus.start, focus.end),
     [active, focus.start, focus.end],
   );
+  const wind = useMemo(
+    () => windOutlook(active, focus.start, focus.end),
+    [active, focus.start, focus.end],
+  );
+  const hourlyWind = useMemo(
+    () => windHours(active, focus.start, focus.end),
+    [active, focus.start, focus.end],
+  );
   const probabilityStart = Math.floor(focus.start / 3600) * 3600,
     probabilityEnd = Math.ceil(focus.end / 3600) * 3600;
   const ensemble = useMemo(
@@ -85,6 +95,7 @@ export function DashboardView() {
     [active, threshold, focus.displayStart, focus.displayEnd],
   );
   const [trend, setTrend] = useState<"rain" | "temperature" | "wind">("rain");
+  const [windPaused, setWindPaused] = useState(false);
   const expected = selectedSourceIds.filter(
     (id) => !disabled.includes(id),
   ).length;
@@ -196,9 +207,20 @@ export function DashboardView() {
               probability.
             </p>
           </details>
+          <p className="run-explanation">
+            {rain.wet && rain.wet < rain.reporting
+              ? "The hourly forecasts disagree. Each source's rain periods are listed below."
+              : rain.wet
+                ? "The hourly rain forecasts are shown below, source by source."
+                : rain.regionalWet.length
+                  ? rain.reporting
+                    ? "Regional forecasts show showers; the hourly forecasts do not."
+                    : "Regional forecasts show showers; hourly data are unavailable."
+                  : "Check each source below for rain outside your run or missing data."}
+          </p>
           <dl className="run-rain-facts">
             <div>
-              <dt>First {timingSource} signal</dt>
+              <dt>Rain arrival · {timingSource}</dt>
               <dd>
                 {intervalLabel(timing.cluster)}
                 <small>
@@ -209,7 +231,7 @@ export function DashboardView() {
               </dd>
             </div>
             <div>
-              <dt>Main clearing signal</dt>
+              <dt>Rain stopping · {timingSource}</dt>
               <dd>
                 {timing.clearing
                   ? intervalLabel(timing.clearing)
@@ -313,24 +335,12 @@ export function DashboardView() {
               </dd>
             </dl>
           </div>
-          <div>
-            <Wind size={18} />
-            <dl>
-              <dt>
-                Wind ·{" "}
-                {conditions.direction === null
-                  ? "direction variable / unavailable"
-                  : `from ${compass(conditions.direction)}`}
-              </dt>
-              <dd>
-                {range(conditions.wind)}
-                <small>km/h</small>
-                <p>Gusts up to {n(conditions.gust?.max)} km/h</p>
-              </dd>
-            </dl>
+          <div className="wind-snapshot">
+            <WindDirection wind={wind} animate={!windPaused} />
           </div>
           <span className="condition-range-note">
-            Ranges across available hourly forecasts.
+            Forecast ranges during your run. Wind from {wind.sources} sources;
+            direction from {wind.directionSources}.
           </span>
         </section>
       </div>
@@ -360,7 +370,64 @@ export function DashboardView() {
       )}
       <div className="run-weather-grid">
         <RunTimeline rows={rows} />
-        <CircuitMap track={track} />
+        <div className="run-map-column">
+          <CircuitMap track={track} />
+          <section
+            className="panel wind-hourly"
+            aria-label="Wind through your run"
+          >
+            <div className="panel-head">
+              <div>
+                <h2>Wind through your run</h2>
+                <p className="panel-sub">
+                  Hourly forecasts at the circuit · arrows show where air moves
+                </p>
+              </div>
+              <button
+                className="icon-button"
+                aria-label={
+                  windPaused ? "Animate wind direction" : "Pause wind animation"
+                }
+                aria-pressed={windPaused}
+                onClick={() => setWindPaused(!windPaused)}
+              >
+                {windPaused ? <Play size={16} /> : <Pause size={16} />}
+                <span>{windPaused ? "Animate wind" : "Pause wind"}</span>
+              </button>
+            </div>
+            <div
+              className="wind-hours"
+              tabIndex={0}
+              role="region"
+              aria-label="Hourly wind directions"
+            >
+              {hourlyWind.map((hour) => (
+                <div key={hour.time}>
+                  <strong>{pointLabel(hour.time)}</strong>
+                  <WindDirection wind={hour} compact animate={!windPaused} />
+                  <span>
+                    {hour.direction !== null
+                      ? `From ${compass(hour.direction)}`
+                      : hour.kind === "variable"
+                        ? "Varies"
+                        : hour.kind === "calm"
+                          ? "Calm"
+                          : "No direction"}
+                  </span>
+                  <small>
+                    {hour.speed ? `${range(hour.speed)} km/h` : "No speed data"}
+                  </small>
+                </div>
+              ))}
+              {!hourlyWind.length && <p>No wind data for this run.</p>}
+            </div>
+            <p className="wind-method">
+              Forecast wind is separate from the radar's past rain scans. Motion
+              illustrates direction, not measured gusts or corner-by-corner
+              flow.
+            </p>
+          </section>
+        </div>
       </div>
       <details className="panel run-details">
         <summary>

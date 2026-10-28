@@ -10,6 +10,8 @@ The default buffers are 15 minutes before and after, adjustable separately to 0,
 
 ## Rain timing and agreement
 
+**Who forecasts what** adds a readable outlook under each source: the actual rain periods that overlap your run, interval-average intensity, next known dry interval, and (for hourly feeds) that source's air temperature, wind and gusts. Separate showers stay separate; gaps never become dry votes. Times retain the source's original interval, even for a short run. A dry interval is not a claim that the track dries. Rain confined to a buffer is stated explicitly. Fetch times identify when Pitwall retrieved the data, not when an agency issued a new model run. Saved cached rows remain labelled.
+
 Each hourly source reports its original hourly blocks. Native regional forecasts use real 15-minute intervals where available. Pitwall requests up to 24 hours automatically; the actual horizon depends on the product and the data returned (AROME can end earlier than ICON-D2). Missing later intervals stay missing. The rows share one axis and mark the run and now. Selecting a block reveals the original full interval and amount. A small note says when only hourly timing is available for the displayed window. The interface does not split an hourly accumulation into apparent quarter-hour or minute-by-minute observations.
 
 The hourly source count includes a source if it shows qualifying rain or has complete rain coverage of the run. Missing hours, invalid negative values and unavailable requests never become dry votes. Regional rows are listed separately and do not inflate that hourly count. Counts are forecasts, not independent opinions: several share model ancestry.
@@ -34,6 +36,10 @@ The change line appears only when genuine earlier saved hourly captures for the 
 
 ## Temperature, wind and detail
 
-Air temperature and wind are ranges across available forecasts overlapping the actual run. Gusts show the highest reported value. Wind direction uses a circular mean and stays variable/unavailable when opposing directions make an average misleading. Humidity, other current conditions, charts and methods remain behind the detail disclosure. Missing values remain unavailable.
+Air temperature and wind are ranges across available forecasts overlapping the actual run. Gusts show the highest reported value. The animated compass names both where the wind comes **from** and where the air moves **towards**; north stays at the top, like the circuit map. It follows the providers' meteorological convention ([MET Norway's arrow examples](https://api.met.no/weatherapi/locationforecast/2.0/documentation)). The animation illustrates direction, not measured particles, gust evolution or a spatial wind field around the track.
+
+The direction summary uses a circular mean of valid directions paired with wind of at least 1 km/h. It suppresses the arrow when directions spread more than 60 degrees from that mean or resultant strength falls below 0.75: these are presentation rules, not a calibrated confidence score. Calm means all available wind samples are below 1 km/h; missing directions stay unavailable. A turning wind can therefore have no whole-run arrow while its real hourly samples show different directions below the radar. The hourly view does not interpolate between samples. Source counts identify available speed and direction feeds separately. Use the single pause button to stop the decorative motion; the system's reduced-motion preference also stops it.
+
+Humidity, other current conditions, charts and methods remain behind the detail disclosure. Missing values remain unavailable. Regional quarter-hour rows supply rain only; hourly wind or temperature are never attributed to those products.
 
 The radar is recent observed rain, independent of the future run window. Its full available two-hour history remains the default playback range. Scans are ten minutes apart; cross-fading smooths their presentation without adding observations. Internet access, provider limits and radar coverage remain external constraints.

@@ -3,11 +3,15 @@ import { SlidersHorizontal } from "lucide-react";
 import type { RainRow } from "@/lib/run-weather";
 import { overlaps } from "@/lib/run-weather";
 import { rainIntensity } from "@/lib/rain-intensity";
-import { n, time } from "@/lib/format";
+import { compass, n, time } from "@/lib/format";
+import { runConditions } from "@/lib/run-weather";
+import { windOutlook } from "@/lib/wind-outlook";
 import { usePitwall } from "@/lib/pitwall-context";
+import { forecastExplanation } from "@/lib/forecast-explanation";
 
 export function RunTimeline({ rows }: { rows: RainRow[] }) {
-  const { track, focus, now, setSettings, threshold, data } = usePitwall();
+  const { track, focus, now, setSettings, threshold, data, active } =
+    usePitwall();
   const [selected, setSelected] = useState("");
   const span = focus.displayEnd - focus.displayStart;
   const position = (value: number) =>
@@ -48,10 +52,14 @@ export function RunTimeline({ rows }: { rows: RainRow[] }) {
     >
       <div className="panel-head">
         <div>
-          <h2>Rain timing</h2>
+          <h2>Who forecasts what</h2>
           <p className="panel-sub">
             Forecast · {time(focus.displayStart, track.timezone)}–
             {time(focus.displayEnd, track.timezone)}
+          </p>
+          <p className="panel-sub">
+            Each row explains rain during your run. The bars also include your
+            buffers.
           </p>
           {(hasNative || hasHourly) && (
             <p className="panel-sub" aria-label="Available rain timing">
@@ -99,73 +107,119 @@ export function RunTimeline({ rows }: { rows: RainRow[] }) {
             </div>
           </div>
         )}
-        {visible.map((row) => (
-          <div
-            className={`timeline-row ${row.native ? "native-row" : ""}`}
-            key={row.id}
-          >
-            <div className="timeline-source">
-              <strong>{row.name}</strong>
-              <small>
-                {row.native ? "15 min · regional" : "1 hour"}
-                {data?.statuses.some(
-                  (s) => s.id === row.id && s.status === "cached",
-                )
-                  ? " · saved"
-                  : ""}
-              </small>
+        {visible.map((row) => {
+          const explanation = forecastExplanation(
+            row,
+            focus,
+            threshold,
+            track.timezone,
+          );
+          const forecast = active.find((f) => f.id === row.id);
+          const conditions = forecast
+            ? runConditions([forecast], focus.start, focus.end)
+            : null;
+          const wind = forecast
+            ? windOutlook([forecast], focus.start, focus.end)
+            : null;
+          const fetched = Date.parse(row.fetchedAt) / 1000;
+          const saved = [
+            ...(data?.statuses ?? []),
+            ...(data?.nearRain?.statuses ?? []),
+          ].some((s) => s.id === row.id && s.status === "cached");
+          return (
+            <div
+              className={`timeline-row ${row.native ? "native-row" : ""}`}
+              key={row.id}
+              role="group"
+              aria-label={`${row.name} forecast for your run`}
+            >
+              <div className="timeline-source">
+                <strong>{row.name}</strong>
+                <small>
+                  {row.native ? "15 min · regional" : "1 hour"}
+                  {saved ? " · saved" : ""}
+                  {Number.isFinite(fetched)
+                    ? ` · fetched ${time(fetched, track.timezone, true)}`
+                    : ""}
+                </small>
+              </div>
+              <div className="timeline-plot">
+                {row.intervals
+                  .filter((i) =>
+                    overlaps(i, focus.displayStart, focus.displayEnd),
+                  )
+                  .map((interval) => {
+                    const left = position(interval.start),
+                      right = position(interval.end);
+                    const intensity = rainIntensity(interval.rate);
+                    const description = `${row.name} · ${time(interval.start, track.timezone, true)}–${time(interval.end, track.timezone)} · ${interval.rate === null ? "Missing rain data" : `${n(interval.rate, 2)} mm/h · ${intensity}${row.native ? ` (${n(interval.rate / 4, 2)} mm in 15 min)` : ""}`}`;
+                    const wet =
+                      interval.rate !== null && interval.rate >= threshold;
+                    return (
+                      <button
+                        key={interval.start}
+                        className={`timeline-block rain-${intensity.toLowerCase().replaceAll(" ", "-")} ${wet ? "wet" : ""}`}
+                        style={{ left: `${left}%`, width: `${right - left}%` }}
+                        title={description}
+                        aria-label={description}
+                        onClick={() => setSelected(description)}
+                        onFocus={() => setSelected(description)}
+                      >
+                        {right - left >= 9
+                          ? interval.rate === null
+                            ? "—"
+                            : interval.rate === 0
+                              ? "·"
+                              : n(interval.rate, 1)
+                          : ""}
+                      </button>
+                    );
+                  })}
+                {focus.kind === "session" && (
+                  <span
+                    className="timeline-run-highlight"
+                    style={{
+                      left: `${runLeft}%`,
+                      width: `${runRight - runLeft}%`,
+                    }}
+                  />
+                )}
+                {nowVisible && (
+                  <span
+                    className="timeline-now"
+                    title="Now"
+                    style={{ left: `${position(now)}%` }}
+                  />
+                )}
+              </div>
+              <div className={`timeline-explanation ${explanation.state}`}>
+                <strong>{explanation.text}</strong>
+                <span>{explanation.detail}</span>
+                {conditions && wind && (
+                  <span className="timeline-conditions">
+                    {conditions.temperature
+                      ? `${n(conditions.temperature.min)}${Math.round(conditions.temperature.min) !== Math.round(conditions.temperature.max) ? `–${n(conditions.temperature.max)}` : ""}°C`
+                      : "Temperature unavailable"}
+                    {" · "}
+                    {wind.speed
+                      ? `Wind ${n(wind.speed.min)}${Math.round(wind.speed.min) !== Math.round(wind.speed.max) ? `–${n(wind.speed.max)}` : ""} km/h`
+                      : "Wind unavailable"}
+                    {wind.direction !== null
+                      ? ` from ${compass(wind.direction)}`
+                      : wind.kind === "variable"
+                        ? ", direction varies"
+                        : wind.kind === "calm"
+                          ? ", calm"
+                          : ", direction unavailable"}
+                    {wind.gust !== null
+                      ? ` · gusts to ${n(wind.gust)} km/h`
+                      : " · gusts unavailable"}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="timeline-plot">
-              {row.intervals
-                .filter((i) =>
-                  overlaps(i, focus.displayStart, focus.displayEnd),
-                )
-                .map((interval) => {
-                  const left = position(interval.start),
-                    right = position(interval.end);
-                  const intensity = rainIntensity(interval.rate);
-                  const description = `${row.name} · ${time(interval.start, track.timezone, true)}–${time(interval.end, track.timezone)} · ${interval.rate === null ? "Missing rain data" : `${n(interval.rate, 2)} mm/h · ${intensity}${row.native ? ` (${n(interval.rate / 4, 2)} mm in 15 min)` : ""}`}`;
-                  const wet =
-                    interval.rate !== null && interval.rate >= threshold;
-                  return (
-                    <button
-                      key={interval.start}
-                      className={`timeline-block rain-${intensity.toLowerCase().replaceAll(" ", "-")} ${wet ? "wet" : ""}`}
-                      style={{ left: `${left}%`, width: `${right - left}%` }}
-                      title={description}
-                      aria-label={description}
-                      onClick={() => setSelected(description)}
-                      onFocus={() => setSelected(description)}
-                    >
-                      {right - left >= 9
-                        ? interval.rate === null
-                          ? "—"
-                          : interval.rate === 0
-                            ? "·"
-                            : n(interval.rate, 1)
-                        : ""}
-                    </button>
-                  );
-                })}
-              {focus.kind === "session" && (
-                <span
-                  className="timeline-run-highlight"
-                  style={{
-                    left: `${runLeft}%`,
-                    width: `${runRight - runLeft}%`,
-                  }}
-                />
-              )}
-              {nowVisible && (
-                <span
-                  className="timeline-now"
-                  title="Now"
-                  style={{ left: `${position(now)}%` }}
-                />
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {!visible.length && (
           <p className="empty-table">
             No rain forecasts available. Try Refresh or choose another time.
