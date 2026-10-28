@@ -50,10 +50,43 @@ test("desktop loads all feeds, preserves plans, exports and restores a real back
   desktopApp,
   temporary,
 }) => {
+  const startedAt = Date.now();
+  const responses: { source: string; status: number; elapsedMs: number }[] = [];
+  page.on("response", (response) => {
+    const url = new URL(response.url());
+    if (
+      [
+        "api.open-meteo.com",
+        "ensemble-api.open-meteo.com",
+        "api.met.no",
+      ].includes(url.hostname)
+    )
+      responses.push({
+        source: `${url.hostname}:${url.searchParams.get("models") ?? "locationforecast"}`,
+        status: response.status(),
+        elapsedMs: Date.now() - startedAt,
+      });
+  });
   await page.goto("http://localhost:4175/");
-  await expect(
-    page.getByText("8 of 8 sources", { exact: false }),
-  ).toBeVisible();
+  try {
+    // The full batch includes paced hourly, regional and ensemble calls. A hidden
+    // Electron window can throttle their timers on macOS; keep a bounded wait
+    // while still requiring all eight sources, without retries or live services.
+    await expect(
+      page.getByText("8 of 8 sources", { exact: false }),
+    ).toBeVisible({ timeout: 20000 });
+    console.info("All eight desktop sources ready", {
+      elapsedMs: Date.now() - startedAt,
+      responses,
+    });
+  } catch (error) {
+    console.error("Desktop source readiness failed", {
+      elapsedMs: Date.now() - startedAt,
+      responses,
+      page: await page.locator("body").innerText(),
+    });
+    throw error;
+  }
   expect(
     await page.evaluate(() => ({
       require: typeof (window as unknown as { require?: unknown }).require,

@@ -16,7 +16,7 @@ The screenshots and video use made-up example data to show the interface. When y
 
 This branch contains the **2.4 comparison preview**. It installs as **Pitwall 2.4 Preview**, alongside the Pitwall 2.3 Preview app, with separate plans, preferences and forecast history. Nothing is copied automatically; export a backup from 2.3 and import it in 2.4 if you want the same plans. History CSV files remain separate.
 
-Download [2.4.2 Preview](https://github.com/CaillouMalade/Pitwall/releases/tag/v2.4.2-preview.1), or keep [2.3 Preview](https://github.com/Arthur-Brht/pitwall/releases/tag/v2.3.0-preview.1) for comparison. The [Releases page](https://github.com/CaillouMalade/Pitwall/releases) keeps the previous versions. This update replaces earlier 2.4 builds in the same app and keeps their plans, preferences and history.
+Download [2.4.2 Preview](https://github.com/CaillouMalade/Pitwall/releases/tag/v2.4.2-preview.2), or keep [2.3 Preview](https://github.com/Arthur-Brht/pitwall/releases/tag/v2.3.0-preview.1) for comparison. The [Releases page](https://github.com/CaillouMalade/Pitwall/releases) keeps the previous versions. This update replaces earlier 2.4 builds in the same app and keeps their plans, preferences and history.
 
 **Mac** (macOS 13 Ventura or newer, Apple silicon or Intel): download the `.dmg`, open it and drag Pitwall 2.4 Preview into Applications. Then open it from Applications, Launchpad or the Dock.
 
