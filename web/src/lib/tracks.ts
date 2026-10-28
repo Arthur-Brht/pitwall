@@ -64,6 +64,15 @@ export const TRACKS: Track[] = [
     lengthKm: 13.626,
   },
   {
+    id: "lemans-bugatti",
+    name: "Le Mans · Bugatti",
+    country: "France",
+    lat: 47.953,
+    lon: 0.212,
+    timezone: "Europe/Paris",
+    lengthKm: 4.185,
+  },
+  {
     id: "barcelona",
     name: "Barcelona-Catalunya",
     country: "Spain",

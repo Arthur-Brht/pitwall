@@ -1,5 +1,6 @@
 ﻿import { InstallApp } from "@/components/pitwall/install-app";
 import { usePitwall } from "@/lib/pitwall-context";
+import { TRACKS } from "@/lib/tracks";
 import {
   BUFFER_MINUTES,
   customBounds,
@@ -223,6 +224,9 @@ export function Sidebar() {
     setMobileNav,
     choose,
   } = usePitwall();
+  const otherCircuits = TRACKS.filter(
+    (circuit) => !favorites.some((saved) => saved.id === circuit.id),
+  );
   const close = () => {
     setMobileNav(false);
     document.querySelector<HTMLButtonElement>(".active-circuit")?.focus();
@@ -257,7 +261,7 @@ export function Sidebar() {
             }}
           >
             <span className="brand-mark" aria-hidden="true" />
-            Pitwall<small className="preview-badge">2.4</small>
+            Pitwall<small className="preview-badge">2.4.1</small>
           </a>
           <button
             className="icon-button"
@@ -274,15 +278,28 @@ export function Sidebar() {
               aria-label="Circuit"
               value={track.id}
               onChange={(e) => {
-                const chosen = favorites.find((t) => t.id === e.target.value);
+                const chosen = [...favorites, ...otherCircuits].find(
+                  (t) => t.id === e.target.value,
+                );
                 if (chosen) choose(chosen);
               }}
             >
-              {favorites.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
+              <optgroup label="Saved circuits">
+                {favorites.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </optgroup>
+              {otherCircuits.length > 0 && (
+                <optgroup label="More circuits">
+                  {otherCircuits.map((circuit) => (
+                    <option key={circuit.id} value={circuit.id}>
+                      {circuit.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </select>
           </label>
         </nav>

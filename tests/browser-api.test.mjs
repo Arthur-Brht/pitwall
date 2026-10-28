@@ -1,5 +1,6 @@
 import { test } from "node:test";
 import { DEFAULT_SOURCE_IDS } from "../web/src/lib/forecast-catalog.ts";
+import { TRACKS } from "../web/src/lib/tracks.ts";
 import assert from "node:assert/strict";
 import { apiFetch } from "../web/src/lib/browser-api.ts";
 import {
@@ -58,7 +59,7 @@ test("invalid coordinates are rejected before any upstream request", async (cont
 
 test("a layout without a verified outline never substitutes the nearby GP circuit", async () => {
   const absent = await apiFetch(
-    "/api/geometry?lat=50.3566&lon=6.9689&trackId=nordschleife",
+    "/api/geometry?lat=50.3356&lon=6.9475&trackId=nurburgring-unverified-layout",
   );
   assert.equal(absent.status, 200);
   const geometry = await absent.json();
@@ -75,6 +76,54 @@ test("a layout without a verified outline never substitutes the nearby GP circui
   const [latitude, longitude] = knownGeometry.coordinates[0][0];
   assert.ok(latitude > 49 && latitude < 51);
   assert.ok(longitude > 6 && longitude < 8);
+});
+
+test("every catalogue circuit has a local outline at its own location without an upstream request", async (context) => {
+  context.mock.method(globalThis, "fetch", async () => {
+    throw Error(
+      "Catalogue outlines must work without a public geometry service",
+    );
+  });
+  for (const track of TRACKS) {
+    const result = await apiFetch(
+      `/api/geometry?lat=${track.lat}&lon=${track.lon}&trackId=${track.id}`,
+    );
+    assert.equal(result.status, 200, track.id);
+    const geometry = await result.json();
+    assert.ok(
+      geometry.coordinates.length > 0,
+      `${track.name} needs an outline`,
+    );
+    const points = geometry.coordinates.flat();
+    assert.ok(points.length > 20, `${track.name} needs a detailed outline`);
+    assert.ok(
+      points.every(
+        ([lat, lon]) =>
+          Number.isFinite(lat) &&
+          Number.isFinite(lon) &&
+          Math.abs(lat - track.lat) < 0.1 &&
+          Math.abs(lon - track.lon) < 0.15,
+      ),
+      `${track.name} must not borrow a different circuit or swap coordinate order`,
+    );
+    assert.ok(geometry.sourceUrl.startsWith("https://"), track.id);
+    assert.ok(geometry.attribution, track.id);
+  }
+});
+
+test("Le Mans layouts and Nürburgring layouts retain distinct lap extents", async () => {
+  const extent = async (id) => {
+    const track = TRACKS.find((item) => item.id === id);
+    const geometry = await (
+      await apiFetch(
+        `/api/geometry?lat=${track.lat}&lon=${track.lon}&trackId=${id}`,
+      )
+    ).json();
+    const latitudes = geometry.coordinates.flat().map(([lat]) => lat);
+    return Math.max(...latitudes) - Math.min(...latitudes);
+  };
+  assert.ok((await extent("lemans")) > 3 * (await extent("lemans-bugatti")));
+  assert.ok((await extent("nordschleife")) > 3 * (await extent("nurburgring")));
 });
 
 test("an already aborted local request rejects with the browser abort contract", async () => {

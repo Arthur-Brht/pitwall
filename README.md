@@ -16,7 +16,7 @@ The screenshots and video use made-up example data to show the interface. When y
 
 This branch contains the **2.4 comparison preview**. It installs as **Pitwall 2.4 Preview**, alongside the Pitwall 2.3 Preview app, with separate plans, preferences and forecast history. Nothing is copied automatically; export a backup from 2.3 and import it in 2.4 if you want the same plans. History CSV files remain separate.
 
-Download [2.4 Preview](https://github.com/Arthur-Brht/pitwall/releases/tag/v2.4.0-preview.1), or keep [2.3 Preview](https://github.com/Arthur-Brht/pitwall/releases/tag/v2.3.0-preview.1) for comparison. The [Releases page](https://github.com/Arthur-Brht/pitwall/releases) keeps both versions.
+Download [2.4.1 Preview](https://github.com/CaillouMalade/Pitwall/releases/tag/v2.4.1-preview.1), or keep [2.3 Preview](https://github.com/Arthur-Brht/pitwall/releases/tag/v2.3.0-preview.1) for comparison. The [Releases page](https://github.com/CaillouMalade/Pitwall/releases) keeps the previous versions. This circuit update replaces 2.4.0 in the same app and keeps its plans and preferences.
 
 **Mac** (macOS 13 Ventura or newer, Apple silicon or Intel): download the `.dmg`, open it and drag Pitwall 2.4 Preview into Applications. Then open it from Applications, Launchpad or the Dock.
 
@@ -34,7 +34,7 @@ Pitwall has four main views.
 - **Models** opens with an intensity-shaded comparison table, with an optional chart for the same window. Small amounts are enlarged automatically while keeping the light/moderate/heavy guide visible. Light, moderate and heavy rain guides give the charts context. You can switch individual forecasts on or off to see where they differ.
 - **History** keeps the forecasts Pitwall has fetched, so you can look back at what was predicted, export it as a CSV file, and compare it with weather station measurements you import.
 
-You can choose from a list of known circuits, including Dijon-Prenois, search for any place, or enter coordinates and a timezone yourself. Light, dark and system appearance are all available. The radar has a taller map, smooth transitions, playback speeds and From/To controls under its map options. It still shows real scans ten minutes apart; blending doesn't add observations between them.
+All 18 known circuits are directly available in the sidebar's Circuit selector, with your saved circuits first. They include Magny-Cours, both Le Mans layouts (La Sarthe and Bugatti), Spa, Portimão, Dijon-Prenois, Paul Ricard and Jarama. Every catalogue circuit has a bundled highlighted outline; loading those outlines does not depend on a live geometry service. You can also search for any place or enter coordinates and a timezone yourself. Light, dark and system appearance are all available. The radar has a taller map, smooth transitions, playback speeds and From/To controls under its map options. It still shows real scans ten minutes apart; blending doesn't add observations between them.
 
 ![Comparing forecasts for a planned session, with example data](docs/images/planner.png)
 

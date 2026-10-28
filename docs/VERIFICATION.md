@@ -53,3 +53,7 @@ The app uses a distinct ID, product name, default profile and local port. Native
 ## 2.4 session dashboard
 
 The [2.4 review notes](REVIEW_2.4.md) describe the approved scope and isolation. The session window, its buffers, missing data, timing groups and comparable-history rules are exercised by dedicated unit and browser scenarios. Both desktop jobs build from the same tagged source. Production-default coexistence checks use the pinned 2.3 reference; Windows also verifies that removing 2.4 leaves 2.3 installed. Native results are recorded in the release's linked workflow run and manifests.
+
+## 2.4.1 circuit catalogue update
+
+The [circuit register](CIRCUITS.md) records all 18 selectable circuits and their bundled outlines. Local checks passed 109 unit/integration tests, lint, formatting, types, notices, the frozen station pilot and production build. The new circuit selection/map regression passed Chromium, Firefox, WebKit and mobile Chromium. A separate live browser loaded Dijon-Prenois with its OSM outline, eight hourly feeds, two regional timing feeds, ensembles and actual map/radar tiles. This confirms connectivity at check time, not weather accuracy. The tagged release links fresh full browser/security and Mac/Windows installer results; its manifests identify the exact build commit and checksums.

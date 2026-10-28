@@ -278,6 +278,14 @@ const namedOutlines: Record<string, string> = {
   monza: "it-1922",
   imola: "it-1953",
   "magny-cours": "fr-1960",
+  "dijon-prenois": "dijon-prenois",
+  jarama: "jarama",
+  lemans: "lemans",
+  "lemans-bugatti": "lemans-bugatti",
+  nordschleife: "nordschleife",
+  estoril: "estoril",
+  jerez: "jerez",
+  alcaniz: "alcaniz",
 };
 async function geometryFor(params: URLSearchParams): Promise<GeometryResponse> {
   const { lat, lon } = coordinates(params),

@@ -38,7 +38,7 @@ Native short-range rain timing uses explicit `dwd_icon_d2_15min` and `meteofranc
 
 Playback From/To controls select actual returned frames. The slider and loop are bounded to that interval, and selection is clamped to the available history after refresh. Preloading and cross-fades smooth the display without increasing the source's ten-minute resolution. They cannot query arbitrary past dates or future radar.
 
-Nine bundled outlines come from [F1 Circuits / Tomislav Bacinger](https://github.com/bacinger/f1-circuits), with its MIT licence retained. Nogaro uses [OSM way 95798633](https://www.openstreetmap.org/way/95798633), © OpenStreetMap contributors, ODbL 1.0. Raw source files and provenance are retained under `web/public/circuits/`. Download date is not survey date; circuit layouts can change.
+Nine bundled outlines come from [F1 Circuits / Tomislav Bacinger](https://github.com/bacinger/f1-circuits), with its MIT licence retained. Nine more use attributed OpenStreetMap geometry under ODbL 1.0: Nogaro, Dijon-Prenois, Jarama, Le Mans La Sarthe, Le Mans Bugatti, Nordschleife, Estoril, Jerez and MotorLand Aragón. The [circuit source register](CIRCUITS.md) identifies their exact source objects and selected layouts. Raw source files and provenance are retained under `web/public/circuits/`. Download date is not survey date; circuit layouts can change. Every named catalogue circuit has its own bundled outline, so an outage of the public geometry service cannot remove it.
 
 Other locations query actual OSM raceways through Overpass within six kilometres. Results can include kart circuits or alternate layouts. When geometry is unavailable, Pitwall shows only the selected coordinates. It does not invent corners, sectors or boundaries from weather grids.
 
