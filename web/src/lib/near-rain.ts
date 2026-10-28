@@ -2,6 +2,10 @@ import type { NearRainForecast } from "./contracts";
 import { JsonAPIClient, ProviderError, finite } from "./providers.ts";
 import { validRain } from "./rain-value.ts";
 
+// Keep only genuinely supplied quarter-hour data. Some regional products end
+// sooner; their missing tail must not be filled from an hourly forecast.
+export const NATIVE_FORECAST_HOURS = 24;
+
 // Explicit native domains avoid returning interpolated global hourly output as
 // apparent quarter-hour timing. Outside these conservative European bounds the
 // app keeps its hourly forecasts. The provider can still reject a domain edge.
@@ -47,7 +51,7 @@ export function normalizeNearRain(
         !Number.isFinite(end) ||
         end % 900 ||
         end <= now ||
-        end > now + 6 * 3600 + 900
+        end > now + NATIVE_FORECAST_HOURS * 3600 + 900
       )
         return [];
       const amount = finite(values.precipitation?.[index]);
@@ -88,7 +92,8 @@ export class NearRainClient extends JsonAPIClient {
       longitude: String(lon),
       models: spec.model,
       minutely_15: "precipitation",
-      forecast_minutely_15: "25",
+      forecast_minutely_15: String(NATIVE_FORECAST_HOURS * 4 + 1),
+      past_minutely_15: "1",
       timeformat: "unixtime",
       timezone: "GMT",
       precipitation_unit: "mm",

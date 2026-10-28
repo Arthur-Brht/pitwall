@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.4.2 — Clearer timing without extra controls
+
+- Qualify the main clearing group against all wet forecasts, retaining sources that clear later or have no confirmed stop. Follow contiguous known intervals up to six hours beyond the timeline, with outside-window and date labels; never bridge gaps.
+- Use explicitly labelled regional arrival and clearing when only regional forecasts predict rain, including during hourly outages.
+- Automatically retain up to 24 hours of genuine native 15-minute rain output where supplied. Keep shorter horizons and missing tails explicit, and show a small hourly-only note where finer data are unavailable. No minute-level interpolation, new accounts or new dashboard controls.
+- Keep all 18 circuit maps, existing run/buffer controls, the radar-wide map view and 2.4 app identity/data. Preserve saved hourly forecasts during an offline cache upgrade.
+
 ## 2.3.0 — Comparison preview
 
 - Lead the dashboard with a single rain sentence; keep hourly ensemble probability and provider agreement separate and move calculation detail behind disclosure.

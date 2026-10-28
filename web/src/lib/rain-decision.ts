@@ -1,6 +1,6 @@
 import type { EnsembleForecast, Forecast, NearRainForecast } from "./contracts";
 import { rainOutlook } from "./rain-outlook.ts";
-import { rainArrival } from "./near-rain.ts";
+import { rainArrival, NATIVE_FORECAST_HOURS } from "./near-rain.ts";
 import { rainIntensity } from "./rain-intensity.ts";
 import { validRain } from "./rain-value.ts";
 
@@ -26,7 +26,7 @@ export function rainDecision(
   const start = Math.floor(now / 3600) * 3600,
     end = start + hours * 3600;
   const outlook = rainOutlook(forecasts, ensembles, start, end, threshold);
-  const nativeEnd = Math.min(end, now + 6 * 3600);
+  const nativeEnd = Math.min(end, now + NATIVE_FORECAST_HOURS * 3600);
   const arrivals = native.map((f) => ({
     forecast: f,
     ...rainArrival(f.points, 900, now, nativeEnd, threshold),

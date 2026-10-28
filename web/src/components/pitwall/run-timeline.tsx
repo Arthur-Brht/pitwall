@@ -33,6 +33,13 @@ export function RunTimeline({ rows }: { rows: RainRow[] }) {
           i.rate !== null && overlaps(i, focus.displayStart, focus.displayEnd),
       ),
   );
+  const hasData = (row: RainRow) =>
+    row.intervals.some(
+      (i) =>
+        i.rate !== null && overlaps(i, focus.displayStart, focus.displayEnd),
+    );
+  const hasNative = visible.some((row) => row.native && hasData(row));
+  const hasHourly = visible.some((row) => !row.native && hasData(row));
   const nowVisible = now >= focus.displayStart && now < focus.displayEnd;
   return (
     <section
@@ -46,6 +53,15 @@ export function RunTimeline({ rows }: { rows: RainRow[] }) {
             Forecast · {time(focus.displayStart, track.timezone)}–
             {time(focus.displayEnd, track.timezone)}
           </p>
+          {(hasNative || hasHourly) && (
+            <p className="panel-sub" aria-label="Available rain timing">
+              {hasNative
+                ? hasHourly
+                  ? "15-min regional timing where covered · hourly elsewhere"
+                  : "15-min regional timing · hourly data unavailable"
+                : "Hourly timing only · no 15-min data for this window"}
+            </p>
+          )}
         </div>
         <button
           className="icon-button"

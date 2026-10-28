@@ -48,8 +48,8 @@ async function weatherFor(
   refresh = false,
   sourceIds = DEFAULT_SOURCE_IDS,
 ): Promise<WeatherResponse> {
-  const previousKey = `weather-v2:${locationKey(lat, lon)}:${zone}:${[...sourceIds].sort().join(",")}`;
-  const key = previousKey.replace("weather-v2:", "weather-v3:");
+  const previousKey = `weather-v3:${locationKey(lat, lon)}:${zone}:${[...sourceIds].sort().join(",")}`;
+  const key = previousKey.replace("weather-v3:", "weather-v4:");
   const cached = !refresh && (await readCache<WeatherResponse>(key));
   if (cached)
     return {
@@ -73,6 +73,10 @@ async function weatherFor(
     const fallback =
       (await readCache<WeatherResponse>(key, { allowStale: true })) ??
       (await readCache<WeatherResponse>(previousKey, { allowStale: true })) ??
+      (await readCache<WeatherResponse>(
+        previousKey.replace("weather-v3:", "weather-v2:"),
+        { allowStale: true },
+      )) ??
       (await readCache<WeatherResponse>(
         `weather-v1:${locationKey(lat, lon)}:${zone}`,
         { allowStale: true },
@@ -181,7 +185,7 @@ async function nearRainFor(
     (spec) => sourceIds.includes(spec.sourceId) && spec.covers(lat, lon),
   );
   if (!specs.length) return { forecasts: [], statuses: [] };
-  const key = `near-rain-v1:${locationKey(lat, lon)}:${specs.map((spec) => spec.id).join(",")}`;
+  const key = `near-rain-v2:${locationKey(lat, lon)}:${specs.map((spec) => spec.id).join(",")}`;
   const saved = !refresh && (await readCache<NearRainResponse>(key));
   if (saved) return saved;
   return once(key, async () => {

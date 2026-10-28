@@ -164,6 +164,12 @@ test("native rows survive an hourly outage and respect disabled sources", async 
   await expect(page.getByLabel("Rain risk snapshot")).toContainText(
     "10:30–10:45",
   );
+  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
+    "Regional showers possible; hourly data unavailable.",
+  );
+  await expect(
+    page.getByText("First regional signal", { exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Manage forecasts" }).click();
   await page
     .getByRole("checkbox", { name: "Fetch DWD ICON", exact: true })
@@ -172,6 +178,102 @@ test("native rows survive an hourly outage and respect disabled sources", async 
   await expect(page.getByLabel("Forecast rain comparison")).not.toContainText(
     "DWD ICON-D2",
   );
+});
+
+test("clearing stays visible beyond the run buffer without hiding an unresolved wet source", async ({
+  page,
+}) => {
+  await page.route("**/api.open-meteo.com/v1/forecast?**", async (route) => {
+    const url = new URL(route.request().url());
+    if (
+      url.searchParams.get("models") !== "ecmwf_ifs025" ||
+      url.searchParams.has("minutely_15")
+    )
+      return route.fallback();
+    const start = Date.parse("2026-10-26T09:00:00Z") / 1000;
+    const times = Array.from({ length: 97 }, (_, i) => start + i * 3600);
+    await route.fulfill({
+      json: {
+        hourly: {
+          time: times,
+          temperature_2m: times.map(() => 18),
+          precipitation: times.map((_, i) => (i >= 5 ? 1 : 0)),
+        },
+      },
+    });
+  });
+  await open(page);
+  await setRun(page, "2026-10-26", "13:15", "13:45");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  const clearing = page
+    .getByText("Main clearing signal", { exact: true })
+    .locator("..");
+  await expect(clearing).toContainText("17:00–18:00");
+  await expect(clearing).toContainText("6 of 7 wet hourly forecasts");
+  await expect(clearing).toContainText("1 without a confirmed stop");
+  await expect(clearing).toContainText("After the shown timeline");
+  await expect(page.getByLabel("Forecast rain comparison")).toContainText(
+    "13:00–14:00",
+  );
+});
+
+test("regional-only rain supplies the main arrival and clearing facts while hourly timing remains explicit elsewhere", async ({
+  page,
+  providers,
+}) => {
+  providers.rain = "partial";
+  await open(page);
+  await chooseCircuit(page, "Spa-Francorchamps");
+  await setRun(page, "2026-10-26", "10:30", "10:45");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  await expect(
+    page.getByText("First regional signal", { exact: true }).locator(".."),
+  ).toContainText("10:30–10:45");
+  await expect(
+    page.getByText("Main clearing signal", { exact: true }).locator(".."),
+  ).toContainText("11:15–11:30");
+  await expect(page.getByLabel("Rain risk snapshot")).toContainText(
+    "Regional showers possible.",
+  );
+  await expect(page.getByLabel("Available rain timing")).toContainText(
+    "15-min regional timing",
+  );
+  await chooseCircuit(page, "Portimão");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  await expect(page.getByLabel("Available rain timing")).toHaveText(
+    "Hourly timing only · no 15-min data for this window",
+  );
+});
+
+test("a later run automatically retains genuine quarter-hour rows beyond six hours with no added selector", async ({
+  page,
+}) => {
+  await open(page);
+  await chooseCircuit(page, "Spa-Francorchamps");
+  await setRun(page, "2026-10-26", "19:15", "19:45");
+  await page
+    .getByRole("button", { name: "Close circuit and session sidebar" })
+    .click();
+  await expect(page.getByLabel("Available rain timing")).toContainText(
+    "15-min regional timing",
+  );
+  await expect(
+    page.getByLabel("Forecast rain comparison").locator(".native-row"),
+  ).toHaveCount(2);
+  await expect(
+    page
+      .getByLabel("Forecast rain comparison")
+      .locator(".native-row")
+      .first()
+      .getByRole("button")
+      .first(),
+  ).toHaveAttribute("aria-label", /19:00–19:15/);
 });
 
 test("missing model and ensemble data never becomes a dry or zero-percent outlook", async ({

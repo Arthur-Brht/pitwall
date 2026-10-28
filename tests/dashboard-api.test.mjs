@@ -85,6 +85,8 @@ test("native timing fetches only the selected regional family and keeps it out o
     const url = new URL(String(input));
     const first = Math.floor(Date.now() / 3600000) * 3600;
     if (url.searchParams.has("minutely_15")) {
+      assert.equal(url.searchParams.get("forecast_minutely_15"), "97");
+      assert.equal(url.searchParams.get("past_minutely_15"), "1");
       models.push(url.searchParams.get("models"));
       return Response.json({
         minutely_15_units: { precipitation: "mm" },

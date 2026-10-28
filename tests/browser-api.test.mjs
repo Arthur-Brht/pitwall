@@ -206,7 +206,7 @@ test("failed refresh retains a saved forecast with its original timestamp and ex
 test("manual refresh bypasses the application cache without turning failed requests into fresh data", async (context) => {
   const weather = savedWeather(12, 60000);
   await writeCache(
-    `weather-v3:${locationKey(12, 0)}:UTC:${[...DEFAULT_SOURCE_IDS].sort().join(",")}`,
+    `weather-v4:${locationKey(12, 0)}:UTC:${[...DEFAULT_SOURCE_IDS].sort().join(",")}`,
     weather,
     Date.now() + 600000,
     Date.now() + 86400000,

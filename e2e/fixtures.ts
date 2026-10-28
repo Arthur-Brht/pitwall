@@ -72,7 +72,7 @@ export const test = base.extend<{
           });
         if (url.searchParams.has("minutely_15")) {
           const quarters = Array.from(
-            { length: 26 },
+            { length: 98 },
             (_, index) => start + index * 900,
           );
           return json({

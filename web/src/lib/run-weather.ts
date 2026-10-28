@@ -79,6 +79,7 @@ export function rowWindow(
     complete: coveredTo >= end,
     wet: !!first,
     first,
+    last,
     clearing,
     peak: wet.length ? Math.max(...wet.map((i) => i.rate!)) : null,
   };
@@ -100,30 +101,75 @@ export function timingCluster(intervals: RainInterval[]) {
     .sort((a, b) => b.count - a.count || a.start - b.start);
   return candidates[0] ?? null;
 }
+
+export const CLEARING_LOOKAHEAD_SECONDS = 6 * 3600;
+
+/** Follow known wet intervals to the next dry interval, never across a gap. */
+export function clearingAfter(
+  row: RainRow,
+  lastWet: RainInterval,
+  end: number,
+  threshold: number,
+) {
+  let next = lastWet.end;
+  for (const interval of [...row.intervals].sort((a, b) => a.start - b.start)) {
+    if (interval.start < next) continue;
+    if (
+      interval.start >= end ||
+      interval.start !== next ||
+      interval.rate === null
+    )
+      return null;
+    if (interval.rate < threshold) return interval;
+    next = interval.end;
+  }
+  return null;
+}
+
 export function runRain(rows: RainRow[], focus: RunFocus, threshold: number) {
+  const clearingEnd = focus.displayEnd + CLEARING_LOOKAHEAD_SECONDS;
   const summarize = (native: boolean) =>
     rows
       .filter((r) => r.native === native)
-      .map((row) => ({
-        ...rowWindow(row, focus.start, focus.end, threshold),
-        context: rowWindow(
+      .map((row) => {
+        const context = rowWindow(
           row,
           focus.displayStart,
           focus.displayEnd,
           threshold,
-        ),
-      }));
+        );
+        return {
+          ...rowWindow(row, focus.start, focus.end, threshold),
+          context,
+          clearingSignal: context.last
+            ? clearingAfter(row, context.last, clearingEnd, threshold)
+            : null,
+        };
+      });
   const hourly = summarize(false),
     regional = summarize(true);
   const reporting = hourly.filter((r) => r.wet || r.complete);
   const wet = reporting.filter((r) => r.wet);
   const contextWet = hourly.filter((r) => r.context.wet);
-  const cluster = timingCluster(
-    contextWet.flatMap((r) => (r.context.first ? [r.context.first] : [])),
-  );
-  const clearing = timingCluster(
-    contextWet.flatMap((r) => (r.context.clearing ? [r.context.clearing] : [])),
-  );
+  const timing = (values: typeof hourly, inRun = false) => {
+    const wet = values.filter((r) => (inRun ? r.wet : r.context.wet));
+    return {
+      wet: wet.length,
+      cluster: timingCluster(
+        wet.flatMap((r) => {
+          const first = inRun ? r.first : r.context.first;
+          return first ? [first] : [];
+        }),
+      ),
+      clearing: timingCluster(
+        wet.flatMap((r) => (r.clearingSignal ? [r.clearingSignal] : [])),
+      ),
+      unresolved: wet.filter((r) => !r.clearingSignal).length,
+    };
+  };
+  const hourlyTiming = timing(hourly),
+    regionalTiming = timing(regional),
+    regionalRunTiming = timing(regional, true);
   const regionalWet = regional.filter((r) => r.wet);
   const peak = wet.length ? Math.max(...wet.map((r) => r.peak!)) : null;
   const conflict =
@@ -137,8 +183,12 @@ export function runRain(rows: RainRow[], focus: RunFocus, threshold: number) {
     reporting: reporting.length,
     wet: wet.length,
     missing: hourly.filter((r) => !r.complete).length,
-    cluster,
-    clearing,
+    cluster: hourlyTiming.cluster,
+    clearing: hourlyTiming.clearing,
+    hourlyTiming,
+    regionalTiming,
+    regionalRunTiming,
+    clearingEnd,
     contextWet,
     regionalWet,
     peak,

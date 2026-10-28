@@ -9,6 +9,7 @@ import {
 import {
   forecastChanges,
   forecastRows,
+  CLEARING_LOOKAHEAD_SECONDS,
   rowWindow,
   runRain,
   timingCluster,
@@ -151,6 +152,111 @@ test("later rain gaps do not hide a later return of rain as a clearing", () => {
   const row = forecastRows([forecast("a", [1, 0, 2])], [])[0];
   assert.equal(rowWindow(row, hour, hour + 10800, 0.1).clearing, null);
 });
+
+test("a clearing group retains the wet forecasts without a known stop, including beyond the timeline", () => {
+  const rows = forecastRows(
+    [
+      forecast("early-a", [1, 0, 0]),
+      forecast("early-b", [2, 0, 0]),
+      forecast("later", [1, 1, 0]),
+      forecast("unresolved", [1, null, 0]),
+    ],
+    [],
+  );
+  const result = runRain(rows, focus(hour + 900, hour + 1800, 0, 0), 0.1);
+  assert.equal(result.hourlyTiming.wet, 4);
+  assert.equal(result.clearing.count, 2);
+  assert.equal(result.clearing.start, hour + 3600);
+  assert.equal(result.hourlyTiming.unresolved, 1);
+  assert.equal(
+    result.hourly.find((r) => r.row.id === "later").clearingSignal.start,
+    hour + 7200,
+  );
+  assert.equal(result.wet, 4);
+  assert.equal(result.clearingEnd, hour + 1800 + CLEARING_LOOKAHEAD_SECONDS);
+});
+
+test("clearing look-ahead cannot cross missing, negative or absent intervals", () => {
+  for (const values of [[1, null, 0], [1, -1, 0], [1]]) {
+    const result = runRain(
+      forecastRows([forecast("a", values)], []),
+      focus(hour, hour + 900, 0, 0),
+      0.1,
+    );
+    assert.equal(result.clearing, null);
+    assert.equal(result.hourlyTiming.unresolved, 1);
+  }
+  const row = forecastRows([forecast("gap", [1, 0])], [])[0];
+  row.intervals[1].start += 3600;
+  row.intervals[1].end += 3600;
+  const result = runRain([row], focus(hour, hour + 900, 0, 0), 0.1);
+  assert.equal(result.clearing, null);
+});
+
+test("clearing look-ahead is bounded and does not substitute a distant unrelated dry period", () => {
+  const result = runRain(
+    forecastRows([forecast("long-rain", [1, 1, 1, 1, 1, 1, 1, 0])], []),
+    focus(hour, hour + 900, 0, 0),
+    0.1,
+  );
+  assert.equal(result.clearing, null);
+  assert.equal(result.hourlyTiming.unresolved, 1);
+});
+
+test("regional-only timing retains its own clearing group and unresolved population", () => {
+  const native = (id, values) => ({
+    id,
+    name: id,
+    sourceId: "icon",
+    fetchedAt: "2026-10-26T09:20:00Z",
+    points: values.map((precipitation, i) => ({
+      time: hour + i * 900,
+      precipitation,
+    })),
+  });
+  const result = runRain(
+    forecastRows(
+      [forecast("dry", [0, 0])],
+      [native("fine-a", [0.2, 0]), native("fine-b", [0.3, null])],
+    ),
+    focus(hour, hour + 900, 0, 0),
+    0.1,
+  );
+  assert.equal(result.wet, 0);
+  assert.equal(result.cluster, null);
+  assert.equal(result.regionalWet.length, 2);
+  assert.equal(result.regionalTiming.cluster.start, hour);
+  assert.equal(result.regionalTiming.clearing.start, hour + 900);
+  assert.equal(result.regionalTiming.clearing.count, 1);
+  assert.equal(result.regionalTiming.wet, 2);
+  assert.equal(result.regionalTiming.unresolved, 1);
+  assert.equal(result.conflict, true);
+});
+test("a buffer-only regional shower cannot supply the run's arrival or clearing group", () => {
+  const native = (id, values) => ({
+    id,
+    name: id,
+    sourceId: "icon",
+    fetchedAt: "2026-10-26T09:20:00Z",
+    points: values.map((precipitation, i) => ({
+      time: hour + i * 900,
+      precipitation,
+    })),
+  });
+  const result = runRain(
+    forecastRows(
+      [],
+      [native("buffer", [0.2, 0, 0]), native("run", [0, 0.2, 0])],
+    ),
+    focus(hour + 900, hour + 1800),
+    0.1,
+  );
+  assert.equal(result.regionalTiming.wet, 2);
+  assert.equal(result.regionalRunTiming.wet, 1);
+  assert.equal(result.regionalRunTiming.cluster.start, hour + 900);
+  assert.equal(result.regionalRunTiming.clearing.start, hour + 1800);
+});
+
 test("forecast change compares identical complete valid hours, never missing values or fetch time alone", () => {
   const current = forecast("a", [0, 1, 0]);
   const history = [0, 1, 2].map((i) => ({

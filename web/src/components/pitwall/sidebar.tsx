@@ -261,7 +261,7 @@ export function Sidebar() {
             }}
           >
             <span className="brand-mark" aria-hidden="true" />
-            Pitwall<small className="preview-badge">2.4.1</small>
+            Pitwall<small className="preview-badge">2.4.2</small>
           </a>
           <button
             className="icon-button"

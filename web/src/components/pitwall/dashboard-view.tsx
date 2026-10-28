@@ -11,7 +11,6 @@ import {
   overlaps,
   runConditions,
   runRain,
-  timingCluster,
 } from "@/lib/run-weather";
 import { buildConsensus } from "@/lib/consensus";
 import CircuitMap from "./circuit-map";
@@ -96,9 +95,11 @@ export function DashboardView() {
     loading && !data
       ? "Checking the weather…"
       : !rain.reporting
-        ? "Rain outlook incomplete."
+        ? rain.regionalWet.length
+          ? "Regional showers possible; hourly data unavailable."
+          : "Rain outlook incomplete."
         : rain.wet > rain.reporting / 2
-          ? "Rain forecast during this window."
+          ? `Rain forecast ${context}.`
           : rain.wet
             ? "Some forecasts show rain."
             : rain.regionalWet.length
@@ -110,16 +111,21 @@ export function DashboardView() {
                   : `No hourly rain forecast ${context}.`;
   const intervalLabel = (value: { start: number; end: number } | null) =>
     value
-      ? `${time(value.start, track.timezone)}–${time(value.end, track.timezone)}`
+      ? `${time(value.start, track.timezone)}–${time(value.end, track.timezone)}${
+          day(value.start, track.timezone) !== day(focus.start, track.timezone)
+            ? ` · ${niceDate(day(value.start, track.timezone))}`
+            : day(value.end, track.timezone) !==
+                day(value.start, track.timezone)
+              ? " (+1 day)"
+              : ""
+        }`
       : "—";
-  const regionalCluster = timingCluster(
-    rain.regionalWet.flatMap((r) => (r.first ? [r.first] : [])),
-  );
-  const regionalClear = timingCluster(
-    rain.regionalWet.flatMap((r) =>
-      r.context.clearing ? [r.context.clearing] : [],
-    ),
-  );
+  const pointLabel = (value: number) =>
+    `${time(value, track.timezone)}${day(value, track.timezone) !== day(focus.start, track.timezone) ? ` · ${niceDate(day(value, track.timezone))}` : ""}`;
+  const regionalOnly = !rain.wet && rain.regionalWet.length > 0;
+  const regional = rain.regionalRunTiming;
+  const timing = regionalOnly ? regional : rain.hourlyTiming;
+  const timingSource = regionalOnly ? "regional" : "hourly";
   const changeLabels = {
     wet: "now show rain",
     dry: "no longer show rain",
@@ -192,35 +198,42 @@ export function DashboardView() {
           </details>
           <dl className="run-rain-facts">
             <div>
-              <dt>First hourly signal</dt>
+              <dt>First {timingSource} signal</dt>
               <dd>
-                {intervalLabel(rain.cluster)}
+                {intervalLabel(timing.cluster)}
                 <small>
-                  {rain.cluster
-                    ? `${rain.cluster.count} forecasts in this timing group`
+                  {timing.cluster
+                    ? `${timing.cluster.count} forecasts in this timing group${regionalOnly ? " · 15-min timing" : ""}`
                     : "None in the displayed window"}
                 </small>
               </dd>
             </div>
             <div>
-              <dt>Rain clearing</dt>
+              <dt>Main clearing signal</dt>
               <dd>
-                {rain.clearing
-                  ? intervalLabel(rain.clearing)
-                  : rain.contextWet.length
+                {timing.clearing
+                  ? intervalLabel(timing.clearing)
+                  : timing.wet
                     ? "Not yet shown"
                     : "—"}
                 <small>
-                  {rain.clearing
-                    ? `${rain.clearing.count} forecasts · rain stopping, not track drying`
-                    : rain.contextWet.length
-                      ? "Extend the window to look further"
-                      : "No hourly wet period to clear"}
+                  {timing.wet
+                    ? timing.clearing
+                      ? `${timing.clearing.count} of ${timing.wet} wet ${timingSource} forecasts in this group${timing.unresolved ? ` · ${timing.unresolved} without a confirmed stop` : ""}`
+                      : `${timing.unresolved} wet ${timingSource} forecasts without a confirmed stop`
+                    : "No wet period to clear"}
                 </small>
+                {timing.wet > 0 && (
+                  <small>
+                    {timing.clearing
+                      ? `${timing.clearing.start >= focus.displayEnd ? "After the shown timeline · " : ""}rain stopping, not track drying`
+                      : `Look-ahead ends ${pointLabel(rain.clearingEnd)} · gaps stay unresolved`}
+                  </small>
+                )}
               </dd>
             </div>
             <div>
-              <dt>Intensity in your window</dt>
+              <dt>Intensity {context}</dt>
               <dd>
                 {rain.maxPeak === null ? "—" : rainIntensity(rain.maxPeak)}
                 <small>
@@ -236,10 +249,12 @@ export function DashboardView() {
               <strong>
                 {rain.regionalWet.length} regional 15-minute forecasts:
               </strong>{" "}
-              rain {intervalLabel(regionalCluster)}
-              {regionalClear
-                ? `; clearing ${intervalLabel(regionalClear)}`
-                : "; no clearing yet in this window"}
+              rain {intervalLabel(regional.cluster)}
+              {regional.clearing
+                ? `; ${regional.clearing.count} of ${regional.wet} signal clearing ${intervalLabel(regional.clearing)}`
+                : "; no confirmed clearing"}
+              {regional.unresolved > 0 &&
+                `; ${regional.unresolved} without a confirmed stop`}
               .{rain.conflict && " Hourly forecasts differ."}
             </p>
           ) : rain.regional.some((r) => r.complete) ? (
@@ -285,7 +300,9 @@ export function DashboardView() {
           )}
         </section>
         <section className="run-conditions" aria-label="Conditions snapshot">
-          <span className="eyebrow">During this window</span>
+          <span className="eyebrow">
+            {focus.kind === "session" ? "During your run" : "Next 3 hours"}
+          </span>
           <div>
             <Thermometer size={18} />
             <dl>
